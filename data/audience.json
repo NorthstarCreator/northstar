@@ -1,0 +1,56 @@
+[
+  {
+    "id": "raisedRight-2026-06",
+    "month": "June 2026",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "gender": {
+      "male": 66,
+      "female": 34
+    },
+    "age": {
+      "18-24": 9.5,
+      "25-34": 28.8,
+      "35-44": 21.2,
+      "45-54": 17.9,
+      "55+": 22.6
+    },
+    "tikTokClassification": "Health Pro",
+    "pps": 5,
+    "goldStatus": true,
+    "spotlightStatus": "Qualified for July",
+    "mostActiveTime": "Wednesday, 6pm-7pm",
+    "monthOverMonth": {
+      "gender": "Add July comparison after next monthly import.",
+      "age": "Add July comparison after next monthly import.",
+      "pps": "Add July PPS comparison."
+    }
+  },
+  {
+    "id": "truthTunedTribe-2026-06",
+    "month": "June 2026",
+    "accountId": "truthTunedTribe",
+    "account": "Truth Tuned Tribe",
+    "gender": {
+      "male": 59,
+      "female": 41
+    },
+    "age": {
+      "18-24": 10.1,
+      "25-34": 15.5,
+      "35-44": 21.2,
+      "45-54": 24.9,
+      "55+": 28.3
+    },
+    "tikTokClassification": "Home & Lifestyle Pro",
+    "pps": 4.4,
+    "goldStatus": true,
+    "spotlightStatus": "Qualified for July",
+    "mostActiveTime": "Use account analytics to pick the strongest July posting window",
+    "monthOverMonth": {
+      "gender": "Add July comparison after next monthly import.",
+      "age": "Add July comparison after next monthly import.",
+      "pps": "Add July PPS comparison."
+    }
+  }
+]

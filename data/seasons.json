@@ -1,0 +1,112 @@
+{
+  "currentMonth": "July",
+  "opportunitiesByMonth": {
+    "July": [
+      "Summer entertaining",
+      "Water quality",
+      "Outdoor tools",
+      "Patriotic leftovers",
+      "Travel",
+      "Pest control"
+    ],
+    "August": [
+      "Back to school",
+      "Fall decor",
+      "Football",
+      "Tailgating",
+      "Halloween sample requests",
+      "Immune support"
+    ],
+    "September": [
+      "Halloween",
+      "Fall home",
+      "Cozy products",
+      "Apple/pumpkin",
+      "Football",
+      "Supplements"
+    ],
+    "October": [
+      "Christmas sample requests",
+      "Gift guides",
+      "Stocking stuffers",
+      "Winter wellness",
+      "Faith books",
+      "Home hosting"
+    ],
+    "November": [
+      "Black Friday",
+      "Christmas gifts",
+      "Cozy home",
+      "Wellness bundles",
+      "Toys",
+      "Kitchen gifts"
+    ],
+    "December": [
+      "Last-minute gifts",
+      "Christmas",
+      "New Year health products",
+      "Planners",
+      "Fitness",
+      "Organization"
+    ]
+  },
+  "currentMonthOpportunities": [
+    "Summer entertaining",
+    "Water quality",
+    "Outdoor tools",
+    "Patriotic leftovers",
+    "Travel",
+    "Pest control"
+  ],
+  "nextMonthSampleRequests": [
+    "Back to school",
+    "Fall decor",
+    "Football",
+    "Tailgating",
+    "Halloween sample requests",
+    "Immune support"
+  ],
+  "holidayPrepTimeline": {
+    "August": [
+      "Halloween sample requests",
+      "Football",
+      "Tailgating",
+      "Immune support"
+    ],
+    "September": [
+      "Halloween",
+      "Fall home",
+      "Supplements"
+    ],
+    "October": [
+      "Christmas sample requests",
+      "Gift guides",
+      "Stocking stuffers"
+    ],
+    "November": [
+      "Black Friday",
+      "Christmas gifts",
+      "Toys",
+      "Kitchen gifts"
+    ],
+    "December": [
+      "Last-minute gifts",
+      "New Year health products",
+      "Organization"
+    ]
+  },
+  "evergreenProductsToRepost": [
+    "truthTunedTribe-ultimate-peptide-protocols-bible-1",
+    "truthTunedTribe-complete-peptide-protocols-playbook-2",
+    "raisedRight-250th-anniversary-commemorative-coin-3",
+    "raisedRight-4-in-1-digital-tds-water-quality-tester-4",
+    "raisedRight-ultimate-peptide-protocols-bible-5",
+    "truthTunedTribe-turmeric-ginger-cinnamon-tea-5",
+    "raisedRight-premium-silver-soft-cotton-grounding-blanket-8",
+    "raisedRight-trump-edition-3d-emblem-sticker-badge-10",
+    "truthTunedTribe-fenbendazole-and-ivermectin-protocols-6",
+    "raisedRight-balm-of-gilead-frankincense-and-myrrh-16",
+    "truthTunedTribe-cheesecloth-8",
+    "raisedRight-big-size-jericho-flower-17"
+  ]
+}

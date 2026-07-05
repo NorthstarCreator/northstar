@@ -1,0 +1,18 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">The Mark White</title>
+  <desc id="desc">White Northstar Creator Compass mark with gold Spark for dark backgrounds.</desc>
+  <defs>
+    <radialGradient id="sparkGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(256 256) rotate(90) scale(74)">
+      <stop stop-color="#FFF4B8" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#F7C948" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect x="26" y="26" width="460" height="460" rx="128" fill="none"/>
+  <path d="M256 82L274 230L430 256L274 282L256 430L238 282L82 256L238 230L256 82Z" stroke="#FFFFFF" stroke-width="16" stroke-linejoin="round"/>
+  <path d="M256 116L267 238L396 256L267 274L256 396L245 274L116 256L245 238L256 116Z" fill="none"/>
+  <circle cx="256" cy="256" r="92" stroke="#FFFFFF" stroke-opacity="0.26" stroke-width="2"/>
+  <circle cx="256" cy="256" r="74" fill="url(#sparkGlow)"/>
+  <path d="M244 198L259 242L304 256L259 270L244 314L229 270L184 256L229 242L244 198Z" fill="#F7C948"/>
+  <path d="M276 206L288 240L324 252L288 264L276 298L264 264L228 252L264 240L276 206Z" fill="#D99A22"/>
+  <circle cx="256" cy="256" r="14" fill="#FFF7C2"/>
+</svg>

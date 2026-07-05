@@ -1,0 +1,40 @@
+[
+  {
+    "id": "raisedRight",
+    "name": "Raised Right",
+    "label": "Health Pro",
+    "accent": "redGold",
+    "coreBuyerMindset": "Show me something useful.",
+    "bestCategories": [
+      "Garden",
+      "Health testing",
+      "Patriotic",
+      "Home problem solvers",
+      "Wellness",
+      "Outdoor"
+    ],
+    "bestVideoStyle": "Demonstration, before/after, problem-solution, quick proof.",
+    "seasonalWarning": "Garden Hoe and Pool Float are strong in summer but may slow after season ends.",
+    "createdMonth": "June 2026",
+    "notes": "Useful problem-solvers, visible demos, proof-first posting."
+  },
+  {
+    "id": "truthTunedTribe",
+    "name": "Truth Tuned Tribe",
+    "label": "Home & Lifestyle Pro",
+    "accent": "blueTeal",
+    "coreBuyerMindset": "Teach me something.",
+    "bestCategories": [
+      "Peptide books",
+      "Wellness",
+      "Supplements",
+      "Natural health",
+      "Educational products",
+      "Curiosity products"
+    ],
+    "bestVideoStyle": "Educational, question-answer, book walkthrough, myth-busting, research explanation.",
+    "seasonalWarning": "Peptide books are the clear breakout category.",
+    "createdMonth": "June 2026",
+    "notes": "Knowledge, curiosity, education, and research-style product storytelling."
+  }
+]

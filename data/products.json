@@ -1,0 +1,2306 @@
+[
+  {
+    "id": "raisedRight-2-in-1-garden-hoe-and-weed-puller-rake-1",
+    "name": "2-in-1 Garden Hoe & Weed Puller Rake",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Garden / Outdoor Problem Solver",
+    "categoryGroup": "Garden",
+    "seasonality": "Spring/Summer",
+    "evergreenSeasonal": "Seasonal",
+    "lifetimeGmv": 3500,
+    "lifetimeCommission": 318.06,
+    "lifetimeUnits": 159,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 3500,
+        "commission": 318.06,
+        "units": 159
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Request Now",
+    "wouldPromoteAgain": "Yes",
+    "status": "Double Down",
+    "originalStatus": "Double Down",
+    "notes": "Breakout utility product. Film proof-heavy demos and request adjacent tools.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Breakout utility product. Film proof-heavy demos and request adjacent tools.",
+    "similarTags": [
+      "Garden",
+      "Seasonal",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-women-s-solid-color-hollow-out-tie-front-cardigan-2",
+    "name": "Women's Solid Color Hollow Out Tie Front Cardigan",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Fashion",
+    "categoryGroup": "Fashion",
+    "seasonality": "Summer",
+    "evergreenSeasonal": "Seasonal",
+    "lifetimeGmv": 426.71,
+    "lifetimeCommission": 30.98,
+    "lifetimeUnits": 23,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 426.71,
+        "commission": 30.98,
+        "units": 23
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Fashion can sell but should be watched against stronger utility products.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Fashion can sell but should be watched against stronger utility products.",
+    "similarTags": [
+      "Fashion",
+      "Seasonal",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-250th-anniversary-commemorative-coin-3",
+    "name": "250th Anniversary Commemorative Coin",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Patriotic / Collectible",
+    "categoryGroup": "Patriotic",
+    "seasonality": "Evergreen through 2026",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 247.72,
+    "lifetimeCommission": 50.4,
+    "lifetimeUnits": 21,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 247.72,
+        "commission": 50.4,
+        "units": 21
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Request Now",
+    "wouldPromoteAgain": "Yes",
+    "status": "Double Down",
+    "originalStatus": "Double Down",
+    "notes": "Strong patriotic evergreen angle through the anniversary year.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Strong patriotic evergreen angle through the anniversary year.",
+    "similarTags": [
+      "Patriotic",
+      "Evergreen",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-4-in-1-digital-tds-water-quality-tester-4",
+    "name": "4-in-1 Digital TDS Water Quality Tester",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Health / Water / Home Testing",
+    "categoryGroup": "Health",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 235.04,
+    "lifetimeCommission": 41.95,
+    "lifetimeUnits": 51,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 235.04,
+        "commission": 41.95,
+        "units": 51
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Request Now",
+    "wouldPromoteAgain": "Yes",
+    "status": "Double Down",
+    "originalStatus": "Double Down",
+    "notes": "Perfect Raised Right fit: simple proof, useful, repeatable home test content.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Perfect Raised Right fit: simple proof, useful, repeatable home test content.",
+    "similarTags": [
+      "Health",
+      "Evergreen",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-ultimate-peptide-protocols-bible-5",
+    "name": "Ultimate Peptide Protocols Bible",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Health Book / Biohacking",
+    "categoryGroup": "Health Book",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 207.84,
+    "lifetimeCommission": 17.28,
+    "lifetimeUnits": 8,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 207.84,
+        "commission": 17.28,
+        "units": 8
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Better fit for Truth Tuned Tribe",
+    "notes": "Performs, but the knowledge angle belongs more naturally to Truth Tuned Tribe.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Performs, but the knowledge angle belongs more naturally to Truth Tuned Tribe.",
+    "similarTags": [
+      "Health Book",
+      "Evergreen",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-led-illuminated-wristbands-6",
+    "name": "LED Illuminated Wristbands",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Patriotic / Event / Seasonal",
+    "categoryGroup": "Patriotic",
+    "seasonality": "Summer / July 4th / Events",
+    "evergreenSeasonal": "Seasonal",
+    "lifetimeGmv": 191.12,
+    "lifetimeCommission": 33.75,
+    "lifetimeUnits": 15,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 191.12,
+        "commission": 33.75,
+        "units": 15
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Wait",
+    "originalStatus": "Seasonal",
+    "notes": "Good event product with a narrowing July window.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Good event product with a narrowing July window.",
+    "similarTags": [
+      "Patriotic",
+      "Seasonal",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-smells-like-a-football-win-scented-candle-7",
+    "name": "Smells Like a Football Win Scented Candle",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Football / Gift / Home",
+    "categoryGroup": "Football",
+    "seasonality": "Fall / Football Season",
+    "evergreenSeasonal": "Seasonal",
+    "lifetimeGmv": 158.02,
+    "lifetimeCommission": 22.1,
+    "lifetimeUnits": 8,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 158.02,
+        "commission": 22.1,
+        "units": 8
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Watch for Fall",
+    "notes": "Queue football content before season ramps.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Queue football content before season ramps.",
+    "similarTags": [
+      "Football",
+      "Seasonal",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-premium-silver-soft-cotton-grounding-blanket-8",
+    "name": "Premium Silver Soft Cotton Grounding Blanket",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Health / Grounding",
+    "categoryGroup": "Health",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 138.52,
+    "lifetimeCommission": 33.69,
+    "lifetimeUnits": 2,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 138.52,
+        "commission": 33.69,
+        "units": 2
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Request Now",
+    "wouldPromoteAgain": "Yes",
+    "status": "Double Down",
+    "originalStatus": "Double Down if commission stays strong",
+    "notes": "Low units but high commission. Worth more educational proof.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Low units but high commission. Worth more educational proof.",
+    "similarTags": [
+      "Health",
+      "Evergreen",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-zipstring-aracna-string-launcher-toy-9",
+    "name": "ZipString Aracna String Launcher Toy",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Viral Toy",
+    "categoryGroup": "Viral Toy",
+    "seasonality": "Gift / Holiday",
+    "evergreenSeasonal": "Seasonal",
+    "lifetimeGmv": 106.21,
+    "lifetimeCommission": 14.79,
+    "lifetimeUnits": 2,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 106.21,
+        "commission": 14.79,
+        "units": 2
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Test",
+    "notes": "Could become a gift guide product; test short novelty demos.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Could become a gift guide product; test short novelty demos.",
+    "similarTags": [
+      "Viral Toy",
+      "Seasonal",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-trump-edition-3d-emblem-sticker-badge-10",
+    "name": "Trump Edition 3D Emblem Sticker Badge",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Patriotic / Identity",
+    "categoryGroup": "Patriotic",
+    "seasonality": "Evergreen / Election / Patriotic",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 101.2,
+    "lifetimeCommission": 10.8,
+    "lifetimeUnits": 10,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 101.2,
+        "commission": 10.8,
+        "units": 10
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Request Now",
+    "wouldPromoteAgain": "Yes",
+    "status": "Double Down",
+    "originalStatus": "Double Down",
+    "notes": "Small-ticket identity product with repeatable audience fit.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Small-ticket identity product with repeatable audience fit.",
+    "similarTags": [
+      "Patriotic",
+      "Evergreen",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-rome-italy-travel-jubilee-satin-pajama-set-11",
+    "name": "Rome Italy Travel Jubilee Satin Pajama Set",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Travel/Fashion",
+    "categoryGroup": "Travel",
+    "seasonality": "Travel",
+    "evergreenSeasonal": "Seasonal",
+    "lifetimeGmv": 97.18,
+    "lifetimeCommission": 9.72,
+    "lifetimeUnits": 2,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 97.18,
+        "commission": 9.72,
+        "units": 2
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Travel",
+      "Seasonal",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-patriotic-trump-thumbs-up-pool-float-12",
+    "name": "Patriotic Trump Thumbs-Up Pool Float",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Patriotic/Summer",
+    "categoryGroup": "Patriotic",
+    "seasonality": "Summer",
+    "evergreenSeasonal": "Seasonal",
+    "lifetimeGmv": 95.46,
+    "lifetimeCommission": 12.85,
+    "lifetimeUnits": 5,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 95.46,
+        "commission": 12.85,
+        "units": 5
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Wait",
+    "originalStatus": "Seasonal",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Patriotic",
+      "Seasonal",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-safer-home-catch-360-cordless-flying-insect-trap-13",
+    "name": "Safer Home Catch 360 Cordless Flying Insect Trap",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Home/Pest Control",
+    "categoryGroup": "Home",
+    "seasonality": "Summer",
+    "evergreenSeasonal": "Seasonal",
+    "lifetimeGmv": 87.48,
+    "lifetimeCommission": 15,
+    "lifetimeUnits": 4,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 87.48,
+        "commission": 15,
+        "units": 4
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Home",
+      "Seasonal",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-2-pack-hummingbird-house-window-view-14",
+    "name": "2 Pack Hummingbird House Window View",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Garden/Birding",
+    "categoryGroup": "Garden",
+    "seasonality": "Spring/Summer",
+    "evergreenSeasonal": "Seasonal",
+    "lifetimeGmv": 65.53,
+    "lifetimeCommission": 9.6,
+    "lifetimeUnits": 3,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 65.53,
+        "commission": 9.6,
+        "units": 3
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Garden",
+      "Seasonal",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-draft-top-lift-can-clip-15",
+    "name": "Draft Top Lift + Can Clip",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Summer/Drinks",
+    "categoryGroup": "Summer",
+    "seasonality": "Summer",
+    "evergreenSeasonal": "Seasonal",
+    "lifetimeGmv": 55.41,
+    "lifetimeCommission": 2.8,
+    "lifetimeUnits": 2,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 55.41,
+        "commission": 2.8,
+        "units": 2
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Wait",
+    "wouldPromoteAgain": "No",
+    "status": "Wait",
+    "originalStatus": "Wait",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Summer",
+      "Seasonal",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-balm-of-gilead-frankincense-and-myrrh-16",
+    "name": "Balm of Gilead Frankincense & Myrrh",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Wellness/Skin",
+    "categoryGroup": "Wellness",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 53.98,
+    "lifetimeCommission": 9,
+    "lifetimeUnits": 2,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 53.98,
+        "commission": 9,
+        "units": 2
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Wellness",
+      "Evergreen",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-big-size-jericho-flower-17",
+    "name": "Big Size Jericho Flower",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Curiosity/Natural",
+    "categoryGroup": "Curiosity",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 50.26,
+    "lifetimeCommission": 5.05,
+    "lifetimeUnits": 7,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 50.26,
+        "commission": 5.05,
+        "units": 7
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Test",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Curiosity",
+      "Evergreen",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-complete-peptide-protocols-playbook-18",
+    "name": "Complete Peptide Protocols Playbook",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Health Book",
+    "categoryGroup": "Health Book",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 49.96,
+    "lifetimeCommission": 4.08,
+    "lifetimeUnits": 2,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 49.96,
+        "commission": 4.08,
+        "units": 2
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Better fit for Truth Tuned Tribe",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Health Book",
+      "Evergreen",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-reusable-bread-bags-19",
+    "name": "Reusable Bread Bags",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Home/Kitchen",
+    "categoryGroup": "Home",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 45.98,
+    "lifetimeCommission": 4.6,
+    "lifetimeUnits": 2,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 45.98,
+        "commission": 4.6,
+        "units": 2
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Home",
+      "Evergreen",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-dr-melaxin-lumi-glow-20",
+    "name": "Dr. Melaxin Lumi Glow",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Beauty/Skincare",
+    "categoryGroup": "Beauty",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 41.63,
+    "lifetimeCommission": 8.07,
+    "lifetimeUnits": 1,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 41.63,
+        "commission": 8.07,
+        "units": 1
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Test",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Beauty",
+      "Evergreen",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-tally-tumbler-golf-portable-stainless-steel-21",
+    "name": "Tally Tumbler Golf Portable Stainless Steel",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Golf/Gift",
+    "categoryGroup": "Golf",
+    "seasonality": "Gift",
+    "evergreenSeasonal": "Seasonal",
+    "lifetimeGmv": 39.99,
+    "lifetimeCommission": 8,
+    "lifetimeUnits": 1,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 39.99,
+        "commission": 8,
+        "units": 1
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Golf",
+      "Seasonal",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-dr-melaxin-peel-shot-care-set-22",
+    "name": "Dr. Melaxin Peel Shot Care Set",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Beauty/Skincare",
+    "categoryGroup": "Beauty",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 35.77,
+    "lifetimeCommission": 5.96,
+    "lifetimeUnits": 1,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 35.77,
+        "commission": 5.96,
+        "units": 1
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Test",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Beauty",
+      "Evergreen",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-ring-sizer-tool-23",
+    "name": "Ring Sizer Tool",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Utility",
+    "categoryGroup": "Utility",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 33.27,
+    "lifetimeCommission": 3.01,
+    "lifetimeUnits": 5,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 33.27,
+        "commission": 3.01,
+        "units": 5
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Utility",
+      "Evergreen",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-hiacry-gel-pens-24",
+    "name": "Hiacry Gel Pens",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Stationery",
+    "categoryGroup": "Stationery",
+    "seasonality": "Back to school",
+    "evergreenSeasonal": "Seasonal",
+    "lifetimeGmv": 33.25,
+    "lifetimeCommission": 2.82,
+    "lifetimeUnits": 3,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 33.25,
+        "commission": 2.82,
+        "units": 3
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Stationery",
+      "Seasonal",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-fenbendazole-and-ivermectin-protocols-25",
+    "name": "Fenbendazole & Ivermectin Protocols",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Health Book",
+    "categoryGroup": "Health Book",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 32.98,
+    "lifetimeCommission": 3,
+    "lifetimeUnits": 1,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 32.98,
+        "commission": 3,
+        "units": 1
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Better fit for Truth Tuned Tribe",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Health Book",
+      "Evergreen",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-engraving-pen-26",
+    "name": "Engraving Pen",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "DIY/Tool",
+    "categoryGroup": "DIY",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 29.99,
+    "lifetimeCommission": 3,
+    "lifetimeUnits": 1,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 29.99,
+        "commission": 3,
+        "units": 1
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Test",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "DIY",
+      "Evergreen",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-fvck-it-edition-3d-emblem-sticker-badge-27",
+    "name": "Fvck It Edition 3D Emblem Sticker Badge",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Humor/Auto",
+    "categoryGroup": "Humor",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 28.17,
+    "lifetimeCommission": 3.24,
+    "lifetimeUnits": 3,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 28.17,
+        "commission": 3.24,
+        "units": 3
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Test",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Humor",
+      "Evergreen",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-dr-brenner-copper-peptide-serum-28",
+    "name": "Dr. Brenner Copper Peptide Serum",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Skincare/Peptide",
+    "categoryGroup": "Skincare",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 27.59,
+    "lifetimeCommission": 6,
+    "lifetimeUnits": 1,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 27.59,
+        "commission": 6,
+        "units": 1
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Request Now",
+    "wouldPromoteAgain": "Yes",
+    "status": "Double Down",
+    "originalStatus": "Request more",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Skincare",
+      "Evergreen",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-kids-coloring-sherpa-blanket-kit-29",
+    "name": "Kids Coloring Sherpa Blanket Kit",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Kids/Craft",
+    "categoryGroup": "Kids",
+    "seasonality": "Gift / Holiday",
+    "evergreenSeasonal": "Seasonal",
+    "lifetimeGmv": 26.99,
+    "lifetimeCommission": 4.62,
+    "lifetimeUnits": 1,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 26.99,
+        "commission": 4.62,
+        "units": 1
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Kids",
+      "Seasonal",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-baron-trump-collection-30",
+    "name": "Baron Trump Collection",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Book/Curiosity",
+    "categoryGroup": "Book",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 24.98,
+    "lifetimeCommission": 1.9,
+    "lifetimeUnits": 1,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 24.98,
+        "commission": 1.9,
+        "units": 1
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Test",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Book",
+      "Evergreen",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-portable-collapsible-stool-31",
+    "name": "Portable Collapsible Stool",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Utility/Outdoor",
+    "categoryGroup": "Utility",
+    "seasonality": "Summer",
+    "evergreenSeasonal": "Seasonal",
+    "lifetimeGmv": 23.99,
+    "lifetimeCommission": 2.4,
+    "lifetimeUnits": 1,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 23.99,
+        "commission": 2.4,
+        "units": 1
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Utility",
+      "Seasonal",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-neck-cream-32",
+    "name": "Neck Cream",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Beauty/Skincare",
+    "categoryGroup": "Beauty",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 22.23,
+    "lifetimeCommission": 3.51,
+    "lifetimeUnits": 1,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 22.23,
+        "commission": 3.51,
+        "units": 1
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Test",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Beauty",
+      "Evergreen",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-baby-silicone-feeding-set-33",
+    "name": "Baby Silicone Feeding Set",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Baby",
+    "categoryGroup": "Baby",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 22.16,
+    "lifetimeCommission": 1.77,
+    "lifetimeUnits": 2,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 22.16,
+        "commission": 1.77,
+        "units": 2
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Wait",
+    "wouldPromoteAgain": "No",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Baby",
+      "Evergreen",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-black-book-of-manifestation-34",
+    "name": "Black Book of Manifestation",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Book/Manifestation",
+    "categoryGroup": "Book",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 19.98,
+    "lifetimeCommission": 1.8,
+    "lifetimeUnits": 1,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 19.98,
+        "commission": 1.8,
+        "units": 1
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Test",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Book",
+      "Evergreen",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-citrus-squeezer-35",
+    "name": "Citrus Squeezer",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Kitchen",
+    "categoryGroup": "Kitchen",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 19.53,
+    "lifetimeCommission": 0.73,
+    "lifetimeUnits": 1,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 19.53,
+        "commission": 0.73,
+        "units": 1
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Wait",
+    "wouldPromoteAgain": "No",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Kitchen",
+      "Evergreen",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-boats-n-hoes-beer-can-sleeve-36",
+    "name": "Boats N' Hoes Beer Can Sleeve",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Humor/Patriotic",
+    "categoryGroup": "Humor",
+    "seasonality": "Summer",
+    "evergreenSeasonal": "Seasonal",
+    "lifetimeGmv": 19.32,
+    "lifetimeCommission": 3.93,
+    "lifetimeUnits": 3,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 19.32,
+        "commission": 3.93,
+        "units": 3
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Wait",
+    "originalStatus": "Seasonal",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Humor",
+      "Seasonal",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-vintage-doorbell-37",
+    "name": "Vintage Doorbell",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Home/Decor",
+    "categoryGroup": "Home",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 18.62,
+    "lifetimeCommission": 0.68,
+    "lifetimeUnits": 1,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 18.62,
+        "commission": 0.68,
+        "units": 1
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Wait",
+    "wouldPromoteAgain": "No",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Home",
+      "Evergreen",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-talking-president-predicto-38",
+    "name": "Talking President Predicto",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Patriotic/Gift",
+    "categoryGroup": "Patriotic",
+    "seasonality": "Gift / Patriotic",
+    "evergreenSeasonal": "Seasonal",
+    "lifetimeGmv": 17.95,
+    "lifetimeCommission": 3.59,
+    "lifetimeUnits": 1,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 17.95,
+        "commission": 3.59,
+        "units": 1
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Patriotic",
+      "Seasonal",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-donald-trump-talking-pop-up-card-39",
+    "name": "Donald Trump Talking Pop Up Card",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Patriotic/Gift",
+    "categoryGroup": "Patriotic",
+    "seasonality": "Gift / Patriotic",
+    "evergreenSeasonal": "Seasonal",
+    "lifetimeGmv": 17.94,
+    "lifetimeCommission": 2.59,
+    "lifetimeUnits": 1,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 17.94,
+        "commission": 2.59,
+        "units": 1
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Patriotic",
+      "Seasonal",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-women-s-summer-hollow-out-cardigan-40",
+    "name": "Women's Summer Hollow Out Cardigan",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Fashion",
+    "categoryGroup": "Fashion",
+    "seasonality": "Summer",
+    "evergreenSeasonal": "Seasonal",
+    "lifetimeGmv": 17.66,
+    "lifetimeCommission": 2.3,
+    "lifetimeUnits": 1,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 17.66,
+        "commission": 2.3,
+        "units": 1
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Fashion",
+      "Seasonal",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-poo-pourri-toilet-spray-41",
+    "name": "Poo-Pourri Toilet Spray",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Home",
+    "categoryGroup": "Home",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 13.49,
+    "lifetimeCommission": 2,
+    "lifetimeUnits": 1,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 13.49,
+        "commission": 2,
+        "units": 1
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Home",
+      "Evergreen",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-spiritual-warfare-prayers-book-42",
+    "name": "Spiritual Warfare Prayers Book",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Faith/Book",
+    "categoryGroup": "Faith",
+    "seasonality": "Evergreen / Holiday",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 12.83,
+    "lifetimeCommission": 1.17,
+    "lifetimeUnits": 1,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 12.83,
+        "commission": 1.17,
+        "units": 1
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Watch for Q4",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Faith",
+      "Evergreen",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-original-croptuck-43",
+    "name": "Original Croptuck",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Fashion/Utility",
+    "categoryGroup": "Fashion",
+    "seasonality": "Summer",
+    "evergreenSeasonal": "Seasonal",
+    "lifetimeGmv": 11.29,
+    "lifetimeCommission": 2.66,
+    "lifetimeUnits": 1,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 11.29,
+        "commission": 2.66,
+        "units": 1
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Fashion",
+      "Seasonal",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-poo-pourri-pocket-spray-44",
+    "name": "Poo-Pourri Pocket Spray",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Travel/Home",
+    "categoryGroup": "Travel",
+    "seasonality": "Travel",
+    "evergreenSeasonal": "Seasonal",
+    "lifetimeGmv": 10.48,
+    "lifetimeCommission": 0.7,
+    "lifetimeUnits": 1,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 10.48,
+        "commission": 0.7,
+        "units": 1
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Wait",
+    "wouldPromoteAgain": "No",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Travel",
+      "Seasonal",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-bulksupplements-saw-palmetto-45",
+    "name": "BulkSupplements Saw Palmetto",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Supplement",
+    "categoryGroup": "Supplement",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 7.36,
+    "lifetimeCommission": 1.1,
+    "lifetimeUnits": 1,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 7.36,
+        "commission": 1.1,
+        "units": 1
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Test",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Supplement",
+      "Evergreen",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-apple-squishy-toys-46",
+    "name": "Apple Squishy Toys",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Stress Relief/Toy",
+    "categoryGroup": "Stress Relief",
+    "seasonality": "Back to school / Gift",
+    "evergreenSeasonal": "Seasonal",
+    "lifetimeGmv": 5.42,
+    "lifetimeCommission": 1.08,
+    "lifetimeUnits": 1,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 5.42,
+        "commission": 1.08,
+        "units": 1
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Wait",
+    "wouldPromoteAgain": "No",
+    "status": "Wait",
+    "originalStatus": "Wait",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Stress Relief",
+      "Seasonal",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-vacuum-filter-fragrance-47",
+    "name": "Vacuum Filter Fragrance",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Home",
+    "categoryGroup": "Home",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 5.36,
+    "lifetimeCommission": 0.82,
+    "lifetimeUnits": 1,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 5.36,
+        "commission": 0.82,
+        "units": 1
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Wait",
+    "wouldPromoteAgain": "No",
+    "status": "Wait",
+    "originalStatus": "Wait",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Home",
+      "Evergreen",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "raisedRight-i-m-not-overthinking-patch-48",
+    "name": "I'm Not Overthinking Patch",
+    "accountId": "raisedRight",
+    "account": "Raised Right",
+    "category": "Humor/Patch",
+    "categoryGroup": "Humor",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 1.59,
+    "lifetimeCommission": 0.13,
+    "lifetimeUnits": 1,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 1.59,
+        "commission": 0.13,
+        "units": 1
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Wait",
+    "wouldPromoteAgain": "No",
+    "status": "Wait",
+    "originalStatus": "Wait",
+    "notes": "Raised Right June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Raised Right fit: Show me something useful.",
+    "similarTags": [
+      "Humor",
+      "Evergreen",
+      "raisedRight"
+    ]
+  },
+  {
+    "id": "truthTunedTribe-ultimate-peptide-protocols-bible-1",
+    "name": "Ultimate Peptide Protocols Bible",
+    "accountId": "truthTunedTribe",
+    "account": "Truth Tuned Tribe",
+    "category": "Health Book / Peptides",
+    "categoryGroup": "Health Book",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 3800,
+    "lifetimeCommission": 313.56,
+    "lifetimeUnits": 146,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 3800,
+        "commission": 313.56,
+        "units": 146
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Request Now",
+    "wouldPromoteAgain": "Yes",
+    "status": "Double Down",
+    "originalStatus": "Double Down",
+    "notes": "Breakout knowledge product. Build recurring Q&A and walkthrough content.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Breakout knowledge product. Build recurring Q&A and walkthrough content.",
+    "similarTags": [
+      "Health Book",
+      "Evergreen",
+      "truthTunedTribe"
+    ]
+  },
+  {
+    "id": "truthTunedTribe-complete-peptide-protocols-playbook-2",
+    "name": "Complete Peptide Protocols Playbook",
+    "accountId": "truthTunedTribe",
+    "account": "Truth Tuned Tribe",
+    "category": "Health Book / Peptides",
+    "categoryGroup": "Health Book",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 3400,
+    "lifetimeCommission": 271.32,
+    "lifetimeUnits": 141,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 3400,
+        "commission": 271.32,
+        "units": 141
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Request Now",
+    "wouldPromoteAgain": "Yes",
+    "status": "Double Down",
+    "originalStatus": "Double Down",
+    "notes": "Second pillar product. Pair with comparisons and research-style hooks.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Second pillar product. Pair with comparisons and research-style hooks.",
+    "similarTags": [
+      "Health Book",
+      "Evergreen",
+      "truthTunedTribe"
+    ]
+  },
+  {
+    "id": "truthTunedTribe-patriotic-trump-thumbs-up-pool-float-3",
+    "name": "Patriotic Trump Thumbs-Up Pool Float",
+    "accountId": "truthTunedTribe",
+    "account": "Truth Tuned Tribe",
+    "category": "Patriotic / Summer",
+    "categoryGroup": "Patriotic",
+    "seasonality": "Summer",
+    "evergreenSeasonal": "Seasonal",
+    "lifetimeGmv": 237.11,
+    "lifetimeCommission": 29.84,
+    "lifetimeUnits": 12,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 237.11,
+        "commission": 29.84,
+        "units": 12
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Wait",
+    "originalStatus": "Seasonal",
+    "notes": "Seasonal winner, but timing window narrows after July.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Seasonal winner, but timing window narrows after July.",
+    "similarTags": [
+      "Patriotic",
+      "Seasonal",
+      "truthTunedTribe"
+    ]
+  },
+  {
+    "id": "truthTunedTribe-zipstring-aracna-string-launcher-toy-4",
+    "name": "ZipString Aracna String Launcher Toy",
+    "accountId": "truthTunedTribe",
+    "account": "Truth Tuned Tribe",
+    "category": "Viral Toy",
+    "categoryGroup": "Viral Toy",
+    "seasonality": "Gift / Holiday",
+    "evergreenSeasonal": "Seasonal",
+    "lifetimeGmv": 222.06,
+    "lifetimeCommission": 32.28,
+    "lifetimeUnits": 6,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 222.06,
+        "commission": 32.28,
+        "units": 6
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Watch for holiday gift guide potential.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Watch for holiday gift guide potential.",
+    "similarTags": [
+      "Viral Toy",
+      "Seasonal",
+      "truthTunedTribe"
+    ]
+  },
+  {
+    "id": "truthTunedTribe-turmeric-ginger-cinnamon-tea-5",
+    "name": "Turmeric Ginger Cinnamon Tea",
+    "accountId": "truthTunedTribe",
+    "account": "Truth Tuned Tribe",
+    "category": "Wellness / Tea",
+    "categoryGroup": "Wellness",
+    "seasonality": "Fall/Winter/Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 159.4,
+    "lifetimeCommission": 29.48,
+    "lifetimeUnits": 14,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 159.4,
+        "commission": 29.48,
+        "units": 14
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Request Now",
+    "wouldPromoteAgain": "Yes",
+    "status": "Double Down",
+    "originalStatus": "Double Down",
+    "notes": "Good bridge into fall wellness and immune support content.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Good bridge into fall wellness and immune support content.",
+    "similarTags": [
+      "Wellness",
+      "Evergreen",
+      "truthTunedTribe"
+    ]
+  },
+  {
+    "id": "truthTunedTribe-fenbendazole-and-ivermectin-protocols-6",
+    "name": "Fenbendazole & Ivermectin Protocols",
+    "accountId": "truthTunedTribe",
+    "account": "Truth Tuned Tribe",
+    "category": "Health Book",
+    "categoryGroup": "Health Book",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 63.14,
+    "lifetimeCommission": 8.16,
+    "lifetimeUnits": 3,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 63.14,
+        "commission": 8.16,
+        "units": 3
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Educational fit, but needs careful positioning and clear product walkthrough.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Educational fit, but needs careful positioning and clear product walkthrough.",
+    "similarTags": [
+      "Health Book",
+      "Evergreen",
+      "truthTunedTribe"
+    ]
+  },
+  {
+    "id": "truthTunedTribe-women-s-cardigan-7",
+    "name": "Women's Cardigan",
+    "accountId": "truthTunedTribe",
+    "account": "Truth Tuned Tribe",
+    "category": "Fashion",
+    "categoryGroup": "Fashion",
+    "seasonality": "Summer",
+    "evergreenSeasonal": "Seasonal",
+    "lifetimeGmv": 56.61,
+    "lifetimeCommission": 5.28,
+    "lifetimeUnits": 4,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 56.61,
+        "commission": 5.28,
+        "units": 4
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Truth Tuned Tribe June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Truth Tuned Tribe fit: Teach me something.",
+    "similarTags": [
+      "Fashion",
+      "Seasonal",
+      "truthTunedTribe"
+    ]
+  },
+  {
+    "id": "truthTunedTribe-cheesecloth-8",
+    "name": "Cheesecloth",
+    "accountId": "truthTunedTribe",
+    "account": "Truth Tuned Tribe",
+    "category": "Kitchen/Home",
+    "categoryGroup": "Kitchen",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 53,
+    "lifetimeCommission": 11.16,
+    "lifetimeUnits": 1,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 53,
+        "commission": 11.16,
+        "units": 1
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Truth Tuned Tribe June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Truth Tuned Tribe fit: Teach me something.",
+    "similarTags": [
+      "Kitchen",
+      "Evergreen",
+      "truthTunedTribe"
+    ]
+  },
+  {
+    "id": "truthTunedTribe-plastic-bowl-cover-dish-cover-9",
+    "name": "Plastic Bowl Cover Dish Cover",
+    "accountId": "truthTunedTribe",
+    "account": "Truth Tuned Tribe",
+    "category": "Kitchen/Home",
+    "categoryGroup": "Kitchen",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 43.35,
+    "lifetimeCommission": 6.5,
+    "lifetimeUnits": 4,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 43.35,
+        "commission": 6.5,
+        "units": 4
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Truth Tuned Tribe June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Truth Tuned Tribe fit: Teach me something.",
+    "similarTags": [
+      "Kitchen",
+      "Evergreen",
+      "truthTunedTribe"
+    ]
+  },
+  {
+    "id": "truthTunedTribe-wireless-bottle-lamp-10",
+    "name": "Wireless Bottle Lamp",
+    "accountId": "truthTunedTribe",
+    "account": "Truth Tuned Tribe",
+    "category": "Home/Decor",
+    "categoryGroup": "Home",
+    "seasonality": "Gift / Home",
+    "evergreenSeasonal": "Seasonal",
+    "lifetimeGmv": 35.98,
+    "lifetimeCommission": 4.68,
+    "lifetimeUnits": 2,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 35.98,
+        "commission": 4.68,
+        "units": 2
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Truth Tuned Tribe June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Truth Tuned Tribe fit: Teach me something.",
+    "similarTags": [
+      "Home",
+      "Seasonal",
+      "truthTunedTribe"
+    ]
+  },
+  {
+    "id": "truthTunedTribe-grounding-mat-11",
+    "name": "Grounding Mat",
+    "accountId": "truthTunedTribe",
+    "account": "Truth Tuned Tribe",
+    "category": "Wellness/Grounding",
+    "categoryGroup": "Wellness",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 33.92,
+    "lifetimeCommission": 3.2,
+    "lifetimeUnits": 2,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 33.92,
+        "commission": 3.2,
+        "units": 2
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Test",
+    "notes": "Truth Tuned Tribe June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Truth Tuned Tribe fit: Teach me something.",
+    "similarTags": [
+      "Wellness",
+      "Evergreen",
+      "truthTunedTribe"
+    ]
+  },
+  {
+    "id": "truthTunedTribe-hanging-solar-lantern-12",
+    "name": "Hanging Solar Lantern",
+    "accountId": "truthTunedTribe",
+    "account": "Truth Tuned Tribe",
+    "category": "Outdoor/Home",
+    "categoryGroup": "Outdoor",
+    "seasonality": "Summer",
+    "evergreenSeasonal": "Seasonal",
+    "lifetimeGmv": 31.6,
+    "lifetimeCommission": 5.58,
+    "lifetimeUnits": 1,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 31.6,
+        "commission": 5.58,
+        "units": 1
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Truth Tuned Tribe June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Truth Tuned Tribe fit: Teach me something.",
+    "similarTags": [
+      "Outdoor",
+      "Seasonal",
+      "truthTunedTribe"
+    ]
+  },
+  {
+    "id": "truthTunedTribe-blue-ceramic-ashtray-with-lid-13",
+    "name": "Blue Ceramic Ashtray with Lid",
+    "accountId": "truthTunedTribe",
+    "account": "Truth Tuned Tribe",
+    "category": "Home/Decor",
+    "categoryGroup": "Home",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 26.86,
+    "lifetimeCommission": 3.36,
+    "lifetimeUnits": 2,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 26.86,
+        "commission": 3.36,
+        "units": 2
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Wait",
+    "wouldPromoteAgain": "No",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Truth Tuned Tribe June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Truth Tuned Tribe fit: Teach me something.",
+    "similarTags": [
+      "Home",
+      "Evergreen",
+      "truthTunedTribe"
+    ]
+  },
+  {
+    "id": "truthTunedTribe-ultimate-peptide-bible-extra-listing-14",
+    "name": "Ultimate Peptide Bible extra listing",
+    "accountId": "truthTunedTribe",
+    "account": "Truth Tuned Tribe",
+    "category": "Health Book",
+    "categoryGroup": "Health Book",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 21.14,
+    "lifetimeCommission": 0,
+    "lifetimeUnits": 1,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 21.14,
+        "commission": 0,
+        "units": 1
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Wait",
+    "wouldPromoteAgain": "No",
+    "status": "Retire",
+    "originalStatus": "Fix listing / commission",
+    "notes": "Investigate zero commission before pushing again.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Investigate zero commission before pushing again.",
+    "similarTags": [
+      "Health Book",
+      "Evergreen",
+      "truthTunedTribe"
+    ]
+  },
+  {
+    "id": "truthTunedTribe-magnetic-glasses-holder-15",
+    "name": "Magnetic Glasses Holder",
+    "accountId": "truthTunedTribe",
+    "account": "Truth Tuned Tribe",
+    "category": "Utility",
+    "categoryGroup": "Utility",
+    "seasonality": "Evergreen",
+    "evergreenSeasonal": "Evergreen",
+    "lifetimeGmv": 19.78,
+    "lifetimeCommission": 3.96,
+    "lifetimeUnits": 2,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 19.78,
+        "commission": 3.96,
+        "units": 2
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Truth Tuned Tribe June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Truth Tuned Tribe fit: Teach me something.",
+    "similarTags": [
+      "Utility",
+      "Evergreen",
+      "truthTunedTribe"
+    ]
+  },
+  {
+    "id": "truthTunedTribe-dog-flea-and-tick-chews-16",
+    "name": "Dog Flea and Tick Chews",
+    "accountId": "truthTunedTribe",
+    "account": "Truth Tuned Tribe",
+    "category": "Pet/Wellness",
+    "categoryGroup": "Pet",
+    "seasonality": "Summer",
+    "evergreenSeasonal": "Seasonal",
+    "lifetimeGmv": 18.99,
+    "lifetimeCommission": 2.47,
+    "lifetimeUnits": 1,
+    "monthlyPerformance": [
+      {
+        "month": "June 2026",
+        "gmv": 18.99,
+        "commission": 2.47,
+        "units": 1
+      }
+    ],
+    "firstPromotedDate": "2026-06-01",
+    "lastPromotedDate": "2026-06-30",
+    "sampleStatus": "Watch",
+    "wouldPromoteAgain": "Maybe",
+    "status": "Watch",
+    "originalStatus": "Watch",
+    "notes": "Truth Tuned Tribe June 2026 product. Add richer filming notes after the next test.",
+    "bestHook": "",
+    "bestCta": "",
+    "strategyNotes": "Truth Tuned Tribe fit: Teach me something.",
+    "similarTags": [
+      "Pet",
+      "Seasonal",
+      "truthTunedTribe"
+    ]
+  }
+]

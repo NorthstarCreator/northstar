@@ -1,0 +1,34 @@
+[
+  {
+    "id": "raised-right-2026-06",
+    "month": "June 2026",
+    "account": "Raised Right",
+    "accountId": "raisedRight",
+    "gmv": 6535.43,
+    "commission": 729.08,
+    "unitsSold": 368,
+    "videosPosted": "",
+    "topProduct": "2-in-1 Garden Hoe & Weed Puller Rake",
+    "topCategory": "Garden / Outdoor Problem Solver",
+    "biggestWin": "Garden hoe became the clear utility breakout.",
+    "biggestFlop": "Tiny low-commission products did not justify repeat focus.",
+    "lessonsLearned": "Raised Right wins when the product solves an obvious problem on camera.",
+    "whatToTestNextMonth": "Water quality testers, garden tools, pest control, patriotic evergreen items."
+  },
+  {
+    "id": "truth-tuned-tribe-2026-06",
+    "month": "June 2026",
+    "account": "Truth Tuned Tribe",
+    "accountId": "truthTunedTribe",
+    "gmv": 8222.94,
+    "commission": 730.83,
+    "unitsSold": 342,
+    "videosPosted": "",
+    "topProduct": "Ultimate Peptide Protocols Bible",
+    "topCategory": "Health Book / Peptides",
+    "biggestWin": "Peptide books became the breakout category.",
+    "biggestFlop": "Zero-commission peptide listing needs investigation.",
+    "lessonsLearned": "Truth Tuned Tribe wins when the content teaches and answers a specific question.",
+    "whatToTestNextMonth": "More wellness books, peptide-adjacent products, fall wellness, tea, supplements."
+  }
+]

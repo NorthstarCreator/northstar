@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">The Mark - Northstar</title>
+  <desc id="desc">A minimal four-point creator compass with a gold spark at the center.</desc>
+  <defs>
+    <radialGradient id="sparkGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFF3B0" stop-opacity="0.88"/>
+      <stop offset="46%" stop-color="#D4A72C" stop-opacity="0.26"/>
+      <stop offset="100%" stop-color="#D4A72C" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="northPoint" x1="64" y1="12" x2="64" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#10233F"/>
+      <stop offset="100%" stop-color="#0F1B2D"/>
+    </linearGradient>
+  </defs>
+  <circle cx="64" cy="64" r="48" fill="none" stroke="#10233F" stroke-width="3" stroke-linecap="round" stroke-dasharray="118 24 118 24" opacity="0.28"/>
+  <path d="M64 12 76 56 64 49 52 56Z" fill="url(#northPoint)"/>
+  <path d="M116 64 78 76 85 64 78 52Z" fill="#10233F" opacity="0.92"/>
+  <path d="M64 116 52 78 64 85 76 78Z" fill="#10233F" opacity="0.82"/>
+  <path d="M12 64 50 52 43 64 50 76Z" fill="#10233F" opacity="0.92"/>
+  <circle cx="64" cy="64" r="24" fill="url(#sparkGlow)"/>
+  <path d="M64 44 69.5 58.5 84 64 69.5 69.5 64 84 58.5 69.5 44 64 58.5 58.5Z" fill="#D4A72C"/>
+  <path d="M64 50 67.6 60.4 78 64 67.6 67.6 64 78 60.4 67.6 50 64 60.4 60.4Z" fill="#FFF3B0" opacity="0.96"/>
+  <circle cx="64" cy="64" r="3.4" fill="#FFF3B0"/>
+</svg>

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Northstar app icon</title>
+  <desc id="desc">Northstar app icon with The Mark centered on soft ivory.</desc>
+  <defs>
+    <linearGradient id="appBg" x1="32" y1="24" x2="224" y2="232" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#FAFAF8"/>
+    </linearGradient>
+    <radialGradient id="appSparkGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFF3B0" stop-opacity="0.9"/>
+      <stop offset="48%" stop-color="#D4A72C" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#D4A72C" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect x="18" y="18" width="220" height="220" rx="52" fill="url(#appBg)" stroke="#E7E5DD" stroke-width="2"/>
+  <g transform="translate(64 64)">
+    <circle cx="64" cy="64" r="48" fill="none" stroke="#10233F" stroke-width="3" stroke-linecap="round" stroke-dasharray="118 24 118 24" opacity="0.3"/>
+    <path d="M64 12 76 56 64 49 52 56Z" fill="#0F1B2D"/>
+    <path d="M116 64 78 76 85 64 78 52Z" fill="#10233F" opacity="0.92"/>
+    <path d="M64 116 52 78 64 85 76 78Z" fill="#10233F" opacity="0.82"/>
+    <path d="M12 64 50 52 43 64 50 76Z" fill="#10233F" opacity="0.92"/>
+    <circle cx="64" cy="64" r="24" fill="url(#appSparkGlow)"/>
+    <path d="M64 44 69.5 58.5 84 64 69.5 69.5 64 84 58.5 69.5 44 64 58.5 58.5Z" fill="#D4A72C"/>
+    <path d="M64 50 67.6 60.4 78 64 67.6 67.6 64 78 60.4 67.6 50 64 60.4 60.4Z" fill="#FFF3B0"/>
+  </g>
+</svg>

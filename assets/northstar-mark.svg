@@ -1,0 +1,43 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">The Mark - Northstar Creator Compass and Spark</title>
+  <desc id="desc">A minimal four-point creator compass with two overlapping gold four-point stars at the center.</desc>
+  <style>
+    .spark-core { transform-origin: 256px 256px; animation: sparkPulse 1500ms ease-out 1; }
+    @keyframes sparkPulse {
+      0% { opacity: 0.82; transform: scale(0.96); }
+      42% { opacity: 1; transform: scale(1.045); }
+      100% { opacity: 0.92; transform: scale(1); }
+    }
+  </style>
+  <defs>
+    <linearGradient id="compassStroke" x1="96" y1="76" x2="416" y2="436" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#111827"/>
+      <stop offset="0.44" stop-color="#2F6FD6"/>
+      <stop offset="1" stop-color="#0F9F9A"/>
+    </linearGradient>
+    <radialGradient id="sparkGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(256 256) rotate(90) scale(74)">
+      <stop stop-color="#FFF4B8" stop-opacity="0.88"/>
+      <stop offset="0.46" stop-color="#F7C948" stop-opacity="0.26"/>
+      <stop offset="1" stop-color="#F7C948" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sparkGold" x1="214" y1="214" x2="300" y2="300" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF1A8"/>
+      <stop offset="0.48" stop-color="#F7C948"/>
+      <stop offset="1" stop-color="#D99A22"/>
+    </linearGradient>
+  </defs>
+  <rect x="26" y="26" width="460" height="460" rx="128" fill="#FFFDF8"/>
+  <rect x="26" y="26" width="460" height="460" rx="128" stroke="#E5E7EB" stroke-width="2"/>
+  <g aria-label="Creator Compass">
+    <path d="M256 62L280 222L450 256L280 290L256 450L232 290L62 256L232 222L256 62Z" fill="url(#compassStroke)" opacity="0.12"/>
+    <path d="M256 82L274 230L430 256L274 282L256 430L238 282L82 256L238 230L256 82Z" stroke="url(#compassStroke)" stroke-width="16" stroke-linejoin="round"/>
+    <path d="M256 116L267 238L396 256L267 274L256 396L245 274L116 256L245 238L256 116Z" fill="#FFFDF8"/>
+    <circle cx="256" cy="256" r="92" stroke="#111827" stroke-opacity="0.12" stroke-width="2"/>
+  </g>
+  <g class="spark-core" aria-label="The Spark">
+    <circle cx="256" cy="256" r="74" fill="url(#sparkGlow)"/>
+    <path d="M244 198L259 242L304 256L259 270L244 314L229 270L184 256L229 242L244 198Z" fill="url(#sparkGold)"/>
+    <path d="M276 206L288 240L324 252L288 264L276 298L264 264L228 252L264 240L276 206Z" fill="#F2B632" fill-opacity="0.9"/>
+    <circle cx="256" cy="256" r="14" fill="#FFF7C2"/>
+  </g>
+</svg>

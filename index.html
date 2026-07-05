@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Northstar | Creator Operating System</title>
+    <link rel="icon" href="assets/brand/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Northstar navigation">
+        <div class="brand">
+          <img class="brand-mark brand-mark-image spark-once spark-pulse" src="assets/brand/northstar-mark.svg" alt="Northstar mark">
+          <div>
+            <h1>NORTHSTAR</h1>
+            <p>Data becomes direction.</p>
+          </div>
+        </div>
+        <nav id="nav" class="nav"></nav>
+        <div class="sidebar-footer">
+          <img class="footer-mark" src="assets/brand/northstar-mark.svg" alt="" aria-hidden="true">
+          <span>Northstar Creator OS</span>
+          <strong>Version 0.2</strong>
+          <small>Data becomes direction.</small>
+          <small>Day One Edition · July 2026</small>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div class="topbar-brand">
+            <img class="topbar-mark" src="assets/brand/northstar-mark.svg" alt="" aria-hidden="true">
+            <div>
+            <p class="eyebrow">Data becomes direction. One place to guide every creator decision.</p>
+            <h2 id="pageTitle">Morning Brief</h2>
+            </div>
+          </div>
+          <div class="topbar-actions">
+            <button id="printButton" class="icon-button" title="Export screenshot or PDF manually">Print</button>
+          </div>
+        </header>
+        <section id="content" class="content" aria-live="polite">
+          <div class="loading-state">
+            <img class="loading-mark spark-once spark-pulse" src="assets/brand/northstar-mark.svg" alt="Northstar mark">
+            <strong>NORTHSTAR</strong>
+            <span>Loading Pulse Signals</span>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      window.northstarBootError = null;
+      window.addEventListener("error", function (event) {
+        window.northstarBootError = event.error || event.message;
+        var content = document.getElementById("content");
+        if (!content) return;
+        content.innerHTML = '<section class="card startup-error"><h3>Northstar caught a loading issue</h3><p>Your local data has not been cleared. Refresh once; if this remains, open Settings after recovery and export a backup.</p><p class="error-copy">' + String(event.message || "Script error").replace(/[<>&]/g, "") + '</p></section>';
+      });
+      window.addEventListener("unhandledrejection", function (event) {
+        window.northstarBootError = event.reason || "Promise rejection";
+      });
+      window.setTimeout(function () {
+        var content = document.getElementById("content");
+        if (!content || !/Loading Pulse Signals/i.test(content.textContent || "")) return;
+        content.innerHTML = '<section class="card startup-error"><h3>Northstar is taking too long to load</h3><p>Your data has not been cleared. This is a display safety screen so the app does not stay on the loading message forever.</p></section>';
+      }, 6000);
+    </script>
+
+    <!-- Northstar Version 0.2 local database cache. Keep this script so index.html works by double-click. -->
+    <script src="data/database.js"></script>
+    <script src="data/raised-right-historical-products.js"></script>
+    <script src="data/product-images.js"></script>
+    <script src="data/july-2-2026-seed.js"></script>
+    <script src="integrations/polaris/adapters.js"></script>
+    <script src="integrations/polaris/normalizer.js"></script>
+    <script src="integrations/polaris/validators.js"></script>
+    <script src="integrations/polaris/sync-history.js"></script>
+    <script src="integrations/polaris/polaris.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

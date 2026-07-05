@@ -1,0 +1,200 @@
+[
+  {
+    "id": "hook-001",
+    "text": "If you hate pulling weeds, watch this.",
+    "category": "Garden",
+    "accountUsed": "Raised Right",
+    "productUsed": "2-in-1 Garden Hoe & Weed Puller Rake",
+    "salesGenerated": 83,
+    "notes": "Track whether this becomes a repeatable opener."
+  },
+  {
+    "id": "hook-002",
+    "text": "I honestly thought this was a gimmick.",
+    "category": "Garden",
+    "accountUsed": "Raised Right",
+    "productUsed": "ZipString Aracna String Launcher Toy",
+    "salesGenerated": 4,
+    "notes": "Track whether this becomes a repeatable opener."
+  },
+  {
+    "id": "hook-003",
+    "text": "The easiest way to clean up your garden beds.",
+    "category": "Garden",
+    "accountUsed": "Raised Right",
+    "productUsed": "2-in-1 Garden Hoe & Weed Puller Rake",
+    "salesGenerated": 83,
+    "notes": "Track whether this becomes a repeatable opener."
+  },
+  {
+    "id": "hook-004",
+    "text": "Everyone is talking about this, but here's what I noticed.",
+    "category": "Health / Wellness",
+    "accountUsed": "Truth Tuned Tribe",
+    "productUsed": "Turmeric Ginger Cinnamon Tea",
+    "salesGenerated": 9,
+    "notes": "Track whether this becomes a repeatable opener."
+  },
+  {
+    "id": "hook-005",
+    "text": "Most people buying this don't realize...",
+    "category": "Health / Wellness",
+    "accountUsed": "Raised Right",
+    "productUsed": "4-in-1 Digital TDS Water Quality Tester",
+    "salesGenerated": 29,
+    "notes": "Track whether this becomes a repeatable opener."
+  },
+  {
+    "id": "hook-006",
+    "text": "I wish I had found this before I spent hours researching.",
+    "category": "Health / Wellness",
+    "accountUsed": "Raised Right",
+    "productUsed": "4-in-1 Digital TDS Water Quality Tester",
+    "salesGenerated": 29,
+    "notes": "Track whether this becomes a repeatable opener."
+  },
+  {
+    "id": "hook-007",
+    "text": "This book answered the question everyone keeps asking.",
+    "category": "Books",
+    "accountUsed": "Raised Right",
+    "productUsed": "Ultimate Peptide Protocols Bible",
+    "salesGenerated": 92,
+    "notes": "Track whether this becomes a repeatable opener."
+  },
+  {
+    "id": "hook-008",
+    "text": "Does it cover dosing? Yes, it does.",
+    "category": "Books",
+    "accountUsed": "Raised Right",
+    "productUsed": "Complete Peptide Protocols Playbook",
+    "salesGenerated": 84,
+    "notes": "Track whether this becomes a repeatable opener."
+  },
+  {
+    "id": "hook-009",
+    "text": "This may save you months of research.",
+    "category": "Books",
+    "accountUsed": "Raised Right",
+    "productUsed": "Ultimate Peptide Protocols Bible",
+    "salesGenerated": 92,
+    "notes": "Track whether this becomes a repeatable opener."
+  },
+  {
+    "id": "hook-010",
+    "text": "Nothing says summer like this.",
+    "category": "Patriotic",
+    "accountUsed": "Raised Right",
+    "productUsed": "Patriotic Trump Thumbs-Up Pool Float",
+    "salesGenerated": 6,
+    "notes": "Track whether this becomes a repeatable opener."
+  },
+  {
+    "id": "hook-011",
+    "text": "This is the kind of thing people ask about.",
+    "category": "Patriotic",
+    "accountUsed": "Raised Right",
+    "productUsed": "250th Anniversary Commemorative Coin",
+    "salesGenerated": 18,
+    "notes": "Track whether this becomes a repeatable opener."
+  },
+  {
+    "id": "hook-012",
+    "text": "I did not expect this to sell like it did.",
+    "category": "Patriotic",
+    "accountUsed": "Raised Right",
+    "productUsed": "250th Anniversary Commemorative Coin",
+    "salesGenerated": 18,
+    "notes": "Track whether this becomes a repeatable opener."
+  },
+  {
+    "id": "hook-013",
+    "text": "I didn't know I needed this until I used it.",
+    "category": "Home",
+    "accountUsed": "Raised Right",
+    "productUsed": "Premium Silver Soft Cotton Grounding Blanket",
+    "salesGenerated": 2,
+    "notes": "Track whether this becomes a repeatable opener."
+  },
+  {
+    "id": "hook-014",
+    "text": "This solves one of the most annoying little problems.",
+    "category": "Home",
+    "accountUsed": "Truth Tuned Tribe",
+    "productUsed": "Cheesecloth",
+    "salesGenerated": 1,
+    "notes": "Track whether this becomes a repeatable opener."
+  },
+  {
+    "id": "hook-015",
+    "text": "This is one of those things that just makes sense.",
+    "category": "Home",
+    "accountUsed": "Raised Right",
+    "productUsed": "Smells Like a Football Win Scented Candle",
+    "salesGenerated": 3,
+    "notes": "Track whether this becomes a repeatable opener."
+  },
+  {
+    "id": "hook-016",
+    "text": "I tested this so you do not have to.",
+    "category": "Beauty",
+    "accountUsed": "",
+    "productUsed": "",
+    "salesGenerated": 0,
+    "notes": "New v2.0 hook category placeholder."
+  },
+  {
+    "id": "hook-017",
+    "text": "You need this before the season changes.",
+    "category": "Seasonal",
+    "accountUsed": "",
+    "productUsed": "",
+    "salesGenerated": 0,
+    "notes": "New v2.0 hook category placeholder."
+  },
+  {
+    "id": "hook-018",
+    "text": "I could not stop wondering if this actually worked.",
+    "category": "Curiosity",
+    "accountUsed": "",
+    "productUsed": "",
+    "salesGenerated": 0,
+    "notes": "New v2.0 hook category placeholder."
+  },
+  {
+    "id": "hook-019",
+    "text": "This fixes the thing everyone complains about.",
+    "category": "Problem",
+    "accountUsed": "",
+    "productUsed": "",
+    "salesGenerated": 0,
+    "notes": "New v2.0 hook category placeholder."
+  },
+  {
+    "id": "hook-020",
+    "text": "Do not make this mistake before you buy.",
+    "category": "Mistake",
+    "accountUsed": "",
+    "productUsed": "",
+    "salesGenerated": 0,
+    "notes": "New v2.0 hook category placeholder."
+  },
+  {
+    "id": "hook-021",
+    "text": "This is for the people who instantly get it.",
+    "category": "Identity",
+    "accountUsed": "",
+    "productUsed": "",
+    "salesGenerated": 0,
+    "notes": "New v2.0 hook category placeholder."
+  },
+  {
+    "id": "hook-022",
+    "text": "I compared this to the one everyone already knows.",
+    "category": "Comparison",
+    "accountUsed": "",
+    "productUsed": "",
+    "salesGenerated": 0,
+    "notes": "New v2.0 hook category placeholder."
+  }
+]
