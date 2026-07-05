@@ -4351,58 +4351,11 @@ navIcon = function navIconWithTikTokConnection(pageId) {
 };
 
 function renderTikTokConnection() {
-  const lastRefresh = localStorage.getItem(LAST_CAPTURED_KEY) || lastSavedAt || "No local refresh yet";
-  content.innerHTML = `
-    <section class="connection-hero">
-      <div>
-        <p class="eyebrow">Integration Planning</p>
-        <h1>TikTok Connection</h1>
-        <p>Prepare Northstar for future TikTok and TikTok Shop account linking without pretending live API access exists today.</p>
-      </div>
-      <span class="connection-status-pill pending">API Pending</span>
-    </section>
-
-    <section class="connection-note">
-      <strong>Current state</strong>
-      <p>Northstar currently uses manual capture and CSV import. Live TikTok linking requires API approval and secure backend infrastructure.</p>
-    </section>
-
-    <section class="connection-section">
-      <div class="section-title"><div><h3>Connected Accounts</h3><p>Readiness view for Jennifer's creator business accounts.</p></div></div>
-      <div class="connected-account-grid">
-        ${connectedAccountCard("Raised Right", "Manual / CSV / API Pending", lastRefresh)}
-        ${connectedAccountCard("Truth Tuned Tribe", "Manual / CSV / API Pending", lastRefresh)}
-      </div>
-    </section>
-
-    <div class="grid two">
-      <section class="connection-section">
-        <div class="section-title"><div><h3>Data Sources Needed</h3><p>Signals Northstar will need when linking becomes available.</p></div></div>
-        <div class="connection-check-grid">
-          ${connectionNeed("TikTok Studio video analytics")}
-          ${connectionNeed("TikTok Shop sales")}
-          ${connectionNeed("Sample approvals")}
-          ${connectionNeed("Product invitations")}
-          ${connectionNeed("Comments")}
-          ${connectionNeed("Follower growth")}
-        </div>
-      </section>
-
-      <section class="connection-section">
-        <div class="section-title"><div><h3>Future API Checklist</h3><p>Infrastructure required before live linking can be trusted.</p></div></div>
-        <div class="api-checklist">
-          ${apiChecklistItem("TikTok developer account")}
-          ${apiChecklistItem("Registered TikTok app")}
-          ${apiChecklistItem("OAuth/Login Kit")}
-          ${apiChecklistItem("Required scopes")}
-          ${apiChecklistItem("TikTok Shop Partner access")}
-          ${apiChecklistItem("Backend server")}
-          ${apiChecklistItem("Secure token storage")}
-          ${apiChecklistItem("Data refresh schedule")}
-        </div>
-      </section>
-    </div>
-  `;
+  dataHubTab = "TikTok Initial Import";
+  activePage = "dataHub";
+  pageTitle.textContent = "Data Hub";
+  renderNav();
+  renderDataHub();
 }
 
 function connectedAccountCard(name, status, lastRefresh) {
@@ -4491,7 +4444,10 @@ function updateCenterMarkup() {
 }
 
 function updateAccountCard(name, accountId, lastRefresh) {
-  return `<article class="update-account-card"><div><span>${name === "Raised Right" ? "RR" : "TT"}</span><h4>${name}</h4></div><dl><div><dt>Status</dt><dd>Manual / CSV / API Pending</dd></div><div><dt>Last updated</dt><dd>${lastRefresh}</dd></div><div><dt>Next available data source</dt><dd>${nextAvailableDataSource(accountId)}</dd></div></dl><button class="ghost-button" data-sync-source="Manual Capture" data-sync-account="${name}" type="button">Simulate Update</button></article>`;
+  const status = name === "Raised Right" ? tiktokConnectionStatusLabel(db.tiktokOAuthConfig || {}) : "Manual / CSV";
+  const actionLabel = name === "Raised Right" ? "Open Connection" : "Simulate Update";
+  const actionAttrs = name === "Raised Right" ? `data-data-hub-tab="TikTok Initial Import"` : `data-sync-source="Manual Capture" data-sync-account="${name}"`;
+  return `<article class="update-account-card"><div><span>${name === "Raised Right" ? "RR" : "TT"}</span><h4>${name}</h4></div><dl><div><dt>Status</dt><dd>${status}</dd></div><div><dt>Last updated</dt><dd>${lastRefresh}</dd></div><div><dt>Next available data source</dt><dd>${nextAvailableDataSource(accountId)}</dd></div></dl><button class="ghost-button" ${actionAttrs} type="button">${actionLabel}</button></article>`;
 }
 
 function updateSourceButton(label, source, pending) {
@@ -4537,7 +4493,7 @@ function runNorthstarUpdate(source, account) {
     status,
     recordsUpdated,
     notes: source.includes("API")
-      ? "Future live sync placeholder. No TikTok API connection attempted."
+      ? "Use the secure connector path for TikTok OAuth and Shop data."
       : "Morning Brief refreshed from local Northstar data."
   };
   const history = readJson(NORTHSTAR_SYNC_HISTORY_KEY, []);
@@ -4575,9 +4531,9 @@ function polarisDataSourcesSection() {
 
 function polarisSources() {
   return window.NorthstarPolaris?.adapters?.SOURCES || [
-    { name: "TikTok Studio", status: "API Pending" },
-    { name: "TikTok Shop", status: "API Pending" },
-    { name: "Creator Rewards", status: "API Pending" },
+    { name: "TikTok Studio", status: "Connector Ready" },
+    { name: "TikTok Shop", status: "Partner Approval Needed" },
+    { name: "Creator Rewards", status: "Partner Approval Needed" },
     { name: "CSV Import", status: "Available" },
     { name: "Screenshot OCR", status: "Planned" },
     { name: "Manual Capture", status: "Available" },
@@ -4586,7 +4542,7 @@ function polarisSources() {
 }
 
 function polarisSourceCard(source) {
-  const className = source.status === "Available" ? "available" : source.status === "API Pending" ? "pending" : "planned";
+  const className = source.status === "Available" || source.status === "Connector Ready" ? "available" : source.status.includes("Approval") ? "pending" : "planned";
   const dataTypes = (source.dataTypes || ["Future Signals"]).join(", ");
   return `<article class="polaris-source-card ${className}"><div><strong>${source.name}</strong><span>${dataTypes}</span></div><em>${source.status}</em></article>`;
 }
@@ -4675,6 +4631,11 @@ bindUpdateCenter = function bindPolarisUpdateCenter() {
   document.querySelector(".update-center-overlay")?.addEventListener("click", (event) => {
     if (event.target.classList.contains("update-center-overlay")) closeUpdateCenter();
   });
+  document.querySelectorAll(".update-center-overlay [data-data-hub-tab]").forEach((button) => button.addEventListener("click", () => {
+    dataHubTab = button.dataset.dataHubTab;
+    closeUpdateCenter();
+    renderPage("dataHub");
+  }));
   document.querySelectorAll("[data-sync-source]").forEach((button) => button.addEventListener("click", () => {
     const progress = document.querySelector("#polarisProgress");
     progress && (progress.innerHTML = polarisProgressMarkup(["Connecting sources"]));
@@ -5672,13 +5633,13 @@ function liveSyncTabMarkup() {
   const lastSync = latestNorthstarRefresh();
   return `
     <section class="card import-center-panel">
-      <div class="section-title"><div><h3>Live TikTok Sync</h3><p>Future one-click sync. No live API connection is attempted in this local version.</p></div><span class="badge hot">Future</span></div>
+      <div class="section-title"><div><h3>Live TikTok Sync</h3><p>OAuth starts in Data Hub. Sync Now uses the secure connector when configured.</p></div><span class="badge good">Connector Ready</span></div>
       <div class="connected-account-grid">
-        ${connectedAccountCard("Raised Right", "Manual / CSV / API Pending", lastSync)}
-        ${connectedAccountCard("Truth Tuned Tribe", "Manual / CSV / API Pending", lastSync)}
+        ${connectedAccountCard("Raised Right", tiktokConnectionStatusLabel(db.tiktokOAuthConfig || {}), lastSync)}
+        ${connectedAccountCard("Truth Tuned Tribe", "Manual / CSV", lastSync)}
       </div>
-      <div class="update-center-note">Future live sync will need TikTok approval, secure login, a backend server, and protected token storage.</div>
-      <button class="icon-button" id="futureLiveSyncButton" type="button">One-click Update</button>
+      <div class="update-center-note">Northstar never saves TikTok tokens in localStorage. The secure connector handles token exchange, refresh tokens, daily sync, and TikTok Shop API access after approval.</div>
+      <button class="icon-button" data-data-hub-tab="TikTok Initial Import" type="button">Open TikTok Connection</button>
     </section>
   `;
 }
@@ -7280,7 +7241,7 @@ function dataHubTabMarkup(tab) {
 }
 
 function dataHubConnectionsMarkup() {
-  return `<section class="card data-hub-panel"><div class="section-title"><div><h3>Connections</h3><p>Current mode is Manual / CSV. Live account syncing remains future infrastructure.</p></div></div><div class="connected-account-grid">${connectedAccountCard("Raised Right", "Manual / CSV / API Pending", latestNorthstarRefresh())}${connectedAccountCard("Truth Tuned Tribe", "Manual / CSV / API Pending", latestNorthstarRefresh())}</div></section>`;
+  return `<section class="card data-hub-panel"><div class="section-title"><div><h3>Connections</h3><p>Raised Right is ready for OAuth through a secure connector. Truth Tuned Tribe stays manual until Jennifer chooses to connect it.</p></div><button class="ghost-button" type="button" data-data-hub-tab="TikTok Initial Import">Connect TikTok</button></div><div class="connected-account-grid">${connectedAccountCard("Raised Right", tiktokConnectionStatusLabel(db.tiktokOAuthConfig || {}), latestNorthstarRefresh())}${connectedAccountCard("Truth Tuned Tribe", "Manual / CSV", latestNorthstarRefresh())}</div></section>`;
 }
 
 function dataHubImportsMarkup() {
@@ -12776,6 +12737,9 @@ refineMorningBriefCommandCenterOrder = function refineMorningBriefRoundOne() {
    Future API/OAuth work should feed payloads through importTikTokCommercePayload()
    so videos, products, sales, and insights continue using one Polaris source of truth. */
 const TIKTOK_IMPORT_START_DEFAULT = "2025-03-01";
+const TIKTOK_OAUTH_AUTH_URL = "https://www.tiktok.com/v2/auth/authorize/";
+const TIKTOK_OAUTH_SCOPES = ["user.info.basic", "video.list"];
+const TIKTOK_DAILY_SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000;
 let tiktokImportState = { summary: null, errors: [] };
 
 const northstarTikTokNormalizeDatabaseBase = normalizeDatabase;
@@ -12784,6 +12748,7 @@ normalizeDatabase = function normalizeDatabaseWithTikTokLayer() {
   db.tiktokConnections = Array.isArray(db.tiktokConnections) ? db.tiktokConnections : [];
   db.tiktokImportJobs = Array.isArray(db.tiktokImportJobs) ? db.tiktokImportJobs : [];
   db.tiktokSyncHistory = Array.isArray(db.tiktokSyncHistory) ? db.tiktokSyncHistory : [];
+  db.tiktokOAuthConfig = db.tiktokOAuthConfig && typeof db.tiktokOAuthConfig === "object" ? db.tiktokOAuthConfig : {};
   db.salesRecords = Array.isArray(db.salesRecords) ? db.salesRecords : [];
 };
 
@@ -12793,6 +12758,7 @@ createCompactLocalData = function createCompactLocalDataWithTikTokLayer() {
   compact.data.tiktokConnections = db.tiktokConnections || [];
   compact.data.tiktokImportJobs = db.tiktokImportJobs || [];
   compact.data.tiktokSyncHistory = db.tiktokSyncHistory || [];
+  compact.data.tiktokOAuthConfig = sanitizedTikTokOAuthConfig(db.tiktokOAuthConfig || {});
   return compact;
 };
 
@@ -12813,6 +12779,8 @@ const northstarTikTokBindRealDataHubControlsBase = bindRealDataHubControls;
 bindRealDataHubControls = function bindRealDataHubControlsWithTikTokImport() {
   northstarTikTokBindRealDataHubControlsBase();
   document.querySelector("#saveTikTokConnection")?.addEventListener("click", saveTikTokConnectionFromForm);
+  document.querySelector("#connectTikTokOAuth")?.addEventListener("click", startTikTokOAuthFlow);
+  document.querySelector("#syncTikTokNow")?.addEventListener("click", () => runTikTokConnectorSync("manual"));
   document.querySelector("#runTikTokInitialImport")?.addEventListener("click", runTikTokInitialImportFromForm);
   document.querySelector("#copyTikTokPayloadTemplate")?.addEventListener("click", async () => {
     const template = tiktokCommercePayloadTemplate();
@@ -12828,14 +12796,19 @@ bindRealDataHubControls = function bindRealDataHubControlsWithTikTokImport() {
 function tiktokConnectionStatusMarkup() {
   const connections = db.tiktokConnections || [];
   const history = db.tiktokSyncHistory || [];
+  const config = sanitizedTikTokOAuthConfig(db.tiktokOAuthConfig || {});
+  const raisedRight = connections.find((connection) => normalizedName(connection.account) === normalizedName("Raised Right")) || connections[0] || {};
   return `
     <section class="card data-hub-panel tiktok-status-panel">
       <div class="section-title">
-        <div><h3>TikTok Commerce Connection Prep</h3><p>Prepared for one account at a time. Current mode remains Manual / CSV until API approval and secure backend infrastructure exist.</p></div>
+        <div><h3>TikTok Commerce Connection</h3><p>One account at a time. First account: Raised Right. OAuth starts here; token storage belongs in the secure connector.</p></div>
         <button class="ghost-button" type="button" data-data-hub-tab="TikTok Initial Import">Open Initial Import</button>
       </div>
       <div class="connected-account-grid">
-        ${connections.length ? connections.map((connection) => connectedAccountCard(connection.account || "TikTok Account", connection.status || "Manual / CSV / API Pending", connection.lastSyncedAt ? formatDateTime(connection.lastSyncedAt) : "Not synced yet")).join("") : connectedAccountCard("No TikTok account selected", "Manual / CSV / API Pending", "Ready to configure")}
+        ${connectedAccountCard(raisedRight.account || "Raised Right", raisedRight.status || tiktokConnectionStatusLabel(config), raisedRight.lastSyncedAt ? formatDateTime(raisedRight.lastSyncedAt) : "Not synced yet")}
+      </div>
+      <div class="update-center-note">
+        <strong>Secure token rule:</strong> Northstar does not store TikTok access or refresh tokens in browser localStorage. Authorization codes are sent to your secure connector, which stores tokens and returns normalized creator-commerce data.
       </div>
       <div class="sync-history-table account-diagnostics-table">
         <table><thead><tr><th>Last sync</th><th>Source</th><th>Account</th><th>Status</th><th>Records</th><th>Notes</th></tr></thead><tbody>
@@ -12848,27 +12821,35 @@ function tiktokConnectionStatusMarkup() {
 
 function tiktokInitialImportMarkup() {
   const connections = db.tiktokConnections || [];
-  const last = connections[0] || {};
+  const last = connections.find((connection) => normalizedName(connection.account) === normalizedName("Raised Right")) || connections[0] || {};
+  const config = sanitizedTikTokOAuthConfig(db.tiktokOAuthConfig || {});
   const summary = tiktokImportState.summary;
   return `
     <section class="card data-hub-panel tiktok-initial-import-panel">
       <div class="section-title">
-        <div><h3>Connect TikTok Account</h3><p>Set up the account and import useful creator-commerce data from March 1, 2025 forward.</p></div>
-        <span class="badge hot">API Pending</span>
+        <div><h3>Connect TikTok Account</h3><p>Use TikTok OAuth for Raised Right, then sync normalized videos, linked products, and sales into Polaris.</p></div>
+        <span class="badge ${config.connectorBaseUrl ? "good" : "warn"}">${escapeHtml(tiktokConnectionStatusLabel(config))}</span>
       </div>
       <div class="form-grid">
-        <label>Account <select id="tiktokImportAccount">${accounts().map((account) => `<option value="${escapeAttr(account.id)}" ${last.accountId === account.id ? "selected" : ""}>${account.name}</option>`).join("")}</select></label>
+        <label>Account <select id="tiktokImportAccount">${accounts().filter((account) => normalizedName(account.name) === normalizedName("Raised Right")).concat(accounts().filter((account) => normalizedName(account.name) !== normalizedName("Raised Right"))).map((account, index) => `<option value="${escapeAttr(account.id)}" ${(last.accountId === account.id || (!last.accountId && index === 0)) ? "selected" : ""}>${account.name}</option>`).join("")}</select></label>
         <label>Import start date <input id="tiktokImportStartDate" type="date" value="${escapeAttr(last.importStartDate || TIKTOK_IMPORT_START_DEFAULT)}"></label>
-        <label>Status <input value="Manual / CSV / API Pending" readonly></label>
-        <label>Mode <input value="Initial historical import, then daily incremental sync" readonly></label>
+        <label>TikTok client key <input id="tiktokClientKey" value="${escapeAttr(config.clientKey || "")}" placeholder="TikTok app client key"></label>
+        <label>OAuth redirect URI <input id="tiktokRedirectUri" value="${escapeAttr(config.redirectUri || defaultTikTokRedirectUri())}" placeholder="https://your-domain.example/tiktok/callback"></label>
+        <label class="full-span">Secure connector URL <input id="tiktokConnectorBaseUrl" value="${escapeAttr(config.connectorBaseUrl || "")}" placeholder="https://your-secure-connector.example"></label>
+        <label>Last Sync <input value="${escapeAttr(last.lastSyncedAt ? formatDateTime(last.lastSyncedAt) : "Not synced yet")}" readonly></label>
+        <label>Mode <input value="OAuth + secure connector, then daily incremental sync on app open" readonly></label>
+        <div class="form-actions full-span">
+          <button class="icon-button" id="connectTikTokOAuth" type="button">Connect TikTok</button>
+          <button class="ghost-button" id="syncTikTokNow" type="button">Sync Now</button>
+          <button class="ghost-button" id="saveTikTokConnection" type="button">Save Connection Settings</button>
+        </div>
+        <div class="update-center-note full-span">Initial import scope: videos posted on or after ${TIKTOK_IMPORT_START_DEFAULT}, products linked to those videos, and related GMV, commission, and units. Drafts, deleted videos, lives, unrelated products, and older videos are excluded.</div>
         <label class="full-span">Initial import JSON <textarea id="tiktokInitialImportPayload" class="video-backfill-textarea" rows="12" spellcheck="false" placeholder="${escapeAttr(tiktokCommercePayloadTemplate())}"></textarea></label>
         <div class="form-actions full-span">
-          <button class="ghost-button" id="saveTikTokConnection" type="button">Save Connection Prep</button>
           <button class="ghost-button" id="copyTikTokPayloadTemplate" type="button">Copy Template</button>
           <button class="icon-button" id="runTikTokInitialImport" type="button">Run Initial Import</button>
         </div>
       </div>
-      <div class="update-center-note">Northstar will import only videos posted on or after ${TIKTOK_IMPORT_START_DEFAULT}, products linked to those videos, and sales tied to those products or videos. Drafts, deleted posts, lives, unrelated products, and older videos are skipped.</div>
       ${summary ? tiktokImportSummaryMarkup(summary) : ""}
     </section>
   `;
@@ -12924,17 +12905,20 @@ function saveTikTokConnectionFromForm() {
   normalizeDatabase();
   const account = getAccount(document.querySelector("#tiktokImportAccount")?.value) || accounts()[0] || {};
   const startDate = normalizeDateKey(document.querySelector("#tiktokImportStartDate")?.value) || TIKTOK_IMPORT_START_DEFAULT;
+  const config = readTikTokOAuthConfigFromForm();
+  db.tiktokOAuthConfig = config;
   const connection = upsertTikTokConnection({
     accountId: account.id,
     account: account.name,
     importStartDate: startDate,
-    status: "Manual / CSV / API Pending",
-    currentMode: "Manual / CSV",
-    futureMode: "Live TikTok Sync",
+    status: tiktokConnectionStatusLabel(config),
+    currentMode: config.connectorBaseUrl ? "OAuth / Secure Connector" : "Manual / CSV",
+    futureMode: "Daily incremental TikTok sync",
+    tokenStorage: config.connectorBaseUrl ? "Secure connector" : "Not configured",
     lastPreparedAt: new Date().toISOString()
   });
   safeSaveLocalData("tiktok-connection");
-  showMessage(`${connection.account} TikTok connection prep saved.`, "good");
+  showMessage(`${connection.account} TikTok connection settings saved.`, "good");
   renderDataHub();
 }
 
@@ -12947,9 +12931,9 @@ function runTikTokInitialImportFromForm() {
     accountId: account.id,
     account: account.name,
     importStartDate: startDate,
-    status: "Manual / CSV / API Pending",
-    currentMode: "Manual / CSV",
-    futureMode: "Live TikTok Sync",
+    status: tiktokConnectionStatusLabel(db.tiktokOAuthConfig || {}),
+    currentMode: db.tiktokOAuthConfig?.connectorBaseUrl ? "OAuth / Secure Connector" : "Manual / CSV",
+    futureMode: "Daily incremental TikTok sync",
     lastPreparedAt: new Date().toISOString()
   });
   createPolarisBackupSnapshot(`TikTok initial import: ${account.name}`);
@@ -13303,6 +13287,266 @@ function parseBoolean(value) {
   return /^(true|yes|y|1)$/i.test(String(value || "").trim());
 }
 
+function sanitizedTikTokOAuthConfig(config = {}) {
+  return {
+    clientKey: String(config.clientKey || "").trim(),
+    redirectUri: String(config.redirectUri || "").trim(),
+    connectorBaseUrl: String(config.connectorBaseUrl || "").trim().replace(/\/+$/, ""),
+    scopes: Array.isArray(config.scopes) && config.scopes.length ? config.scopes : TIKTOK_OAUTH_SCOPES
+  };
+}
+
+function defaultTikTokRedirectUri() {
+  if (location.protocol !== "https:") return "";
+  return `${location.origin}${location.pathname}`;
+}
+
+function tiktokConnectionStatusLabel(config = {}) {
+  const safe = sanitizedTikTokOAuthConfig(config);
+  if (safe.clientKey && safe.redirectUri && safe.connectorBaseUrl) return "OAuth Ready";
+  if (safe.clientKey || safe.redirectUri || safe.connectorBaseUrl) return "Needs Secure Connector";
+  return "Manual / CSV";
+}
+
+function readTikTokOAuthConfigFromForm() {
+  return sanitizedTikTokOAuthConfig({
+    clientKey: document.querySelector("#tiktokClientKey")?.value || "",
+    redirectUri: document.querySelector("#tiktokRedirectUri")?.value || "",
+    connectorBaseUrl: document.querySelector("#tiktokConnectorBaseUrl")?.value || "",
+    scopes: TIKTOK_OAUTH_SCOPES
+  });
+}
+
+async function startTikTokOAuthFlow() {
+  normalizeDatabase();
+  const account = getAccount(document.querySelector("#tiktokImportAccount")?.value) || accounts().find((item) => normalizedName(item.name) === normalizedName("Raised Right")) || accounts()[0] || {};
+  const startDate = normalizeDateKey(document.querySelector("#tiktokImportStartDate")?.value) || TIKTOK_IMPORT_START_DEFAULT;
+  const config = readTikTokOAuthConfigFromForm();
+  db.tiktokOAuthConfig = config;
+  upsertTikTokConnection({
+    accountId: account.id,
+    account: account.name || "Raised Right",
+    importStartDate: startDate,
+    status: tiktokConnectionStatusLabel(config),
+    currentMode: config.connectorBaseUrl ? "OAuth / Secure Connector" : "Manual / CSV",
+    tokenStorage: config.connectorBaseUrl ? "Secure connector" : "Not configured",
+    lastPreparedAt: new Date().toISOString()
+  });
+  safeSaveLocalData("tiktok-oauth-settings");
+
+  if (!config.clientKey) {
+    showMessage("Add the TikTok app client key first.", "warn");
+    return;
+  }
+  if (!config.redirectUri || !/^https:\/\//i.test(config.redirectUri)) {
+    showMessage("TikTok OAuth requires an HTTPS redirect URI registered in TikTok Developers.", "warn");
+    return;
+  }
+  if (!config.connectorBaseUrl || !/^https:\/\//i.test(config.connectorBaseUrl)) {
+    showMessage("Add a secure HTTPS connector URL before connecting TikTok.", "warn");
+    return;
+  }
+
+  try {
+    const codeVerifier = base64UrlFromBytes(crypto.getRandomValues(new Uint8Array(64)));
+    const codeChallenge = await sha256Base64Url(codeVerifier);
+    const state = uniqueImportId(`tiktok-oauth-state-${Date.now()}`);
+    sessionStorage.setItem("northstar.tiktok.oauth", JSON.stringify({
+      state,
+      codeVerifier,
+      accountId: account.id,
+      account: account.name || "Raised Right",
+      startDate,
+      connectorBaseUrl: config.connectorBaseUrl,
+      redirectUri: config.redirectUri,
+      createdAt: new Date().toISOString()
+    }));
+    const url = new URL(TIKTOK_OAUTH_AUTH_URL);
+    url.searchParams.set("client_key", config.clientKey);
+    url.searchParams.set("scope", config.scopes.join(","));
+    url.searchParams.set("response_type", "code");
+    url.searchParams.set("redirect_uri", config.redirectUri);
+    url.searchParams.set("state", state);
+    url.searchParams.set("code_challenge", codeChallenge);
+    url.searchParams.set("code_challenge_method", "S256");
+    location.href = url.toString();
+  } catch (error) {
+    showMessage("TikTok connection could not start. Check connector settings.", "warn");
+    console.warn("TikTok OAuth start failed safely.", error);
+  }
+}
+
+async function handleTikTokOAuthCallback() {
+  const params = new URLSearchParams(location.search);
+  const code = params.get("code");
+  const state = params.get("state");
+  const error = params.get("error");
+  if (!code && !error) return;
+  const stored = readTikTokOAuthSession();
+  if (error) {
+    showMessage(`TikTok authorization stopped: ${error}`, "warn");
+    writeTikTokOAuthHistory("OAuth", stored?.account || "Raised Right", "Needs Review", 0, `TikTok returned ${error}.`);
+    clearTikTokOAuthQuery();
+    return;
+  }
+  if (!stored || stored.state !== state) {
+    showMessage("TikTok authorization state did not match. No data was changed.", "warn");
+    clearTikTokOAuthQuery();
+    return;
+  }
+  if (!stored.connectorBaseUrl) {
+    showMessage("TikTok authorized, but no secure connector is configured.", "warn");
+    clearTikTokOAuthQuery();
+    return;
+  }
+  try {
+    showMessage("Finishing TikTok connection securely...", "good");
+    const response = await fetch(`${stored.connectorBaseUrl}/oauth/tiktok/callback`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        code,
+        codeVerifier: stored.codeVerifier,
+        redirectUri: stored.redirectUri,
+        account: stored.account,
+        accountId: stored.accountId,
+        importStartDate: stored.startDate,
+        requestedData: tiktokRequestedDataShape()
+      })
+    });
+    if (!response.ok) throw new Error(`Connector returned ${response.status}`);
+    const payload = await response.json();
+    const account = getAccount(stored.accountId) || accounts().find((item) => normalizedName(item.name) === normalizedName(stored.account)) || {};
+    upsertTikTokConnection({
+      accountId: stored.accountId,
+      account: stored.account,
+      importStartDate: stored.startDate,
+      status: "Connected",
+      currentMode: "OAuth / Secure Connector",
+      tokenStorage: "Secure connector",
+      lastAuthorizedAt: new Date().toISOString()
+    });
+    const summary = importTikTokCommercePayload(payload, { account, startDate: stored.startDate, source: "TikTok OAuth Initial Import" });
+    tiktokImportState.summary = summary;
+    writeTikTokSyncHistory(summary, "OAuth Initial Import");
+    safeSaveLocalData("tiktok-oauth-import");
+    showMessage("TikTok connected and initial import saved.", "good");
+  } catch (error) {
+    writeTikTokOAuthHistory("OAuth", stored.account, "Needs Review", 0, error.message || "Secure connector failed.");
+    showMessage("TikTok authorized, but the secure connector did not finish sync.", "warn");
+    console.warn("TikTok OAuth callback failed safely.", error);
+  } finally {
+    sessionStorage.removeItem("northstar.tiktok.oauth");
+    clearTikTokOAuthQuery();
+    if (activePage === "dataHub") renderDataHub();
+  }
+}
+
+function readTikTokOAuthSession() {
+  try { return JSON.parse(sessionStorage.getItem("northstar.tiktok.oauth") || "null"); } catch { return null; }
+}
+
+function clearTikTokOAuthQuery() {
+  if (!history.replaceState) return;
+  const cleanUrl = `${location.origin}${location.pathname}${location.hash || ""}`;
+  if (/^https?:/i.test(location.protocol)) history.replaceState({}, document.title, cleanUrl);
+}
+
+async function runTikTokConnectorSync(reason = "manual") {
+  normalizeDatabase();
+  const config = document.querySelector("#tiktokConnectorBaseUrl") ? readTikTokOAuthConfigFromForm() : sanitizedTikTokOAuthConfig(db.tiktokOAuthConfig || {});
+  db.tiktokOAuthConfig = config;
+  const connection = (db.tiktokConnections || []).find((item) => normalizedName(item.account) === normalizedName("Raised Right")) || db.tiktokConnections?.[0];
+  const account = getAccount(connection?.accountId) || accounts().find((item) => normalizedName(item.name) === normalizedName(connection?.account || "Raised Right")) || {};
+  if (!config.connectorBaseUrl) {
+    showMessage("Add a secure connector before syncing TikTok.", "warn");
+    return null;
+  }
+  try {
+    const response = await fetch(`${config.connectorBaseUrl}/sync/tiktok`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        account: connection?.account || account.name || "Raised Right",
+        accountId: connection?.accountId || account.id,
+        importStartDate: connection?.importStartDate || TIKTOK_IMPORT_START_DEFAULT,
+        since: connection?.lastSyncedAt || connection?.lastAuthorizedAt || null,
+        mode: reason === "daily" ? "incremental" : "manual",
+        requestedData: tiktokRequestedDataShape()
+      })
+    });
+    if (!response.ok) throw new Error(`Connector returned ${response.status}`);
+    const payload = await response.json();
+    const summary = importTikTokCommercePayload(payload, {
+      account,
+      startDate: connection?.importStartDate || TIKTOK_IMPORT_START_DEFAULT,
+      source: reason === "daily" ? "TikTok Daily Incremental Sync" : "TikTok Sync Now"
+    });
+    tiktokImportState.summary = summary;
+    writeTikTokSyncHistory(summary, reason === "daily" ? "Daily Sync" : "Sync Now");
+    safeSaveLocalData("tiktok-connector-sync");
+    showMessage(reason === "daily" ? "TikTok daily sync complete." : "TikTok sync complete.", "good");
+    if (activePage === "dataHub") renderDataHub();
+    if (activePage === "executive") renderPage("executive");
+    return summary;
+  } catch (error) {
+    writeTikTokOAuthHistory(reason === "daily" ? "Daily Sync" : "Sync Now", connection?.account || "Raised Right", "Needs Review", 0, error.message || "Connector sync failed.");
+    safeSaveLocalData("tiktok-sync-error");
+    showMessage("TikTok sync needs review. Secure connector did not return data.", "warn");
+    console.warn("TikTok connector sync failed safely.", error);
+    return null;
+  }
+}
+
+function maybeRunDailyTikTokSync() {
+  try {
+    const config = sanitizedTikTokOAuthConfig(db.tiktokOAuthConfig || {});
+    const connection = (db.tiktokConnections || []).find((item) => normalizedName(item.account) === normalizedName("Raised Right")) || db.tiktokConnections?.[0];
+    if (!config.connectorBaseUrl || !connection || !/connected|oauth ready/i.test(connection.status || "")) return;
+    const last = Date.parse(connection.lastSyncedAt || connection.lastAuthorizedAt || 0);
+    if (last && Date.now() - last < TIKTOK_DAILY_SYNC_INTERVAL_MS) return;
+    runTikTokConnectorSync("daily");
+  } catch (error) {
+    console.warn("Daily TikTok sync skipped safely.", error);
+  }
+}
+
+function tiktokRequestedDataShape() {
+  return {
+    videos: ["video_id", "account", "video_url", "cover_image", "publish_date", "caption", "hook", "hashtags", "duration", "views", "likes", "comments", "shares", "saves", "average_watch_time", "completion_rate", "followers_gained", "linked_product_ids", "is_shop_video"],
+    products: ["product_id", "product_name", "account", "seller", "category", "product_image", "price", "commission_rate", "current_status", "first_video_date", "last_video_date", "related_video_ids"],
+    sales: ["product_id", "video_id", "date", "units_sold", "GMV", "commission", "refunds"],
+    startDate: TIKTOK_IMPORT_START_DEFAULT,
+    exclusions: ["older videos", "drafts", "deleted videos", "lives", "unrelated products"]
+  };
+}
+
+function writeTikTokOAuthHistory(source, account, status, recordsUpdated, notes) {
+  db.tiktokSyncHistory = db.tiktokSyncHistory || [];
+  db.tiktokSyncHistory.unshift({
+    id: uniqueImportId(`tiktok-sync-${Date.now()}`),
+    syncedAt: new Date().toISOString(),
+    source,
+    account,
+    status,
+    recordsUpdated,
+    notes
+  });
+  db.tiktokSyncHistory = db.tiktokSyncHistory.slice(0, 80);
+}
+
+async function sha256Base64Url(value) {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return base64UrlFromBytes(new Uint8Array(digest));
+}
+
+function base64UrlFromBytes(bytes) {
+  let binary = "";
+  bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
 function writeTikTokSyncHistory(summary, source) {
   db.tiktokSyncHistory = db.tiktokSyncHistory || [];
   const recordsUpdated = summary.videosAdded + summary.videosUpdated + summary.productsAdded + summary.productsUpdated + summary.salesAdded + summary.salesUpdated;
@@ -13448,6 +13692,8 @@ function scheduleNorthstarDeferredWarmup() {
       normalizeDatabase();
       validateNorthstarDatabaseShape();
       initializePulseEngine("idle-warmup");
+      handleTikTokOAuthCallback?.();
+      maybeRunDailyTikTokSync?.();
       recordNorthstarStartupDiagnostic("idle warmup complete");
       if (activePage === "executive") showMessage("Northstar finished loading background data.", "good");
     } catch (error) {

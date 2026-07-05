@@ -168,20 +168,58 @@ It includes:
 
 ## TikTok Connection
 
-TikTok Connection is a planning page for future TikTok and TikTok Shop account linking.
+TikTok Connection now includes the first real OAuth-ready connection flow for Raised Right.
 
-It does not connect to TikTok yet.
+Open **Data Hub → TikTok Initial Import**.
 
-Northstar currently uses manual capture and CSV import. Live TikTok linking requires API approval and secure backend infrastructure.
+Northstar can:
+
+- Save Raised Right as the first TikTok account to connect
+- Start TikTok's official OAuth authorization URL when a TikTok client key, HTTPS redirect URI, and secure connector URL are configured
+- Use PKCE for the browser authorization step
+- Send the OAuth authorization code to a secure connector for token exchange
+- Import normalized videos, linked products, and related sales into Polaris when the secure connector returns data
+- Track Last Sync
+- Run Sync Now
+- Attempt one daily incremental sync when Northstar opens and a secure connector is available
+
+Important security rule:
+
+Northstar does **not** store TikTok access tokens or refresh tokens in browser localStorage. OAuth tokens must be exchanged and stored by a secure backend connector.
 
 The page tracks:
 
 - Raised Right connection readiness
-- Truth Tuned Tribe connection readiness
-- Connection status: Manual / CSV / API Pending
-- Last local data refresh
-- Data sources needed for future linking
-- Future API checklist for OAuth, scopes, TikTok Shop Partner access, backend server, secure token storage, and refresh schedule
+- Connection status: Manual / CSV, Needs Secure Connector, OAuth Ready, or Connected
+- Last Sync timestamp
+- Sync History
+- Import start date, defaulting to March 1, 2025
+- Videos, linked products, and sales/GMV/commission records returned from the connector
+
+The secure connector must provide:
+
+- `POST /oauth/tiktok/callback`
+- `POST /sync/tiktok`
+
+Both endpoints should return Northstar's normalized commerce payload:
+
+- `videos`
+- `products`
+- `sales`
+
+Northstar imports only:
+
+- Videos posted on or after 2025-03-01
+- Products linked to those videos
+- Sales/GMV/commission records tied to those videos or products
+
+Northstar skips older videos, drafts, deleted videos, lives, and unrelated products.
+
+Official TikTok references:
+
+- TikTok Login Kit for Web: https://developers.tiktok.com/doc/login-kit-web/
+- TikTok OAuth token management: https://developers.tiktok.com/doc/oauth-user-access-token-management/
+- TikTok Shop Open API access requires TikTok Shop Partner/API approval.
 
 ## Sprint 10: Update Northstar™
 
@@ -191,25 +229,25 @@ The **Update Northstar** button appears in the Morning Brief header.
 
 Today it opens Update Center in:
 
-- Current mode: Manual / CSV
-- Future mode: Live TikTok Sync
+- Current mode: Manual / CSV or OAuth through a secure connector
+- Future mode: expanded live TikTok Shop sync after Partner/API approval
 
 Update Center includes:
 
 - Connected accounts: Raised Right and Truth Tuned Tribe
-- Account status: Manual / CSV / API Pending
+- Account status: Manual / CSV, Needs Secure Connector, OAuth Ready, or Connected
 - Last updated
 - Next available data source
-- Update sources: Manual Capture, CSV Import, Screenshot Import placeholder, TikTok API placeholder, TikTok Shop API placeholder
+- Update sources: Manual Capture, CSV Import, Screenshot Import placeholder, TikTok OAuth connector, TikTok Shop connector after approval
 - Data needed: video analytics, sales, GMV, commission, samples, product invitations, comments, followers, Creator Rewards
-- Future one-click sync message
+- One-click sync message
 - Sync History saved locally
 
 The reusable sync function is:
 
 `runNorthstarUpdate(source, account)`
 
-For now, this function simulates a sync, records Sync History in localStorage, and refreshes the Morning Brief from local data. It does not attempt a real TikTok API connection.
+Northstar also includes `runTikTokConnectorSync(reason)` for the OAuth connector path. The browser starts TikTok OAuth and sends the returned authorization code to the secure connector; it does not exchange or store TikTok access tokens directly.
 
 ## Project Polaris: Real Data Operating Sprint
 
