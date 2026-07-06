@@ -1,0 +1,152 @@
+# Northstar Creator Documentation
+
+This file is the ongoing documentation log for changes made to the public Northstar Creator website and supporting project files.
+
+Going forward, every meaningful change should add a dated entry with two audiences in mind:
+
+- Developer documentation: what changed technically, which files changed, why the change was made, and how it was verified.
+- User documentation: what Jennifer or a public visitor will notice, what action they should take, and whether anything changes about how Northstar is used.
+
+Do not include API keys, client secrets, access tokens, refresh tokens, passwords, private TikTok data, or other sensitive information in this file.
+
+## Entry Template
+
+Date:
+
+Change title:
+
+Files changed:
+
+Developer notes:
+
+- 
+
+User notes:
+
+- 
+
+Verification:
+
+- 
+
+Follow-up:
+
+- 
+
+## 2026-07-05 - Documentation Log Created
+
+Files changed:
+
+- Documentation
+
+Developer notes:
+
+- Added a root-level documentation file for future Northstar Creator site changes.
+- Established a repeatable format for developer notes, user notes, verification, and follow-up.
+- This file is intentionally plain text with Markdown-style headings so it is easy to read in GitHub, Finder preview, or a text editor.
+
+User notes:
+
+- Future changes to the Northstar Creator public website should be documented here in plain English.
+- Each entry should explain what changed and what the change means for Jennifer or a website visitor.
+
+Verification:
+
+- Confirmed the repository was clean before adding this file.
+- No app behavior was changed.
+
+Follow-up:
+
+- Add a new dated entry to this file whenever the public website or supporting project setup changes.
+
+## 2026-07-05 - SDLC User Guide Added
+
+Files changed:
+
+- docs/northstar-sdlc-user-guide.md
+- Documentation
+
+Developer notes:
+
+- Added a standalone SDLC-style user guide for Northstar Creator.
+- The guide explains the product purpose, local app structure, public website, data model, lifecycle, QA checks, storage rules, and future TikTok integration boundaries.
+- This is a documentation-only change and does not modify local app behavior, public website behavior, data files, localStorage, or backups.
+
+User notes:
+
+- A new reader can now understand what Northstar is, what problem it solves, how Jennifer should use it, and how the product is maintained.
+- The document explains the Morning Brief, Product Workspace, Waiting to Film workflow, product/video records, backups, and the SDLC process in plain English.
+
+Verification:
+
+- Documentation file was updated with this change entry.
+- No app code was changed.
+
+Follow-up:
+
+- Link this guide from the public website or README later if Jennifer wants it visible to reviewers or collaborators.
+
+## 2026-07-05 - Word Documentation Package Created
+
+Files changed:
+
+- Documentation
+- Northstar Documentation Package.docx
+
+Developer notes:
+
+- Created a Word document package that combines the SDLC user guide, documentation log, README, brand guide, and public website page content into a single reviewer-friendly file.
+- The DOCX is intended as a portable handoff artifact and does not change app code, data loading, localStorage, product records, videos, samples, or website behavior.
+
+User notes:
+
+- Jennifer can open one Word document to understand what Northstar is, how it works, how it is maintained, and what the public website says.
+- This is useful for reviewers, collaborators, developers, or anyone who has never seen Northstar before.
+
+Verification:
+
+- The source documentation files remained in place.
+- No app behavior was changed.
+
+Follow-up:
+
+- Regenerate the Word package after major documentation changes so the DOCX stays current.
+
+## 2026-07-05 - Public Review Pages Polished for TikTok Developer Submission
+
+Files changed:
+
+- docs/index.html
+- docs/privacy.html
+- docs/terms.html
+- docs/contact.html
+- docs/site.css
+- Documentation
+
+Developer notes:
+
+- Updated the public homepage so primary actions do not imply a live TikTok OAuth connection or a live demo before approval.
+- Changed the TikTok audience badge to include TikTok Shop creators and creator-commerce teams.
+- Added a demo status section and changed the demo call-to-action to "Demo Coming Soon."
+- Updated Privacy Policy language to describe future OAuth token handling through a secure server-side connector and to clarify that tokens will not be stored in browser localStorage.
+- Added clearer privacy language for creator data categories, product experience usage, no sale of user data, and support/deletion contact.
+- Added a Terms contact section and replaced Contact page GitHub repository language with the official support email.
+- Did not change GitHub Pages configuration or docs/CNAME.
+
+User notes:
+
+- Public visitors and TikTok reviewers now see clearer, more accurate language about what NorthStar Creator does today and what is planned after approval.
+- The homepage no longer has a misleading "Watch Demo" button.
+- The TikTok connection action now points to connection status and roadmap information instead of implying a live connection.
+- Privacy, Terms, and Contact pages now provide the official email address: hello@northstar-creator.com.
+
+Verification:
+
+- Confirm Privacy Policy, Terms of Service, and Contact links work in the header/footer.
+- Confirm there are no dead primary buttons on the homepage.
+- Confirm docs/CNAME remains unchanged as northstar-creator.com.
+- Run repository checks before commit.
+
+Follow-up:
+
+- Push the commit to GitHub when ready so GitHub Pages can publish the review-ready public pages.
