@@ -381,12 +381,12 @@ h3 {
 
 .review-feature-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
 }
 
 .review-feature-card {
-  min-height: 168px;
+  min-height: 0;
   padding: 20px;
   border: 1px solid rgba(15, 27, 45, 0.08);
   border-radius: 20px;
@@ -411,6 +411,42 @@ h3 {
   background: rgba(212, 167, 44, 0.10);
   color: #5f4a13;
   font-size: 0.96rem;
+}
+
+.privacy-callout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 16px;
+  padding: 18px 20px;
+  border: 1px solid rgba(47, 124, 122, 0.18);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.privacy-callout .eyebrow {
+  margin: 0;
+  color: var(--teal);
+}
+
+.privacy-callout ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.privacy-callout li {
+  padding: 8px 12px;
+  border: 1px solid rgba(15, 27, 45, 0.08);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--navy);
+  font-size: 0.88rem;
+  font-weight: 700;
 }
 
 .steps-grid,
@@ -687,6 +723,11 @@ h3 {
   .review-section {
     padding: 28px 22px;
     border-radius: 24px;
+  }
+
+  .privacy-callout {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .comparison-table > div {
