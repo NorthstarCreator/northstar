@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NorthStar Dashboard | TikTok Sandbox</title>
+  <meta name="description" content="NorthStar secure dashboard shell for TikTok Sandbox OAuth and Display API review.">
+  <link rel="icon" href="assets/northstar-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#top" aria-label="NorthStar dashboard home">
+        <img src="assets/northstar-mark.svg" alt="" aria-hidden="true">
+        <span><strong>NORTHSTAR</strong><small>Creator Dashboard</small></span>
+      </a>
+      <nav aria-label="Dashboard sections">
+        <a href="#tiktok">TikTok Connection</a>
+        <a href="#migration">Data Migration</a>
+        <a href="#privacy">Data Safety</a>
+      </nav>
+    </aside>
+
+    <main id="top" class="main-content">
+      <section class="hero">
+        <p class="eyebrow">TikTok Sandbox Integration</p>
+        <h1>Connect TikTok securely.</h1>
+        <p>NorthStar uses official TikTok OAuth to display authorized creator profile stats and public videos. Tokens stay on the secure API server and are never exposed to browser code.</p>
+        <div class="hero-actions">
+          <a id="connectTikTok" class="button primary" href="#">Connect TikTok</a>
+          <button id="syncTikTok" class="button secondary" type="button">Sync Now</button>
+          <button id="disconnectTikTok" class="button quiet" type="button">Disconnect</button>
+        </div>
+        <p id="statusMessage" class="status-message" role="status">Preparing secure session...</p>
+      </section>
+
+      <section id="tiktok" class="grid two">
+        <article class="card">
+          <div class="card-header">
+            <span class="pill">user.info.basic</span>
+            <h2>Creator Identity</h2>
+          </div>
+          <div id="profilePanel" class="profile-panel empty">Connect TikTok to show authorized creator identity.</div>
+        </article>
+
+        <article class="card">
+          <div class="card-header">
+            <span class="pill">user.info.stats</span>
+            <h2>Creator Stats</h2>
+          </div>
+          <div id="statsPanel" class="stats-grid">
+            <div><span>Followers</span><strong>--</strong></div>
+            <div><span>Following</span><strong>--</strong></div>
+            <div><span>Likes</span><strong>--</strong></div>
+            <div><span>Videos</span><strong>--</strong></div>
+          </div>
+        </article>
+      </section>
+
+      <section class="card">
+        <div class="card-header horizontal">
+          <div>
+            <span class="pill">video.list</span>
+            <h2>Authorized Public Videos</h2>
+          </div>
+          <span id="videoCount" class="subtle">No videos loaded</span>
+        </div>
+        <div id="videosPanel" class="video-list empty">Connect TikTok, then sync public videos available through the approved Display API scope.</div>
+      </section>
+
+      <section id="migration" class="card notice">
+        <h2>Move Your Local NorthStar Data Safely</h2>
+        <p>The hosted dashboard uses a different browser storage area than the private <code>file://</code> app. Export a backup from your local NorthStar Settings page, then import it here.</p>
+        <div class="migration-actions">
+          <label class="file-button">
+            Import NorthStar Backup
+            <input id="backupImport" type="file" accept="application/json,.json">
+          </label>
+          <button id="exportHostedBackup" class="button secondary" type="button">Export Hosted Backup</button>
+        </div>
+        <p id="migrationStatus" class="subtle">No backup has been imported into this browser yet.</p>
+      </section>
+
+      <section id="privacy" class="card safety">
+        <h2>Data Safety Notice</h2>
+        <p>The Vercel-hosted dashboard shell may be publicly reachable. Personal creator data is available only within the authenticated user session/browser and is never bundled into deployed static files.</p>
+        <ul>
+          <li>No TikTok client secret is stored in this dashboard.</li>
+          <li>No TikTok access token or refresh token is returned to browser JavaScript.</li>
+          <li>No Jennifer local records, exports, backups, notes, sales records, videos, or samples are deployed with this shell.</li>
+        </ul>
+      </section>
+    </main>
+  </div>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

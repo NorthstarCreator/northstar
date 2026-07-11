@@ -70,6 +70,88 @@ Northstar principles:
 
 Northstar is local only. There is no login, no backend server, and no public website.
 
+## TikTok Sandbox Deployment Plan
+
+NorthStar now includes a deployable TikTok Sandbox foundation without changing the private local app.
+
+Public surfaces:
+
+- Marketing and legal site: `https://northstar-creator.com`
+- Dashboard web app: `https://app.northstar-creator.com`
+- Secure OAuth/API connector: `https://api.northstar-creator.com`
+
+The dashboard deployable lives in `/dashboard`. It is a static shell only and must not include Jennifer's localStorage data, exports, backups, sales records, notes, samples, videos, or private data folders.
+
+Dashboard Vercel project:
+
+- Root Directory: `/dashboard`
+- Framework Preset: Other
+- Build Command: none
+- Output Directory: `.`
+- Install Command: none
+
+The dashboard reads public, non-secret configuration from `dashboard/config.js`:
+
+```js
+window.NORTHSTAR_CONFIG = {
+  apiOrigin: "https://api.northstar-creator.com",
+  appOrigin: "https://app.northstar-creator.com"
+};
+```
+
+Do not put TikTok client keys, client secrets, access tokens, refresh tokens, Redis credentials, or encryption secrets in `dashboard/config.js` or any frontend file.
+
+API Vercel project:
+
+- Root Directory: `/vercel-api`
+- Framework Preset: Other
+- Install Command: `npm install`
+- Build Command: none
+- Output Directory: `.`
+
+The public API routes are:
+
+- `GET https://api.northstar-creator.com/session`
+- `GET https://api.northstar-creator.com/auth/tiktok/start`
+- `GET https://api.northstar-creator.com/auth/tiktok/callback`
+- `POST https://api.northstar-creator.com/auth/tiktok/disconnect`
+- `GET https://api.northstar-creator.com/tiktok/me`
+- `GET https://api.northstar-creator.com/tiktok/videos`
+- `POST https://api.northstar-creator.com/tiktok/sync`
+
+TikTok Sandbox settings:
+
+- Product: Login Kit
+- Scopes: `user.info.basic`, `user.info.stats`, `video.list`
+- Redirect URI: `https://api.northstar-creator.com/auth/tiktok/callback`
+
+Do not request TikTok Shop data, sales, samples, commissions, orders, Content Posting API, `video.publish`, `video.upload`, Share Kit, Webhooks, or `user.info.profile` for this integration.
+
+Required API environment variables are listed in `.env.example`. Add real values directly in the Vercel API project settings. Never paste secrets into frontend files, GitHub Pages, screenshots, committed files, or Codex chat.
+
+Token/session storage:
+
+- Use Upstash Redis through the Vercel Marketplace for the API project.
+- Store only encrypted access token, encrypted refresh token, token expiration, TikTok account identifier, granted scopes, connection timestamp, and NorthStar session id.
+- Encrypt tokens with `TOKEN_STORE_SECRET` before writing them to Redis.
+- Never return TikTok access or refresh tokens to browser JavaScript.
+
+Session and CSRF:
+
+- `GET /session` creates or retrieves the NorthStar session, sets a Secure HttpOnly SameSite=Lax host-only cookie, and returns a non-sensitive CSRF token.
+- The dashboard calls `/session` with `credentials: "include"`.
+- `POST /auth/tiktok/disconnect` and `POST /tiktok/sync` require the session cookie, a matching `X-CSRF-Token` header, and an Origin header exactly equal to `https://app.northstar-creator.com`.
+- CORS is restricted to `https://app.northstar-creator.com` only.
+
+Data migration:
+
+1. Open the current local `file://` NorthStar app.
+2. Export a backup from Settings.
+3. Open `https://app.northstar-creator.com`.
+4. Import the backup into that browser.
+
+The hosted dashboard and local `file://` app use different browser storage origins. No backup file should be committed or deployed.
+
 ## Navigation
 
 - Morning Brief

@@ -1,0 +1,13 @@
+{
+  "name": "northstar-tiktok-connector",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Secure TikTok Sandbox OAuth connector for NorthStar Creator.",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "check": "node -c api/session.js && node -c api/auth/tiktok/start.js && node -c api/auth/tiktok/callback.js && node -c api/auth/tiktok/disconnect.js && node -c api/tiktok/me.js && node -c api/tiktok/videos.js && node -c api/tiktok/sync.js && node -c lib/cors.js && node -c lib/crypto.js && node -c lib/session.js && node -c lib/tiktok.js && node -c lib/token-store.js"
+  }
+}

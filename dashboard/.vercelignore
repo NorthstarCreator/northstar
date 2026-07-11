@@ -1,0 +1,16 @@
+.DS_Store
+.env
+.env.*
+docs/
+vercel-api/
+data/
+work/
+outputs/
+*.json
+*.xlsx
+*.csv
+*.zip
+*.backup
+*.bak
+.git/
+.github/
