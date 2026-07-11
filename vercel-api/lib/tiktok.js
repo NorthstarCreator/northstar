@@ -88,7 +88,7 @@ async function tiktokFetch(url, accessToken, options = {}) {
     }
   });
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok || payload.error?.code) {
+  if (!response.ok || (payload.error?.code && payload.error.code !== "ok")) {
     throw new Error(payload.error?.message || payload.error?.code || "TikTok API request failed.");
   }
   return payload;

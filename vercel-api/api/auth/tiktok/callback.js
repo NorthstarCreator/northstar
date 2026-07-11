@@ -14,13 +14,24 @@ module.exports = async function handler(req, res) {
   if (denied) return redirectToApp(res, { tiktok: "error_denied" });
   if (!code || !state) return redirectToApp(res, { tiktok: "error_missing_code" });
 
+  const statePayload = await consumeOAuthState(state);
+  if (!statePayload?.sessionId) return redirectToApp(res, { tiktok: "error_state" });
+
+  let tokenPayload;
   try {
-    const statePayload = await consumeOAuthState(state);
-    if (!statePayload?.sessionId) return redirectToApp(res, { tiktok: "error_state" });
+    tokenPayload = await exchangeCode(code);
+  } catch (error) {
+    return redirectToApp(res, { tiktok: "error_token_exchange" });
+  }
 
-    const tokenPayload = await exchangeCode(code);
-    const profile = await getUserInfo(tokenPayload.access_token);
+  let profile;
+  try {
+    profile = await getUserInfo(tokenPayload.access_token);
+  } catch (error) {
+    return redirectToApp(res, { tiktok: "error_user_info" });
+  }
 
+  try {
     await storeEncryptedConnection(statePayload.sessionId, {
       accessToken: tokenPayload.access_token,
       refreshToken: tokenPayload.refresh_token,
@@ -34,6 +45,6 @@ module.exports = async function handler(req, res) {
     setSessionCookie(res, statePayload.sessionId);
     return redirectToApp(res, { tiktok: "connected" });
   } catch (error) {
-    return redirectToApp(res, { tiktok: "error_callback" });
+    return redirectToApp(res, { tiktok: "error_connection_store" });
   }
 };
