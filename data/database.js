@@ -50,19 +50,29 @@ window.PROJECT_FLYWHEEL_DB = {
       "categoryGroup": "Garden",
       "seasonality": "Spring/Summer",
       "evergreenSeasonal": "Seasonal",
-      "lifetimeGmv": 3500,
-      "lifetimeCommission": 318.06,
-      "lifetimeUnits": 159,
+      "lifetimeGmv": 4465.17,
+      "lifetimeCommission": 430.78,
+      "lifetimeUnits": 204,
       "monthlyPerformance": [
         {
           "month": "June 2026",
           "gmv": 3500,
           "commission": 318.06,
           "units": 159
+        },
+        {
+          "month": "July 2026",
+          "date": "2026-07-10",
+          "periodStart": "2026-07-01",
+          "periodEnd": "2026-07-10",
+          "gmv": 965.17,
+          "commission": 112.72,
+          "units": 45,
+          "source": "July 1-10 2026 product sales update"
         }
       ],
       "firstPromotedDate": "2026-06-01",
-      "lastPromotedDate": "2026-06-30",
+      "lastPromotedDate": "2026-07-10",
       "sampleStatus": "Request Now",
       "wouldPromoteAgain": "Yes",
       "status": "Double Down",
@@ -75,7 +85,8 @@ window.PROJECT_FLYWHEEL_DB = {
         "Garden",
         "Seasonal",
         "raisedRight"
-      ]
+      ],
+      "july2026SalesSource": "July 1-10 2026 product sales update"
     },
     {
       "id": "raisedRight-women-s-solid-color-hollow-out-tie-front-cardigan-2",
@@ -158,19 +169,29 @@ window.PROJECT_FLYWHEEL_DB = {
       "categoryGroup": "Health",
       "seasonality": "Evergreen",
       "evergreenSeasonal": "Evergreen",
-      "lifetimeGmv": 235.04,
-      "lifetimeCommission": 41.95,
-      "lifetimeUnits": 51,
+      "lifetimeGmv": 850.16,
+      "lifetimeCommission": 166.96,
+      "lifetimeUnits": 209,
       "monthlyPerformance": [
         {
           "month": "June 2026",
           "gmv": 235.04,
           "commission": 41.95,
           "units": 51
+        },
+        {
+          "month": "July 2026",
+          "date": "2026-07-10",
+          "periodStart": "2026-07-01",
+          "periodEnd": "2026-07-10",
+          "gmv": 615.12,
+          "commission": 125.01,
+          "units": 158,
+          "source": "July 1-10 2026 product sales update"
         }
       ],
       "firstPromotedDate": "2026-06-01",
-      "lastPromotedDate": "2026-06-30",
+      "lastPromotedDate": "2026-07-10",
       "sampleStatus": "Request Now",
       "wouldPromoteAgain": "Yes",
       "status": "Double Down",
@@ -183,7 +204,8 @@ window.PROJECT_FLYWHEEL_DB = {
         "Health",
         "Evergreen",
         "raisedRight"
-      ]
+      ],
+      "july2026SalesSource": "July 1-10 2026 product sales update"
     },
     {
       "id": "raisedRight-ultimate-peptide-protocols-bible-5",
@@ -266,19 +288,29 @@ window.PROJECT_FLYWHEEL_DB = {
       "categoryGroup": "Football",
       "seasonality": "Fall / Football Season",
       "evergreenSeasonal": "Seasonal",
-      "lifetimeGmv": 158.02,
-      "lifetimeCommission": 22.1,
-      "lifetimeUnits": 8,
+      "lifetimeGmv": 193.72,
+      "lifetimeCommission": 27.2,
+      "lifetimeUnits": 10,
       "monthlyPerformance": [
         {
           "month": "June 2026",
           "gmv": 158.02,
           "commission": 22.1,
           "units": 8
+        },
+        {
+          "month": "July 2026",
+          "date": "2026-07-10",
+          "periodStart": "2026-07-01",
+          "periodEnd": "2026-07-10",
+          "gmv": 35.7,
+          "commission": 5.1,
+          "units": 2,
+          "source": "July 1-10 2026 product sales update"
         }
       ],
       "firstPromotedDate": "2026-06-01",
-      "lastPromotedDate": "2026-06-30",
+      "lastPromotedDate": "2026-07-10",
       "sampleStatus": "Watch",
       "wouldPromoteAgain": "Maybe",
       "status": "Watch",
@@ -291,7 +323,8 @@ window.PROJECT_FLYWHEEL_DB = {
         "Football",
         "Seasonal",
         "raisedRight"
-      ]
+      ],
+      "july2026SalesSource": "July 1-10 2026 product sales update"
     },
     {
       "id": "raisedRight-premium-silver-soft-cotton-grounding-blanket-8",
@@ -302,19 +335,29 @@ window.PROJECT_FLYWHEEL_DB = {
       "categoryGroup": "Health",
       "seasonality": "Evergreen",
       "evergreenSeasonal": "Evergreen",
-      "lifetimeGmv": 138.52,
-      "lifetimeCommission": 33.69,
-      "lifetimeUnits": 2,
+      "lifetimeGmv": 335.7,
+      "lifetimeCommission": 79.05,
+      "lifetimeUnits": 4,
       "monthlyPerformance": [
         {
           "month": "June 2026",
           "gmv": 138.52,
           "commission": 33.69,
           "units": 2
+        },
+        {
+          "month": "July 2026",
+          "date": "2026-07-10",
+          "periodStart": "2026-07-01",
+          "periodEnd": "2026-07-10",
+          "gmv": 197.18,
+          "commission": 45.36,
+          "units": 2,
+          "source": "July 1-10 2026 product sales update"
         }
       ],
       "firstPromotedDate": "2026-06-01",
-      "lastPromotedDate": "2026-06-30",
+      "lastPromotedDate": "2026-07-10",
       "sampleStatus": "Request Now",
       "wouldPromoteAgain": "Yes",
       "status": "Double Down",
@@ -327,7 +370,8 @@ window.PROJECT_FLYWHEEL_DB = {
         "Health",
         "Evergreen",
         "raisedRight"
-      ]
+      ],
+      "july2026SalesSource": "July 1-10 2026 product sales update"
     },
     {
       "id": "raisedRight-zipstring-aracna-string-launcher-toy-9",
@@ -554,19 +598,29 @@ window.PROJECT_FLYWHEEL_DB = {
       "categoryGroup": "Summer",
       "seasonality": "Summer",
       "evergreenSeasonal": "Seasonal",
-      "lifetimeGmv": 55.41,
-      "lifetimeCommission": 2.8,
-      "lifetimeUnits": 2,
+      "lifetimeGmv": 83.78,
+      "lifetimeCommission": 7.15,
+      "lifetimeUnits": 3,
       "monthlyPerformance": [
         {
           "month": "June 2026",
           "gmv": 55.41,
           "commission": 2.8,
           "units": 2
+        },
+        {
+          "month": "July 2026",
+          "date": "2026-07-10",
+          "periodStart": "2026-07-01",
+          "periodEnd": "2026-07-10",
+          "gmv": 28.37,
+          "commission": 4.35,
+          "units": 1,
+          "source": "July 1-10 2026 product sales update"
         }
       ],
       "firstPromotedDate": "2026-06-01",
-      "lastPromotedDate": "2026-06-30",
+      "lastPromotedDate": "2026-07-10",
       "sampleStatus": "Wait",
       "wouldPromoteAgain": "No",
       "status": "Wait",
@@ -579,7 +633,8 @@ window.PROJECT_FLYWHEEL_DB = {
         "Summer",
         "Seasonal",
         "raisedRight"
-      ]
+      ],
+      "july2026SalesSource": "July 1-10 2026 product sales update"
     },
     {
       "id": "raisedRight-balm-of-gilead-frankincense-and-myrrh-16",
@@ -590,19 +645,29 @@ window.PROJECT_FLYWHEEL_DB = {
       "categoryGroup": "Wellness",
       "seasonality": "Evergreen",
       "evergreenSeasonal": "Evergreen",
-      "lifetimeGmv": 53.98,
-      "lifetimeCommission": 9,
-      "lifetimeUnits": 2,
+      "lifetimeGmv": 83.97,
+      "lifetimeCommission": 13.5,
+      "lifetimeUnits": 3,
       "monthlyPerformance": [
         {
           "month": "June 2026",
           "gmv": 53.98,
           "commission": 9,
           "units": 2
+        },
+        {
+          "month": "July 2026",
+          "date": "2026-07-10",
+          "periodStart": "2026-07-01",
+          "periodEnd": "2026-07-10",
+          "gmv": 29.99,
+          "commission": 4.5,
+          "units": 1,
+          "source": "July 1-10 2026 product sales update"
         }
       ],
       "firstPromotedDate": "2026-06-01",
-      "lastPromotedDate": "2026-06-30",
+      "lastPromotedDate": "2026-07-10",
       "sampleStatus": "Watch",
       "wouldPromoteAgain": "Maybe",
       "status": "Watch",
@@ -615,7 +680,8 @@ window.PROJECT_FLYWHEEL_DB = {
         "Wellness",
         "Evergreen",
         "raisedRight"
-      ]
+      ],
+      "july2026SalesSource": "July 1-10 2026 product sales update"
     },
     {
       "id": "raisedRight-big-size-jericho-flower-17",
@@ -626,19 +692,29 @@ window.PROJECT_FLYWHEEL_DB = {
       "categoryGroup": "Curiosity",
       "seasonality": "Evergreen",
       "evergreenSeasonal": "Evergreen",
-      "lifetimeGmv": 50.26,
-      "lifetimeCommission": 5.05,
-      "lifetimeUnits": 7,
+      "lifetimeGmv": 269.08,
+      "lifetimeCommission": 28.12,
+      "lifetimeUnits": 37,
       "monthlyPerformance": [
         {
           "month": "June 2026",
           "gmv": 50.26,
           "commission": 5.05,
           "units": 7
+        },
+        {
+          "month": "July 2026",
+          "date": "2026-07-10",
+          "periodStart": "2026-07-01",
+          "periodEnd": "2026-07-10",
+          "gmv": 218.82,
+          "commission": 23.07,
+          "units": 30,
+          "source": "July 1-10 2026 product sales update"
         }
       ],
       "firstPromotedDate": "2026-06-01",
-      "lastPromotedDate": "2026-06-30",
+      "lastPromotedDate": "2026-07-10",
       "sampleStatus": "Watch",
       "wouldPromoteAgain": "Maybe",
       "status": "Watch",
@@ -651,7 +727,8 @@ window.PROJECT_FLYWHEEL_DB = {
         "Curiosity",
         "Evergreen",
         "raisedRight"
-      ]
+      ],
+      "july2026SalesSource": "July 1-10 2026 product sales update"
     },
     {
       "id": "raisedRight-complete-peptide-protocols-playbook-18",
@@ -662,19 +739,29 @@ window.PROJECT_FLYWHEEL_DB = {
       "categoryGroup": "Health Book",
       "seasonality": "Evergreen",
       "evergreenSeasonal": "Evergreen",
-      "lifetimeGmv": 49.96,
-      "lifetimeCommission": 4.08,
-      "lifetimeUnits": 2,
+      "lifetimeGmv": 748.68,
+      "lifetimeCommission": 59.16,
+      "lifetimeUnits": 31,
       "monthlyPerformance": [
         {
           "month": "June 2026",
           "gmv": 49.96,
           "commission": 4.08,
           "units": 2
+        },
+        {
+          "month": "July 2026",
+          "date": "2026-07-10",
+          "periodStart": "2026-07-01",
+          "periodEnd": "2026-07-10",
+          "gmv": 698.72,
+          "commission": 55.08,
+          "units": 29,
+          "source": "July 1-10 2026 product sales update"
         }
       ],
       "firstPromotedDate": "2026-06-01",
-      "lastPromotedDate": "2026-06-30",
+      "lastPromotedDate": "2026-07-10",
       "sampleStatus": "Watch",
       "wouldPromoteAgain": "Maybe",
       "status": "Watch",
@@ -687,7 +774,8 @@ window.PROJECT_FLYWHEEL_DB = {
         "Health Book",
         "Evergreen",
         "raisedRight"
-      ]
+      ],
+      "july2026SalesSource": "July 1-10 2026 product sales update"
     },
     {
       "id": "raisedRight-reusable-bread-bags-19",
@@ -1094,19 +1182,29 @@ window.PROJECT_FLYWHEEL_DB = {
       "categoryGroup": "Book",
       "seasonality": "Evergreen",
       "evergreenSeasonal": "Evergreen",
-      "lifetimeGmv": 24.98,
-      "lifetimeCommission": 1.9,
-      "lifetimeUnits": 1,
+      "lifetimeGmv": 49.96,
+      "lifetimeCommission": 3.8,
+      "lifetimeUnits": 2,
       "monthlyPerformance": [
         {
           "month": "June 2026",
           "gmv": 24.98,
           "commission": 1.9,
           "units": 1
+        },
+        {
+          "month": "July 2026",
+          "date": "2026-07-10",
+          "periodStart": "2026-07-01",
+          "periodEnd": "2026-07-10",
+          "gmv": 24.98,
+          "commission": 1.9,
+          "units": 1,
+          "source": "July 1-10 2026 product sales update"
         }
       ],
       "firstPromotedDate": "2026-06-01",
-      "lastPromotedDate": "2026-06-30",
+      "lastPromotedDate": "2026-07-10",
       "sampleStatus": "Watch",
       "wouldPromoteAgain": "Maybe",
       "status": "Watch",
@@ -1119,7 +1217,8 @@ window.PROJECT_FLYWHEEL_DB = {
         "Book",
         "Evergreen",
         "raisedRight"
-      ]
+      ],
+      "july2026SalesSource": "July 1-10 2026 product sales update"
     },
     {
       "id": "raisedRight-portable-collapsible-stool-31",
@@ -1238,19 +1337,29 @@ window.PROJECT_FLYWHEEL_DB = {
       "categoryGroup": "Book",
       "seasonality": "Evergreen",
       "evergreenSeasonal": "Evergreen",
-      "lifetimeGmv": 19.98,
-      "lifetimeCommission": 1.8,
-      "lifetimeUnits": 1,
+      "lifetimeGmv": 39.96,
+      "lifetimeCommission": 3.6,
+      "lifetimeUnits": 2,
       "monthlyPerformance": [
         {
           "month": "June 2026",
           "gmv": 19.98,
           "commission": 1.8,
           "units": 1
+        },
+        {
+          "month": "July 2026",
+          "date": "2026-07-10",
+          "periodStart": "2026-07-01",
+          "periodEnd": "2026-07-10",
+          "gmv": 19.98,
+          "commission": 1.8,
+          "units": 1,
+          "source": "July 1-10 2026 product sales update"
         }
       ],
       "firstPromotedDate": "2026-06-01",
-      "lastPromotedDate": "2026-06-30",
+      "lastPromotedDate": "2026-07-10",
       "sampleStatus": "Watch",
       "wouldPromoteAgain": "Maybe",
       "status": "Watch",
@@ -1263,7 +1372,8 @@ window.PROJECT_FLYWHEEL_DB = {
         "Book",
         "Evergreen",
         "raisedRight"
-      ]
+      ],
+      "july2026SalesSource": "July 1-10 2026 product sales update"
     },
     {
       "id": "raisedRight-citrus-squeezer-35",
@@ -1562,19 +1672,29 @@ window.PROJECT_FLYWHEEL_DB = {
       "categoryGroup": "Fashion",
       "seasonality": "Summer",
       "evergreenSeasonal": "Seasonal",
-      "lifetimeGmv": 11.29,
-      "lifetimeCommission": 2.66,
-      "lifetimeUnits": 1,
+      "lifetimeGmv": 20.08,
+      "lifetimeCommission": 4.86,
+      "lifetimeUnits": 2,
       "monthlyPerformance": [
         {
           "month": "June 2026",
           "gmv": 11.29,
           "commission": 2.66,
           "units": 1
+        },
+        {
+          "month": "July 2026",
+          "date": "2026-07-10",
+          "periodStart": "2026-07-01",
+          "periodEnd": "2026-07-10",
+          "gmv": 8.79,
+          "commission": 2.2,
+          "units": 1,
+          "source": "July 1-10 2026 product sales update"
         }
       ],
       "firstPromotedDate": "2026-06-01",
-      "lastPromotedDate": "2026-06-30",
+      "lastPromotedDate": "2026-07-10",
       "sampleStatus": "Watch",
       "wouldPromoteAgain": "Maybe",
       "status": "Watch",
@@ -1587,7 +1707,8 @@ window.PROJECT_FLYWHEEL_DB = {
         "Fashion",
         "Seasonal",
         "raisedRight"
-      ]
+      ],
+      "july2026SalesSource": "July 1-10 2026 product sales update"
     },
     {
       "id": "raisedRight-poo-pourri-pocket-spray-44",
@@ -1634,19 +1755,29 @@ window.PROJECT_FLYWHEEL_DB = {
       "categoryGroup": "Supplement",
       "seasonality": "Evergreen",
       "evergreenSeasonal": "Evergreen",
-      "lifetimeGmv": 7.36,
-      "lifetimeCommission": 1.1,
-      "lifetimeUnits": 1,
+      "lifetimeGmv": 25.04,
+      "lifetimeCommission": 2.5,
+      "lifetimeUnits": 2,
       "monthlyPerformance": [
         {
           "month": "June 2026",
           "gmv": 7.36,
           "commission": 1.1,
           "units": 1
+        },
+        {
+          "month": "July 2026",
+          "date": "2026-07-10",
+          "periodStart": "2026-07-01",
+          "periodEnd": "2026-07-10",
+          "gmv": 17.68,
+          "commission": 1.4,
+          "units": 1,
+          "source": "July 1-10 2026 product sales update"
         }
       ],
       "firstPromotedDate": "2026-06-01",
-      "lastPromotedDate": "2026-06-30",
+      "lastPromotedDate": "2026-07-10",
       "sampleStatus": "Watch",
       "wouldPromoteAgain": "Maybe",
       "status": "Watch",
@@ -1659,7 +1790,8 @@ window.PROJECT_FLYWHEEL_DB = {
         "Supplement",
         "Evergreen",
         "raisedRight"
-      ]
+      ],
+      "july2026SalesSource": "July 1-10 2026 product sales update"
     },
     {
       "id": "raisedRight-apple-squishy-toys-46",
@@ -1778,9 +1910,9 @@ window.PROJECT_FLYWHEEL_DB = {
       "categoryGroup": "Health Book",
       "seasonality": "Evergreen",
       "evergreenSeasonal": "Evergreen",
-      "lifetimeGmv": 3851.96,
-      "lifetimeCommission": 317.88,
-      "lifetimeUnits": 148,
+      "lifetimeGmv": 4137.74,
+      "lifetimeCommission": 341.64,
+      "lifetimeUnits": 159,
       "monthlyPerformance": [
         {
           "month": "June 2026",
@@ -1790,14 +1922,17 @@ window.PROJECT_FLYWHEEL_DB = {
         },
         {
           "month": "July 2026",
-          "gmv": 51.96,
-          "commission": 4.32,
-          "units": 2,
-          "date": "2026-07-01"
+          "date": "2026-07-10",
+          "periodStart": "2026-07-01",
+          "periodEnd": "2026-07-10",
+          "gmv": 337.74,
+          "commission": 28.08,
+          "units": 13,
+          "source": "July 1-10 2026 product sales update"
         }
       ],
       "firstPromotedDate": "2026-06-01",
-      "lastPromotedDate": "2026-07-01",
+      "lastPromotedDate": "2026-07-10",
       "sampleStatus": "Request Now",
       "wouldPromoteAgain": "Yes",
       "status": "Double Down",
@@ -1818,7 +1953,8 @@ window.PROJECT_FLYWHEEL_DB = {
         "audienceCapitalScorePlaceholder": "High",
         "trustScorePlaceholder": "High"
       },
-      "seedSource": "July 2, 2026 morning update"
+      "seedSource": "July 2, 2026 morning update",
+      "july2026SalesSource": "July 1-10 2026 product sales update"
     },
     {
       "id": "truthTunedTribe-complete-peptide-protocols-playbook-2",
@@ -1829,9 +1965,9 @@ window.PROJECT_FLYWHEEL_DB = {
       "categoryGroup": "Health Book",
       "seasonality": "Evergreen",
       "evergreenSeasonal": "Evergreen",
-      "lifetimeGmv": 3616.06,
-      "lifetimeCommission": 287.64,
-      "lifetimeUnits": 150,
+      "lifetimeGmv": 5200,
+      "lifetimeCommission": 418.2,
+      "lifetimeUnits": 218,
       "monthlyPerformance": [
         {
           "month": "June 2026",
@@ -1841,14 +1977,17 @@ window.PROJECT_FLYWHEEL_DB = {
         },
         {
           "month": "July 2026",
-          "gmv": 216.06,
-          "commission": 16.32,
-          "units": 9,
-          "date": "2026-07-01"
+          "date": "2026-07-10",
+          "periodStart": "2026-07-01",
+          "periodEnd": "2026-07-10",
+          "gmv": 1800,
+          "commission": 146.88,
+          "units": 77,
+          "source": "July 1-10 2026 product sales update"
         }
       ],
       "firstPromotedDate": "2026-06-01",
-      "lastPromotedDate": "2026-07-01",
+      "lastPromotedDate": "2026-07-10",
       "sampleStatus": "Request Now",
       "wouldPromoteAgain": "Yes",
       "status": "Double Down",
@@ -1869,7 +2008,8 @@ window.PROJECT_FLYWHEEL_DB = {
         "audienceCapitalScorePlaceholder": "High",
         "trustScorePlaceholder": "High"
       },
-      "seedSource": "July 2, 2026 morning update"
+      "seedSource": "July 2, 2026 morning update",
+      "july2026SalesSource": "July 1-10 2026 product sales update"
     },
     {
       "id": "truthTunedTribe-patriotic-trump-thumbs-up-pool-float-3",
@@ -1952,19 +2092,29 @@ window.PROJECT_FLYWHEEL_DB = {
       "categoryGroup": "Wellness",
       "seasonality": "Fall/Winter",
       "evergreenSeasonal": "Evergreen",
-      "lifetimeGmv": 159.4,
-      "lifetimeCommission": 29.48,
-      "lifetimeUnits": 14,
+      "lifetimeGmv": 189.36,
+      "lifetimeCommission": 34.68,
+      "lifetimeUnits": 16,
       "monthlyPerformance": [
         {
           "month": "June 2026",
           "gmv": 159.4,
           "commission": 29.48,
           "units": 14
+        },
+        {
+          "month": "July 2026",
+          "date": "2026-07-10",
+          "periodStart": "2026-07-01",
+          "periodEnd": "2026-07-10",
+          "gmv": 29.96,
+          "commission": 5.2,
+          "units": 2,
+          "source": "July 1-10 2026 product sales update"
         }
       ],
       "firstPromotedDate": "2026-06-01",
-      "lastPromotedDate": "2026-06-30",
+      "lastPromotedDate": "2026-07-10",
       "sampleStatus": "Request Now",
       "wouldPromoteAgain": "Yes",
       "status": "Double Down",
@@ -1984,7 +2134,8 @@ window.PROJECT_FLYWHEEL_DB = {
         "audienceCapitalScorePlaceholder": "High",
         "trustScorePlaceholder": "High"
       },
-      "seedSource": "July 2, 2026 morning update"
+      "seedSource": "July 2, 2026 morning update",
+      "july2026SalesSource": "July 1-10 2026 product sales update"
     },
     {
       "id": "truthTunedTribe-fenbendazole-and-ivermectin-protocols-6",
@@ -2254,19 +2405,29 @@ window.PROJECT_FLYWHEEL_DB = {
       "categoryGroup": "Home",
       "seasonality": "Evergreen",
       "evergreenSeasonal": "Evergreen",
-      "lifetimeGmv": 26.86,
-      "lifetimeCommission": 3.36,
-      "lifetimeUnits": 2,
+      "lifetimeGmv": 39.45,
+      "lifetimeCommission": 4.06,
+      "lifetimeUnits": 3,
       "monthlyPerformance": [
         {
           "month": "June 2026",
           "gmv": 26.86,
           "commission": 3.36,
           "units": 2
+        },
+        {
+          "month": "July 2026",
+          "date": "2026-07-10",
+          "periodStart": "2026-07-01",
+          "periodEnd": "2026-07-10",
+          "gmv": 12.59,
+          "commission": 0.7,
+          "units": 1,
+          "source": "July 1-10 2026 product sales update"
         }
       ],
       "firstPromotedDate": "2026-06-01",
-      "lastPromotedDate": "2026-06-30",
+      "lastPromotedDate": "2026-07-10",
       "sampleStatus": "Wait",
       "wouldPromoteAgain": "No",
       "status": "Watch",
@@ -2279,7 +2440,8 @@ window.PROJECT_FLYWHEEL_DB = {
         "Home",
         "Evergreen",
         "truthTunedTribe"
-      ]
+      ],
+      "july2026SalesSource": "July 1-10 2026 product sales update"
     },
     {
       "id": "truthTunedTribe-ultimate-peptide-bible-extra-listing-14",
@@ -2400,14 +2562,17 @@ window.PROJECT_FLYWHEEL_DB = {
       "monthlyPerformance": [
         {
           "month": "July 2026",
+          "date": "2026-07-10",
+          "periodStart": "2026-07-01",
+          "periodEnd": "2026-07-10",
           "gmv": 12.79,
           "commission": 0.75,
           "units": 1,
-          "date": "2026-07-01"
+          "source": "July 1-10 2026 product sales update"
         }
       ],
       "firstPromotedDate": "2026-07-02",
-      "lastPromotedDate": "2026-07-01",
+      "lastPromotedDate": "2026-07-10",
       "notes": "Small July sale. Track as curiosity product, but low commission means it should not pull focus from peptide books.",
       "bestHook": "A curiosity-led belief/story angle is required before scaling.",
       "bestCta": "Use only if the audience response proves trust.",
@@ -2431,7 +2596,8 @@ window.PROJECT_FLYWHEEL_DB = {
         "audienceCapitalScorePlaceholder": "Medium",
         "trustScorePlaceholder": "Needs more data"
       },
-      "seedSource": "July 2, 2026 morning update"
+      "seedSource": "July 2, 2026 morning update",
+      "july2026SalesSource": "July 1-10 2026 product sales update"
     },
     {
       "id": "truthtunedtribe-ghk-cu-topical",
@@ -4694,6 +4860,530 @@ window.PROJECT_FLYWHEEL_DB = {
       "updateDate": "2026-07-02",
       "products": 8,
       "videos": 15
+    }
+  ],
+  "salesRecords": [
+    {
+      "id": "july-2026-01-10-raisedRight-2-in-1-garden-hoe-and-weed-puller",
+      "accountId": "raisedRight",
+      "account": "Raised Right",
+      "productId": "raisedRight-2-in-1-garden-hoe-and-weed-puller-rake-1",
+      "productName": "2-in-1 Garden Hoe & Weed Puller Rake",
+      "category": "Garden / Outdoor Problem Solver",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 965.17,
+      "commission": 112.72,
+      "unitsSold": 45,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
+    },
+    {
+      "id": "july-2026-01-10-raisedRight-the-complete-peptide-protocols-playbook",
+      "accountId": "raisedRight",
+      "account": "Raised Right",
+      "productId": "raisedRight-complete-peptide-protocols-playbook-18",
+      "productName": "Complete Peptide Protocols Playbook",
+      "category": "Health Book",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 698.72,
+      "commission": 55.08,
+      "unitsSold": 29,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
+    },
+    {
+      "id": "july-2026-01-10-raisedRight-4-in-1-digital-tds-water-quality-tester",
+      "accountId": "raisedRight",
+      "account": "Raised Right",
+      "productId": "raisedRight-4-in-1-digital-tds-water-quality-tester-4",
+      "productName": "4-in-1 Digital TDS Water Quality Tester",
+      "category": "Health / Water / Home Testing",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 615.12,
+      "commission": 125.01,
+      "unitsSold": 158,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
+    },
+    {
+      "id": "july-2026-01-10-raisedRight-big-size-jericho-flower",
+      "accountId": "raisedRight",
+      "account": "Raised Right",
+      "productId": "raisedRight-big-size-jericho-flower-17",
+      "productName": "Big Size Jericho Flower",
+      "category": "Curiosity/Natural",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 218.82,
+      "commission": 23.07,
+      "unitsSold": 30,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
+    },
+    {
+      "id": "july-2026-01-10-raisedRight-premium-silver-soft-cotton-grounding-blanket",
+      "accountId": "raisedRight",
+      "account": "Raised Right",
+      "productId": "raisedRight-premium-silver-soft-cotton-grounding-blanket-8",
+      "productName": "Premium Silver Soft Cotton Grounding Blanket",
+      "category": "Health / Grounding",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 197.18,
+      "commission": 45.36,
+      "unitsSold": 2,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
+    },
+    {
+      "id": "july-2026-01-10-raisedRight-women-s-hollow-out-tie-front-cardigan",
+      "accountId": "raisedRight",
+      "account": "Raised Right",
+      "productId": "",
+      "productName": "Women's Hollow Out Tie Front Cardigan",
+      "category": "Fashion",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 126.04,
+      "commission": 10.1,
+      "unitsSold": 7,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
+    },
+    {
+      "id": "july-2026-01-10-raisedRight-flowy-shorts",
+      "accountId": "raisedRight",
+      "account": "Raised Right",
+      "productId": "",
+      "productName": "Flowy Shorts",
+      "category": "Fashion",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 44.38,
+      "commission": 6.66,
+      "unitsSold": 2,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
+    },
+    {
+      "id": "july-2026-01-10-raisedRight-hanging-solar-lantern",
+      "accountId": "raisedRight",
+      "account": "Raised Right",
+      "productId": "",
+      "productName": "Hanging Solar Lantern",
+      "category": "Garden / Outdoor Decor",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 43.22,
+      "commission": 6.48,
+      "unitsSold": 1,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
+    },
+    {
+      "id": "july-2026-01-10-raisedRight-magic-pens",
+      "accountId": "raisedRight",
+      "account": "Raised Right",
+      "productId": "",
+      "productName": "Magic Pens",
+      "category": "Utility / Office",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 39.35,
+      "commission": 4.8,
+      "unitsSold": 3,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
+    },
+    {
+      "id": "july-2026-01-10-raisedRight-football-candle",
+      "accountId": "raisedRight",
+      "account": "Raised Right",
+      "productId": "raisedRight-smells-like-a-football-win-scented-candle-7",
+      "productName": "Smells Like a Football Win Scented Candle",
+      "category": "Football / Gift / Home",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 35.7,
+      "commission": 5.1,
+      "unitsSold": 2,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
+    },
+    {
+      "id": "july-2026-01-10-raisedRight-ettika-heart-necklace",
+      "accountId": "raisedRight",
+      "account": "Raised Right",
+      "productId": "",
+      "productName": "Ettika Heart Necklace",
+      "category": "Jewelry",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 34.77,
+      "commission": 5.82,
+      "unitsSold": 1,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
+    },
+    {
+      "id": "july-2026-01-10-raisedRight-frankincense-and-myrrh-balm",
+      "accountId": "raisedRight",
+      "account": "Raised Right",
+      "productId": "raisedRight-balm-of-gilead-frankincense-and-myrrh-16",
+      "productName": "Balm of Gilead Frankincense & Myrrh",
+      "category": "Wellness/Skin",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 29.99,
+      "commission": 4.5,
+      "unitsSold": 1,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
+    },
+    {
+      "id": "july-2026-01-10-raisedRight-draft-top-lift",
+      "accountId": "raisedRight",
+      "account": "Raised Right",
+      "productId": "raisedRight-draft-top-lift-can-clip-15",
+      "productName": "Draft Top Lift + Can Clip",
+      "category": "Summer/Drinks",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 28.37,
+      "commission": 4.35,
+      "unitsSold": 1,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
+    },
+    {
+      "id": "july-2026-01-10-raisedRight-baron-trump-collection",
+      "accountId": "raisedRight",
+      "account": "Raised Right",
+      "productId": "raisedRight-baron-trump-collection-30",
+      "productName": "Baron Trump Collection",
+      "category": "Book/Curiosity",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 24.98,
+      "commission": 1.9,
+      "unitsSold": 1,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
+    },
+    {
+      "id": "july-2026-01-10-raisedRight-body-electric",
+      "accountId": "raisedRight",
+      "account": "Raised Right",
+      "productId": "",
+      "productName": "Body Electric",
+      "category": "Books / Wellness",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 23.58,
+      "commission": 1.76,
+      "unitsSold": 1,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
+    },
+    {
+      "id": "july-2026-01-10-raisedRight-black-book-of-manifestation",
+      "accountId": "raisedRight",
+      "account": "Raised Right",
+      "productId": "raisedRight-black-book-of-manifestation-34",
+      "productName": "Black Book of Manifestation",
+      "category": "Book/Manifestation",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 19.98,
+      "commission": 1.8,
+      "unitsSold": 1,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
+    },
+    {
+      "id": "july-2026-01-10-raisedRight-artificial-geraniums",
+      "accountId": "raisedRight",
+      "account": "Raised Right",
+      "productId": "",
+      "productName": "Artificial Geraniums",
+      "category": "Garden / Decor",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 18.88,
+      "commission": 3.21,
+      "unitsSold": 1,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
+    },
+    {
+      "id": "july-2026-01-10-raisedRight-saw-palmetto",
+      "accountId": "raisedRight",
+      "account": "Raised Right",
+      "productId": "raisedRight-bulksupplements-saw-palmetto-45",
+      "productName": "BulkSupplements Saw Palmetto",
+      "category": "Supplement",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 17.68,
+      "commission": 1.4,
+      "unitsSold": 1,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
+    },
+    {
+      "id": "july-2026-01-10-raisedRight-trump-insults-playing-cards",
+      "accountId": "raisedRight",
+      "account": "Raised Right",
+      "productId": "",
+      "productName": "Trump Insults Playing Cards",
+      "category": "Patriotic / Games",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 15.98,
+      "commission": 2.72,
+      "unitsSold": 1,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
+    },
+    {
+      "id": "july-2026-01-10-raisedRight-croptuck",
+      "accountId": "raisedRight",
+      "account": "Raised Right",
+      "productId": "raisedRight-original-croptuck-43",
+      "productName": "Original Croptuck",
+      "category": "Fashion/Utility",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 8.79,
+      "commission": 2.2,
+      "unitsSold": 1,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
+    },
+    {
+      "id": "july-2026-01-10-truthTunedTribe-the-complete-peptide-protocols-playbook",
+      "accountId": "truthTunedTribe",
+      "account": "Truth Tuned Tribe",
+      "productId": "truthTunedTribe-complete-peptide-protocols-playbook-2",
+      "productName": "Complete Peptide Protocols Playbook",
+      "category": "Health Book / Peptides",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 1800,
+      "commission": 146.88,
+      "unitsSold": 77,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
+    },
+    {
+      "id": "july-2026-01-10-truthTunedTribe-the-ultimate-peptide-protocols-bible",
+      "accountId": "truthTunedTribe",
+      "account": "Truth Tuned Tribe",
+      "productId": "truthTunedTribe-ultimate-peptide-protocols-bible-1",
+      "productName": "Ultimate Peptide Protocols Bible",
+      "category": "Health Book / Peptides",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 337.74,
+      "commission": 28.08,
+      "unitsSold": 13,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
+    },
+    {
+      "id": "july-2026-01-10-truthTunedTribe-women-s-solid-color-hollow-out-tie-front-cardigan",
+      "accountId": "truthTunedTribe",
+      "account": "Truth Tuned Tribe",
+      "productId": "",
+      "productName": "Women's Solid Color Hollow Out Tie Front Cardigan",
+      "category": "Fashion",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 87.12,
+      "commission": 7.12,
+      "unitsSold": 5,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
+    },
+    {
+      "id": "july-2026-01-10-truthTunedTribe-6-pack-electroculture-copper-gardening-stakes",
+      "accountId": "truthTunedTribe",
+      "account": "Truth Tuned Tribe",
+      "productId": "",
+      "productName": "6 Pack Electroculture Copper Gardening Stakes",
+      "category": "Garden / Wellness",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 44.14,
+      "commission": 1.41,
+      "unitsSold": 1,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
+    },
+    {
+      "id": "july-2026-01-10-truthTunedTribe-turmeric-ginger-cinnamon-tea",
+      "accountId": "truthTunedTribe",
+      "account": "Truth Tuned Tribe",
+      "productId": "truthTunedTribe-turmeric-ginger-cinnamon-tea-5",
+      "productName": "Turmeric Ginger Cinnamon Tea",
+      "category": "Wellness / Tea",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 29.96,
+      "commission": 5.2,
+      "unitsSold": 2,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
+    },
+    {
+      "id": "july-2026-01-10-truthTunedTribe-pure-copper-drinking-straws",
+      "accountId": "truthTunedTribe",
+      "account": "Truth Tuned Tribe",
+      "productId": "",
+      "productName": "Pure Copper Drinking Straws",
+      "category": "Wellness / Kitchen",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 13.62,
+      "commission": 1.6,
+      "unitsSold": 1,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
+    },
+    {
+      "id": "july-2026-01-10-truthTunedTribe-7x-reversible-candle",
+      "accountId": "truthTunedTribe",
+      "account": "Truth Tuned Tribe",
+      "productId": "truthtunedtribe-7x-reversible-candle-breaks-witchcraft",
+      "productName": "7X Reversible Candle Breaks Witchcraft",
+      "category": "Spiritual / Candle",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 12.79,
+      "commission": 0.75,
+      "unitsSold": 1,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
+    },
+    {
+      "id": "july-2026-01-10-truthTunedTribe-elegant-blue-ceramic-ashtray",
+      "accountId": "truthTunedTribe",
+      "account": "Truth Tuned Tribe",
+      "productId": "truthTunedTribe-blue-ceramic-ashtray-with-lid-13",
+      "productName": "Blue Ceramic Ashtray with Lid",
+      "category": "Home/Decor",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 12.59,
+      "commission": 0.7,
+      "unitsSold": 1,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
+    },
+    {
+      "id": "july-2026-01-10-truthTunedTribe-plastic-food-covers",
+      "accountId": "truthTunedTribe",
+      "account": "Truth Tuned Tribe",
+      "productId": "",
+      "productName": "Plastic Food Covers",
+      "category": "Kitchen / Utility",
+      "date": "2026-07-10",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-10",
+      "periodLabel": "July 1-10, 2026",
+      "month": "July 2026",
+      "gmv": 10.72,
+      "commission": 1.61,
+      "unitsSold": 1,
+      "source": "July 1-10 2026 product sales update",
+      "lastUpdated": "2026-07-10T12:00:00.000Z"
     }
   ]
 };

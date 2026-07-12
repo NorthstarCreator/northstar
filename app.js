@@ -8543,6 +8543,7 @@ function upsertSeedVideo(row) {
 }
 
 function seedJuly3Sales() {
+  if ((db.salesRecords || []).some((record) => record.source === "July 1-10 2026 product sales update")) return;
   [
     ["raisedRight", "2-in-1 Garden Hoe & Weed Puller Rake", "Garden / Outdoor Problem Solver", 81.10, 8.30, 4],
     ["raisedRight", "4-in-1 Digital TDS Water Quality Tester", "Health / Water / Home Testing", 31.52, 6.32, 8],
