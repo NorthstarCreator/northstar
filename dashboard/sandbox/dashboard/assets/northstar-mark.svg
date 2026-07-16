@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Northstar logo">
+
+  <defs>
+    <radialGradient id="navyBg" cx="50%" cy="45%" r="75%">
+      <stop offset="0" stop-color="#082640"/>
+      <stop offset="0.55" stop-color="#06182A"/>
+      <stop offset="1" stop-color="#020A13"/>
+    </radialGradient>
+    <linearGradient id="goldMetal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7A4B06"/>
+      <stop offset="0.22" stop-color="#FFD86A"/>
+      <stop offset="0.48" stop-color="#F6B900"/>
+      <stop offset="0.72" stop-color="#D4AF37"/>
+      <stop offset="1" stop-color="#8B5608"/>
+    </linearGradient>
+    <linearGradient id="whiteMetal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.5" stop-color="#F7F2E8"/>
+      <stop offset="1" stop-color="#A9B0B7"/>
+    </linearGradient>
+    <linearGradient id="northMetal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.16" stop-color="#FFD86A"/>
+      <stop offset="0.44" stop-color="#D4AF37"/>
+      <stop offset="0.68" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#8B5608"/>
+    </linearGradient>
+    <radialGradient id="centerDark" cx="50%" cy="46%" r="60%">
+      <stop offset="0" stop-color="#201203"/>
+      <stop offset="0.58" stop-color="#120902"/>
+      <stop offset="1" stop-color="#020A13"/>
+    </radialGradient>
+    <radialGradient id="sparkCore" cx="50%" cy="50%" r="55%">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.26" stop-color="#FFF5C4"/>
+      <stop offset="0.58" stop-color="#FFD86A"/>
+      <stop offset="1" stop-color="#D4AF37"/>
+    </radialGradient>
+    
+    <filter id="sparkHalo" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="7" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0.98 0 0.74 0 0 0.46 0 0 0.13 0 0.02 0 0 0 0.72 0"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="softLogoGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0.86 0 0.62 0 0 0.18 0 0 0.09 0 0.01 0 0 0 0.32 0"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    
+  </defs>
+
+<g id="compass" transform="translate(256 256) scale(0.98) translate(-256 -256)">
+<circle id="spark-glow" cx="256" cy="256" r="86" fill="#D4AF37" opacity=".16" filter="url(#softLogoGlow)"/>
+<g id="outer-arcs" fill="none" stroke-linecap="butt">
+<path d="M 144.738 211.047 A 120.000 120.000 0 0 1 220.915 141.243" stroke="#FFFFFF" stroke-width="7.84"/>
+<path d="M 291.085 141.243 A 120.000 120.000 0 0 1 367.262 211.047" stroke="#FFFFFF" stroke-width="7.84"/>
+<path d="M 367.262 300.953 A 120.000 120.000 0 0 1 291.085 370.757" stroke="#FFFFFF" stroke-width="7.84"/>
+<path d="M 220.915 370.757 A 120.000 120.000 0 0 1 144.738 300.953" stroke="#FFFFFF" stroke-width="7.84"/>
+</g>
+<g id="cardinal-points">
+<path id="north-point" d="M 256.000 60.000 L 278.000 222.000 Q 256.000 265.000 234.000 222.000 Z" fill="url(#northMetal)" stroke="#FFFFFF" stroke-width="2.16"/>
+<path id="south-point" d="M 256.000 406.000 L 240.000 288.000 Q 256.000 247.000 272.000 288.000 Z" fill="url(#whiteMetal)" stroke="#FFFFFF" stroke-width="1.76"/>
+<path id="east-point" d="M 420.000 256.000 L 288.000 271.000 Q 247.000 256.000 288.000 241.000 Z" fill="url(#whiteMetal)" stroke="#FFFFFF" stroke-width="1.76"/>
+<path id="west-point" d="M 92.000 256.000 L 224.000 241.000 Q 265.000 256.000 224.000 271.000 Z" fill="url(#whiteMetal)" stroke="#FFFFFF" stroke-width="1.76"/>
+<path d="M 256.000 60.000 L 263.000 222.000 Q 256.000 265.000 249.000 222.000 Z" fill="#FFF7D1" opacity=".92"/>
+<path d="M 420.000 256.000 L 288.000 261.000 Q 247.000 256.000 288.000 251.000 Z" fill="#FFFDF5" opacity=".72"/>
+<path d="M 92.000 256.000 L 224.000 251.000 Q 265.000 256.000 224.000 261.000 Z" fill="#FFFDF5" opacity=".72"/>
+</g>
+<g id="calibration-marks" stroke-linecap="round">
+<path d="M 310.45 310.45 L 328.83 328.83" stroke="#D4AF37" stroke-width="4.90"/>
+<path d="M 201.55 310.45 L 183.17 328.83" stroke="#D4AF37" stroke-width="4.90"/>
+<path d="M 201.55 201.55 L 183.17 183.17" stroke="#D4AF37" stroke-width="4.90"/>
+<path d="M 310.45 201.55 L 328.83 183.17" stroke="#D4AF37" stroke-width="4.90"/>
+</g>
+<g id="center-medallion">
+<circle cx="256" cy="256" r="58" fill="url(#centerDark)" stroke="url(#goldMetal)" stroke-width="7.84"/>
+<circle cx="256" cy="256" r="47" fill="none" stroke="#FFD86A" stroke-width="1.37" opacity=".82"/>
+</g>
+<g id="spark-particles" fill="#FFD86A" opacity=".82">
+<circle cx="221" cy="236" r="2.0"/>
+<circle cx="236" cy="286" r="1.6"/>
+<circle cx="293" cy="224" r="1.7"/>
+<circle cx="303" cy="269" r="1.25"/>
+<circle cx="209" cy="265" r="1.3"/>
+<circle cx="273" cy="301" r="1.15"/>
+<circle cx="235" cy="217" r="1.1"/>
+<circle cx="289" cy="289" r="1.05"/>
+</g>
+<g id="spark">
+<path d="M 256.000 208.000 L 263.778 248.222 L 304.000 256.000 L 263.778 263.778 L 256.000 304.000 L 248.222 263.778 L 208.000 256.000 L 248.222 248.222 Z" fill="#D4AF37" opacity=".56" filter="url(#sparkHalo)"/>
+<path d="M 256.000 217.000 L 262.364 249.636 L 295.000 256.000 L 262.364 262.364 L 256.000 295.000 L 249.636 262.364 L 217.000 256.000 L 249.636 249.636 Z" fill="url(#sparkCore)"/>
+<path d="M 278.000 256.000 L 259.536 259.536 L 256.000 278.000 L 252.464 259.536 L 234.000 256.000 L 252.464 252.464 L 256.000 234.000 L 259.536 252.464 Z" fill="url(#sparkCore)" opacity=".95"/>
+</g>
+</g>
+</svg>
