@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Northstar Live Dashboard Sandbox</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Primary">
+        <div class="brand-lockup">
+          <div class="mark" aria-hidden="true">N</div>
+          <div>
+            <p class="eyebrow">Northstar</p>
+            <h1>Creator OS</h1>
+          </div>
+        </div>
+        <nav id="sidebarNav" class="nav-list"></nav>
+        <button id="addAccountButton" class="ghost-button full-width" type="button">Add Account</button>
+        <div class="sidebar-note">
+          <span>Sandbox prototype</span>
+          <strong>Mock data only</strong>
+        </div>
+      </aside>
+
+      <main class="main-shell">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Visual Prototype</p>
+            <h2 id="pageTitle">Morning Brief</h2>
+          </div>
+          <div class="controls">
+            <label class="control">
+              <span>Account</span>
+              <select id="accountSelect">
+                <option value="all">All Accounts</option>
+                <option value="raised-right">Raised Right</option>
+                <option value="truth-tuned-tribe">Truth Tuned Tribe</option>
+              </select>
+            </label>
+            <label class="control">
+              <span>Date range</span>
+              <select id="dateSelect">
+                <option value="today">Today</option>
+                <option value="week">This Week</option>
+                <option value="month" selected>This Month</option>
+                <option value="custom">Custom</option>
+              </select>
+            </label>
+            <div id="customRange" class="custom-range" hidden>
+              <label>
+                <span>Start</span>
+                <input id="customStart" type="date" value="2026-07-01">
+              </label>
+              <label>
+                <span>End</span>
+                <input id="customEnd" type="date" value="2026-07-16">
+              </label>
+            </div>
+          </div>
+        </header>
+
+        <section class="sync-strip" aria-label="Sync status">
+          <span>Last Sync</span>
+          <strong>Today at 8:04 AM</strong>
+          <span class="dot"></span>
+          <span>Prototype values update with account and date filters.</span>
+        </section>
+
+        <section id="content" class="content-area" tabindex="-1"></section>
+      </main>
+    </div>
+
+    <div id="modalRoot" class="modal-root" hidden></div>
+
+    <script src="mock-data.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
