@@ -170,6 +170,83 @@ window.NORTHSTAR_SANDBOX_DATA = {
     { id: "v7", accountId: "truth-tuned-tribe", productId: "hotel-cafe", title: "This hidden cafe is inside an old hotel", thumbnail: "☕", date: "2026-07-12", time: "4:45 PM", views: 93500, likes: 3100, comments: 156, shares: 730, earnings: 188, gmv: 0, units: 0, qualifiedViews: 0, bookings: 18, linkClicks: 412, sourceIds: ["go"] },
     { id: "v8", accountId: "truth-tuned-tribe", productId: "peptide-playbook", title: "One peptide mistake I would not repeat", thumbnail: "📘", date: "2026-07-10", time: "11:28 AM", views: 72000, likes: 2100, comments: 92, shares: 420, earnings: 138, gmv: 0, units: 0, qualifiedViews: 66000, bookings: 0, linkClicks: 0, sourceIds: ["rewards"] }
   ],
+  audience: [
+    {
+      accountId: "raised-right",
+      range: "month",
+      viewers: {
+        total: 389000,
+        new: 241000,
+        returning: 148000,
+        gender: { Female: 53, Male: 44, "Unspecified": 3 },
+        age: { "18-24": 8, "25-34": 18, "35-44": 24, "45-54": 31, "55+": 19 },
+        locations: { "United States": 82, Canada: 6, "United Kingdom": 4, Australia: 3, Other: 5 },
+        hourly: [3100, 2200, 1600, 1200, 900, 1100, 1800, 2600, 4300, 6100, 7200, 7900, 8400, 8800, 9200, 10300, 12100, 15800, 19600, 24200, 21800, 17100, 9800, 5200],
+        weekdays: { Mon: 38200, Tue: 42100, Wed: 46500, Thu: 69200, Fri: 63600, Sat: 58100, Sun: 71400 },
+        trend: [17200, 19800, 18400, 23100, 20600, 21900, 24800, 26100, 25700, 28400, 27900, 30200, 29600, 32600, 34100, 35300]
+      },
+      followers: {
+        total: 84200,
+        netNew: 318,
+        gained: 354,
+        lost: 36,
+        gender: { Female: 55, Male: 42, "Unspecified": 3 },
+        age: { "18-24": 6, "25-34": 16, "35-44": 26, "45-54": 33, "55+": 19 },
+        locations: { "United States": 86, Canada: 5, "United Kingdom": 3, Australia: 2, Other: 4 },
+        hourly: [420, 310, 190, 130, 110, 160, 250, 380, 620, 790, 910, 980, 1040, 1110, 1240, 1490, 1780, 2260, 2910, 3380, 3140, 2380, 1410, 760],
+        weekdays: { Mon: 920, Tue: 1010, Wed: 1150, Thu: 1520, Fri: 1470, Sat: 1310, Sun: 1660 },
+        trend: [83910, 83928, 83945, 83969, 83988, 84005, 84032, 84051, 84070, 84094, 84116, 84142, 84163, 84182, 84203, 84200]
+      }
+    },
+    {
+      accountId: "truth-tuned-tribe",
+      range: "month",
+      viewers: {
+        total: 255700,
+        new: 174500,
+        returning: 81200,
+        gender: { Female: 61, Male: 35, "Unspecified": 4 },
+        age: { "18-24": 11, "25-34": 23, "35-44": 27, "45-54": 25, "55+": 14 },
+        locations: { "United States": 77, Canada: 8, "United Kingdom": 6, Australia: 4, Other: 5 },
+        hourly: [1900, 1400, 1000, 800, 700, 900, 1500, 2300, 4200, 7300, 11200, 13400, 12600, 11900, 10500, 9900, 10800, 12100, 13200, 14700, 13600, 9400, 5200, 2800],
+        weekdays: { Mon: 31800, Tue: 33700, Wed: 37900, Thu: 49600, Fri: 42100, Sat: 28900, Sun: 31700 },
+        trend: [11800, 13600, 14200, 15100, 14900, 15800, 16200, 17100, 16400, 17600, 18300, 19100, 21400, 19800, 22100, 23800]
+      },
+      followers: {
+        total: 61450,
+        netNew: 486,
+        gained: 532,
+        lost: 46,
+        gender: { Female: 64, Male: 32, "Unspecified": 4 },
+        age: { "18-24": 10, "25-34": 24, "35-44": 29, "45-54": 27, "55+": 10 },
+        locations: { "United States": 79, Canada: 7, "United Kingdom": 6, Australia: 3, Other: 5 },
+        hourly: [260, 190, 150, 110, 90, 140, 230, 360, 610, 1150, 1680, 1910, 1770, 1620, 1450, 1370, 1510, 1690, 1880, 2110, 1970, 1320, 760, 420],
+        weekdays: { Mon: 710, Tue: 830, Wed: 940, Thu: 1310, Fri: 1120, Sat: 790, Sun: 860 },
+        trend: [60990, 61012, 61040, 61069, 61102, 61134, 61162, 61193, 61224, 61261, 61298, 61331, 61368, 61402, 61428, 61450]
+      }
+    }
+  ],
+  shopOrders: [
+    { id: "ord-1001", accountId: "raised-right", productId: "garden-hoe", videoId: "v1", date: "2026-07-16", status: "Estimated", attributionType: "organic_video", price: 24.99, quantity: 5, commissionBase: 124.95, commissionRate: 0.14, estimatedCommission: 17.49, actualCommission: null, settlement: "Estimated settlement in 14 days", sellerAdAttributed: false, dataSource: "tiktok_shop" },
+    { id: "ord-1002", accountId: "raised-right", productId: "garden-hoe", videoId: "v1", date: "2026-07-16", status: "Estimated", attributionType: "shop_ad", price: 24.99, quantity: 9, commissionBase: 224.91, commissionRate: 0.06, estimatedCommission: 13.49, actualCommission: null, settlement: "Seller ad attribution pending", sellerAdAttributed: true, dataSource: "tiktok_shop" },
+    { id: "ord-1003", accountId: "raised-right", productId: "garden-hoe", videoId: "v2", date: "2026-07-12", status: "Estimated", attributionType: "organic_video", price: 24.99, quantity: 14, commissionBase: 349.86, commissionRate: 0.14, estimatedCommission: 48.98, actualCommission: null, settlement: "Estimated settlement in 10 days", sellerAdAttributed: false, dataSource: "tiktok_shop" },
+    { id: "ord-1004", accountId: "raised-right", productId: "garden-hoe", videoId: "v2", date: "2026-07-12", status: "Estimated", attributionType: "shop_ad", price: 24.99, quantity: 18, commissionBase: 449.82, commissionRate: 0.06, estimatedCommission: 26.99, actualCommission: null, settlement: "Seller ad attribution pending", sellerAdAttributed: true, dataSource: "tiktok_shop" },
+    { id: "ord-1005", accountId: "raised-right", productId: "tds-meter", videoId: "v3", date: "2026-07-15", status: "Estimated", attributionType: "organic_video", price: 18.99, quantity: 12, commissionBase: 227.88, commissionRate: 0.12, estimatedCommission: 27.35, actualCommission: null, settlement: "Estimated settlement in 13 days", sellerAdAttributed: false, dataSource: "tiktok_shop" },
+    { id: "ord-1006", accountId: "raised-right", productId: "solar-lantern", videoId: "v4", date: "2026-07-11", status: "Paid", attributionType: "organic_video", price: 32.0, quantity: 6, commissionBase: 192.0, commissionRate: 0.1, estimatedCommission: 19.2, actualCommission: 19.2, settlement: "Paid", sellerAdAttributed: false, dataSource: "tiktok_shop" },
+    { id: "ord-1007", accountId: "truth-tuned-tribe", productId: "peptide-playbook", videoId: "v5", date: "2026-07-13", status: "Estimated", attributionType: "organic_video", price: 19.99, quantity: 21, commissionBase: 419.79, commissionRate: 0.15, estimatedCommission: 62.97, actualCommission: null, settlement: "Estimated settlement in 11 days", sellerAdAttributed: false, dataSource: "tiktok_shop" },
+    { id: "ord-1008", accountId: "truth-tuned-tribe", productId: "peptide-playbook", videoId: "v5", date: "2026-07-13", status: "Estimated", attributionType: "shop_ad", price: 19.99, quantity: 13, commissionBase: 259.87, commissionRate: 0.07, estimatedCommission: 18.19, actualCommission: null, settlement: "Seller ad attribution pending", sellerAdAttributed: true, dataSource: "tiktok_shop" },
+    { id: "ord-1009", accountId: "truth-tuned-tribe", productId: "ai-glasses", videoId: "v6", date: "2026-07-16", status: "Estimated", attributionType: "organic_video", price: 48.0, quantity: 2, commissionBase: 96.0, commissionRate: 0.08, estimatedCommission: 7.68, actualCommission: null, settlement: "Estimated settlement in 14 days", sellerAdAttributed: false, dataSource: "tiktok_shop" },
+    { id: "ord-1010", accountId: "truth-tuned-tribe", productId: "ai-glasses", videoId: "v6", date: "2026-07-16", status: "Estimated", attributionType: "shop_ad", price: 48.0, quantity: 1, commissionBase: 48.0, commissionRate: 0.045, estimatedCommission: 2.16, actualCommission: null, settlement: "Seller ad attribution pending", sellerAdAttributed: true, dataSource: "tiktok_shop" }
+  ],
+  dataHubSources: [
+    { name: "Account Profile", status: "Connected", lastUpdated: "2026-07-16 9:00 AM", records: 2, dataSource: "tiktok_profile" },
+    { name: "Video Performance", status: "Sandbox Mock", lastUpdated: "2026-07-16 9:05 AM", records: 8, dataSource: "tiktok_analytics" },
+    { name: "Viewer Insights", status: "Sandbox Mock", lastUpdated: "2026-07-16 9:08 AM", records: 2, dataSource: "tiktok_analytics" },
+    { name: "Follower Insights", status: "Sandbox Mock", lastUpdated: "2026-07-16 9:08 AM", records: 2, dataSource: "tiktok_analytics" },
+    { name: "TikTok Shop Orders", status: "Sandbox Mock", lastUpdated: "2026-07-16 9:12 AM", records: 10, dataSource: "tiktok_shop" },
+    { name: "Creator Rewards", status: "Awaiting Source", lastUpdated: "Manual mock only", records: 4, dataSource: "manual_import" },
+    { name: "TikTok GO", status: "Awaiting Source", lastUpdated: "Manual mock only", records: 1, dataSource: "future_integration" }
+  ],
   days: [
     { date: "2026-07-01", raisedRight: { shop: 88, rewards: 0, go: 0, videos: 1, bestVideo: "Garden refresh", bestProduct: "Garden Hoe", time: "7:10 PM", units: 8 }, truthTunedTribe: { shop: 42, rewards: 18, go: 0, videos: 1, bestVideo: "Peptide intro", bestProduct: "Peptide Playbook", time: "2:20 PM", units: 4 } },
     { date: "2026-07-02", raisedRight: { shop: 144, rewards: 0, go: 0, videos: 2, bestVideo: "Water tester demo", bestProduct: "Water Tester", time: "6:58 PM", units: 13 }, truthTunedTribe: { shop: 36, rewards: 24, go: 0, videos: 1, bestVideo: "Hidden setting", bestProduct: "Peptide Playbook", time: "9:30 AM", units: 3 } },
