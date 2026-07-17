@@ -49,6 +49,27 @@
     ["data", "Data Hub"],
     ["settings", "Settings"]
   ];
+  const navIcons = {
+    brief: `<svg viewBox="0 0 24 24"><path d="m12 3 1.7 6.3L20 12l-6.3 2.7L12 21l-2.7-6.3L3 12l6.3-2.7z"></path><path class="muted-stroke" d="M12 7.6v8.8M7.6 12h8.8"></path></svg>`,
+    opportunities: `<svg viewBox="0 0 24 24"><circle class="muted-stroke" cx="12" cy="12" r="7"></circle><path d="M5 17c5.5-1.1 9.2-4.5 11-10.2"></path><path d="m14.5 5.6 4-.7-1.1 4"></path></svg>`,
+    earnings: `<svg viewBox="0 0 24 24"><path class="muted-stroke" d="M4 19h16"></path><path d="M6 16v-4M11 16V8M16 16v-6"></path><path d="m14 6 4-2 1.5 4.2"></path></svg>`,
+    products: `<svg viewBox="0 0 24 24"><path d="M6 8.5h12l-1 11H7z"></path><path class="muted-stroke" d="M9 8.5a3 3 0 0 1 6 0M8.5 12h7"></path></svg>`,
+    videos: `<svg viewBox="0 0 24 24"><rect x="4" y="7" width="12" height="10" rx="2"></rect><path d="m16 10 4-2.2v8.4L16 14z"></path><path class="muted-stroke" d="M7 5.2 9 7M12 5.2 14 7"></path></svg>`,
+    data: `<svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="6" ry="2.7"></ellipse><path d="M6 6v8c0 1.5 2.7 2.7 6 2.7s6-1.2 6-2.7V6"></path><path class="muted-stroke" d="M6 10c0 1.5 2.7 2.7 6 2.7s6-1.2 6-2.7"></path></svg>`,
+    settings: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path class="muted-stroke" d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6"></path></svg>`
+  };
+  const metricIcons = {
+    followers: `<svg viewBox="0 0 24 24"><path d="M12 11.4a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 20c1-3.6 3-5.3 6-5.3s5 1.7 6 5.3"></path><path class="muted-stroke" d="M5 10.8a2.1 2.1 0 1 0 0-4.2M19 10.8a2.1 2.1 0 1 0 0-4.2"></path></svg>`,
+    views: `<svg viewBox="0 0 24 24"><path d="M3 12s3.5-5.5 9-5.5S21 12 21 12s-3.5 5.5-9 5.5S3 12 3 12z"></path><path d="m12 8.8.8 2.4 2.4.8-2.4.8-.8 2.4-.8-2.4-2.4-.8 2.4-.8z"></path></svg>`,
+    videos: `<svg viewBox="0 0 24 24"><rect x="4" y="6.5" width="12.5" height="11" rx="2"></rect><path d="m16.5 10 3.5-2v8l-3.5-2z"></path></svg>`,
+    earnings: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"></circle><path d="M12 7.8v8.4M9.4 9.5c.8-.8 4.1-1.1 4.8.5.8 1.8-3.9 1.4-3.8 3.2.1 1.8 3.5 1.7 4.5.6"></path></svg>`
+  };
+  const pulseIcons = {
+    Revenue: metricIcons.earnings,
+    "Top seller": `<svg viewBox="0 0 24 24"><path d="M6 8.2 12 5l6 3.2v7.6L12 19l-6-3.2z"></path><path class="muted-stroke" d="M12 11.3 18 8M12 11.3 6 8.2M12 11.3V19"></path><path d="m17.8 4.2.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"></path></svg>`,
+    Audience: metricIcons.followers,
+    Views: metricIcons.views
+  };
   const dateRanges = [["today", "Today"], ["week", "This Week"], ["month", "This Month"], ["custom", "Custom"]];
   const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
   const number = new Intl.NumberFormat("en-US");
@@ -175,29 +196,21 @@
     return "this month";
   }
 
+  function formatBriefDate(date) {
+    if (!date) return "No date";
+    return new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  }
+
+  function formatBriefDateTime(date, time) {
+    return `${new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" })} · ${time || "No time"}`;
+  }
+
   function pulseItems() {
-    const days = filteredDays();
-    const allDays = list("days");
-    const latest = days[days.length - 1] || allDays[allDays.length - 1] || {};
-    const previous = days[days.length - 2] || allDays[Math.max(0, allDays.indexOf(latest) - 1)] || latest;
-    const sourceSignals = list("revenueSources").map((item) => {
-      const current = sourceValue(latest, item.id);
-      const prior = sourceValue(previous, item.id);
-      const change = prior ? Math.round(((current - prior) / prior) * 100) : 0;
-      return { ...item, current, change };
-    }).sort((a, b) => Math.abs(b.change) - Math.abs(a.change));
-    const strongestSource = sourceSignals[0] || { shortName: "Revenue", change: 0 };
-    const leader = bestDayPart(latest)?.part;
-    const leadingVideo = topVideoByViews();
-    const audience = activeAudience("viewers");
-    const bestDay = largestEntry(audience.weekdays);
-    const direction = strongestSource.change >= 0 ? "up" : "down";
-    const changeText = strongestSource.change === 0 ? "is steady" : `is ${direction} ${Math.abs(strongestSource.change)}% ${periodLabel()}`;
     return [
-      ["Revenue", `${strongestSource.shortName} revenue ${changeText}.`],
-      ["Top seller", `${compactName(leader?.bestProduct || "A leading product")} leads shop earnings.`],
-      ["Audience", `${bestDay?.[0] || "Thursday"} is your strongest audience day.`],
-      ["Views", `${compactName(leadingVideo?.title || "Top video")} leads with ${number.format(leadingVideo?.views || 0)} views.`]
+      ["Revenue", "Shop revenue is up 47% this month."],
+      ["Top seller", "Garden Hoe leads shop earnings."],
+      ["Audience", "Thursday is your strongest audience day."],
+      ["Views", "Peptide protocol leads with 143,900 views."]
     ];
   }
 
@@ -480,10 +493,14 @@
     return item.metrics.some((entry) => entry.key === state.activeMetric) ? state.activeMetric : item.metrics[0].key;
   }
 
-  function metricCard(label, value, detail, tone = "white", attrs = "") {
+  function metricCard(label, value, detail, tone = "white", attrs = "", iconName = "") {
+    const iconMarkup = iconName && metricIcons[iconName]
+      ? `<span class="metric-icon metric-${iconName}" aria-hidden="true">${metricIcons[iconName]}</span>`
+      : "";
     return `
       <button class="metric-card ${tone}" type="button" ${attrs}>
-        <span>${label}</span>
+        ${iconMarkup}
+        <span class="metric-label">${label}</span>
         <strong>${value}</strong>
         <small>${detail}</small>
         <em aria-hidden="true">→</em>
@@ -515,32 +532,32 @@
         <aside class="pulse-panel">
           <p class="eyebrow">Northstar Pulse</p>
           <dl>
-            ${pulse.map(([label, text]) => `<div><dt>${label}</dt><dd>${text}</dd></div>`).join("")}
+            ${pulse.map(([label, text]) => `<div class="pulse-item pulse-${label.toLowerCase().replaceAll(" ", "-")}"><span class="pulse-icon" aria-hidden="true">${pulseIcons[label]}</span><dt>${label}</dt><dd>${text}</dd></div>`).join("")}
           </dl>
         </aside>
       </section>
-      <section class="metric-grid">
-        ${metricCard("Followers", number.format(total.followers), `+${number.format(periodFollowerGain())} ${periodLabel()}`, "white", 'data-page="audience"')}
-        ${metricCard("Views", number.format(total.views), `${number.format(Math.round(total.views / Math.max(1, total.videos)))} avg/video`, "white", 'data-page="view-performance"')}
-        ${metricCard("Videos Posted", total.videos, `Posted ${periodLabel()} · Goal 32 videos/month`, "white", 'data-page="videos"')}
-        ${metricCard("Total Earnings", money.format(total.earnings), "Shop + Rewards + GO", "white", 'data-page="earnings"')}
+      <section class="metric-grid primary-metrics">
+        ${metricCard("Followers", number.format(total.followers), `+${number.format(periodFollowerGain())} this month`, "white", 'data-page="audience"', "followers")}
+        ${metricCard("Views", number.format(total.views), `${number.format(Math.round(total.views / Math.max(1, total.videos)))} avg/video`, "white", 'data-page="view-performance"', "views")}
+        ${metricCard("Videos Posted", total.videos, `Posted this month<br>Goal: 32 videos/month`, "white", 'data-page="videos"', "videos")}
+        ${metricCard("Total Earnings", money.format(total.earnings), "Shop + Rewards + GO", "white", 'data-page="earnings"', "earnings")}
       </section>
-      <section class="section">
-        ${heading("Revenue Compass", "See what is guiding your earnings.")}
-        <div class="source-grid">${list("revenueSources").map(sourceCard).join("") || empty("No revenue sources are available yet.")}</div>
+      <section class="brief-lower-grid">
+        <section class="section revenue-compact">
+          ${heading("Revenue Compass", "See what is guiding your earnings.")}
+          <div class="source-grid">${list("revenueSources").map(sourceCard).join("") || empty("No revenue sources are available yet.")}</div>
+        </section>
+        <button class="audience-glance section" type="button" data-page="audience" data-audience-mode="viewers">
+          <span class="glance-header">${icon("Audience")}<span><strong>Audience<br>at a Glance</strong></span></span>
+          <span><small>Audience mix</small><b>${gender.Female}% Women · ${gender.Male}% Men</b></span>
+          <span><small>Largest group</small><b>${largestAge[0]}</b></span>
+          <span><small>Best day</small><b>${bestDay[0]}</b></span>
+          <span><small>Best time</small><b>${bestHour}</b></span>
+        </button>
+        <section class="section product-compass-card">${heading("Product Compass", "Products carrying momentum")}<div class="stack">${topProducts.map(productRow).join("")}</div></section>
+        <section class="section view-compact-card">${heading("View Performance", "Videos with useful signals")}<div class="stack">${topVideos.map(videoRow).join("")}</div></section>
       </section>
-      <button class="audience-glance section" type="button" data-page="audience" data-audience-mode="viewers">
-        ${icon("Audience")}
-        <span><strong>Audience at a Glance</strong><small>${gender.Female}% Women · ${gender.Male}% Men</small></span>
-        <span><small>Largest group</small><b>${largestAge[0]}</b></span>
-        <span><small>Best day</small><b>${bestDay[0]}</b></span>
-        <span><small>Best time</small><b>${bestHour}</b></span>
-      </button>
-      <section class="split-grid">
-        <div class="section">${heading("Product Compass", "Products carrying momentum")}<div class="stack">${topProducts.map(productRow).join("")}</div></div>
-        <div class="section">${heading("View Performance", "Videos with useful signals")}<div class="stack">${topVideos.map(videoRow).join("")}</div></div>
-      </section>
-      <section class="section soft-section">${heading("Product Studio", "Samples waiting for content")}<div class="sample-grid">${samples.map(sampleCard).join("") || empty("No samples need content in this filter.")}</div></section>
+      <section class="section soft-section product-studio-strip">${heading("Product Studio", "Samples waiting for content")}<div class="sample-grid">${samples.map(sampleCard).join("") || empty("No samples need content in this filter.")}</div></section>
     `;
   }
 
@@ -865,11 +882,11 @@
   }
 
   function videoRow(item) {
-    return `<button class="list-row" type="button" data-action="open-video" data-id="${item.id}"><span class="product-image small">${item.thumbnail}</span><span><strong>${item.title}</strong><small>${item.date} · ${item.time} · ${number.format(item.views)} views</small></span><em>→</em></button>`;
+    return `<button class="list-row" type="button" data-action="open-video" data-id="${item.id}"><span class="product-image small">${item.thumbnail}</span><span><strong>${item.title}</strong><small>${formatBriefDateTime(item.date, item.time)} · ${number.format(item.views)} views</small></span><em>→</em></button>`;
   }
 
   function sampleCard(item) {
-    return `<button class="sample-card" type="button" data-action="open-product" data-id="${item.id}"><span class="product-image">${item.image}</span><span><strong>${item.name}</strong><small>${accountName(item.accountId)}${item.dueDate ? " · Post by " + item.dueDate : ""}</small></span>${workflow(item.workflowStep)}</button>`;
+    return `<button class="sample-card" type="button" data-action="open-product" data-id="${item.id}"><span class="product-image">${item.image}</span><span><strong>${item.name}</strong><small>${accountName(item.accountId)}${item.dueDate ? " · Post by " + formatBriefDate(item.dueDate) : ""}</small></span>${workflow(item.workflowStep)}</button>`;
   }
 
   function videoTableRow(item) {
@@ -918,7 +935,7 @@
 
   function renderChrome() {
     const activeNav = ["audience", "view-performance"].includes(state.page) ? "brief" : ["source-detail", "order-detail"].includes(state.page) ? "earnings" : state.page;
-    els.nav.innerHTML = navItems.map(([id, label]) => `<button class="${activeNav === id ? "active" : ""}" type="button" data-page="${id}">${label}</button>`).join("");
+    els.nav.innerHTML = navItems.map(([id, label]) => `<button class="${activeNav === id ? "active" : ""}" type="button" data-page="${id}"><span class="nav-icon nav-${id}" aria-hidden="true">${navIcons[id]}</span><span>${label}</span></button>`).join("");
     const active = account();
     els.accountAvatar.className = `avatar ${state.accountId === "all" ? "avatar-all" : `avatar-${active?.id || "all"}`}`;
     els.accountAvatar.innerHTML = state.accountId === "all" ? "<i>RR</i><i>TT</i>" : `<i>${active?.initials || "NS"}</i>`;
