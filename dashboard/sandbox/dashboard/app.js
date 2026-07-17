@@ -1,5 +1,5 @@
 (function () {
-  const data = window.NORTHSTAR_SANDBOX_DATA;
+  const data = window.NORTHSTAR_SANDBOX_DATA || {};
   const state = {
     page: "brief",
     accountId: "all",
@@ -53,12 +53,29 @@
   const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
   const number = new Intl.NumberFormat("en-US");
 
-  const account = (id = state.accountId) => data.accounts.find((item) => item.id === id);
+  const list = (key) => Array.isArray(data[key]) ? data[key] : [];
+  const defaultAudience = () => ({
+    total: 0,
+    new: 0,
+    returning: 0,
+    netNew: 0,
+    gained: 0,
+    lost: 0,
+    gender: { Female: 0, Male: 0 },
+    age: { Unknown: 0 },
+    locations: { Unknown: 0 },
+    hourly: Array.from({ length: 24 }, () => 0),
+    weekdays: { Monday: 0, Tuesday: 0, Wednesday: 0, Thursday: 0, Friday: 0, Saturday: 0, Sunday: 0 },
+    trend: []
+  });
+
+  const account = (id = state.accountId) => list("accounts").find((item) => item.id === id);
   const accountName = (id = state.accountId) => account(id)?.name || "All Accounts";
-  const source = (id = state.activeSource) => data.revenueSources.find((item) => item.id === id);
-  const product = (id) => data.products.find((item) => item.id === id);
-  const video = (id) => data.videos.find((item) => item.id === id);
-  const order = (id) => data.shopOrders.find((item) => item.id === id);
+  const source = (id = state.activeSource) => list("revenueSources").find((item) => item.id === id);
+  const product = (id) => list("products").find((item) => item.id === id);
+  const video = (id) => list("videos").find((item) => item.id === id);
+  const order = (id) => list("shopOrders").find((item) => item.id === id);
+  const itemSources = (item) => Array.isArray(item?.sourceIds) ? item.sourceIds : [];
 
   const sectionIcon = {
     "Revenue Compass": "M12 3l2.6 6.4L21 12l-6.4 2.6L12 21l-2.6-6.4L3 12l6.4-2.6L12 3zm0 5.6L10.6 12l1.4 3.4 1.4-3.4L12 8.6z",
@@ -93,20 +110,20 @@
     return current >= start && current <= end;
   }
 
-  const accountIds = () => state.accountId === "all" ? data.accounts.map((item) => item.id) : [state.accountId];
+  const accountIds = () => state.accountId === "all" ? list("accounts").map((item) => item.id) : [state.accountId];
   const accountMatches = (item) => state.accountId === "all" || item.accountId === state.accountId;
-  const accountPart = (day, id) => day[id === "raised-right" ? "raisedRight" : "truthTunedTribe"];
-  const filteredDays = () => data.days.filter((day) => inRange(day.date));
+  const accountPart = (day = {}, id) => day[id === "raised-right" ? "raisedRight" : "truthTunedTribe"] || {};
+  const filteredDays = () => list("days").filter((day) => inRange(day.date));
 
   function periodFollowerGain(accountId = state.accountId) {
     const days = Math.max(1, filteredDays().length);
-    const scale = Math.min(1, days / Math.max(1, data.days.length));
-    if (accountId === "all") return data.accounts.reduce((sum, item) => sum + periodFollowerGain(item.id), 0);
+    const scale = Math.min(1, days / Math.max(1, list("days").length));
+    if (accountId === "all") return list("accounts").reduce((sum, item) => sum + periodFollowerGain(item.id), 0);
     return Math.round((account(accountId)?.followerChange || 0) * scale);
   }
 
   function currentFollowers(accountId = state.accountId) {
-    if (accountId === "all") return data.accounts.reduce((sum, item) => sum + item.followers, 0);
+    if (accountId === "all") return list("accounts").reduce((sum, item) => sum + (item.followers || 0), 0);
     return account(accountId)?.followers || 0;
   }
 
@@ -129,15 +146,16 @@
 
   function pulseItems() {
     const days = filteredDays();
-    const latest = days[days.length - 1] || data.days[data.days.length - 1];
-    const previous = days[days.length - 2] || data.days[Math.max(0, data.days.indexOf(latest) - 1)] || latest;
-    const sourceSignals = data.revenueSources.map((item) => {
+    const allDays = list("days");
+    const latest = days[days.length - 1] || allDays[allDays.length - 1] || {};
+    const previous = days[days.length - 2] || allDays[Math.max(0, allDays.indexOf(latest) - 1)] || latest;
+    const sourceSignals = list("revenueSources").map((item) => {
       const current = sourceValue(latest, item.id);
       const prior = sourceValue(previous, item.id);
       const change = prior ? Math.round(((current - prior) / prior) * 100) : 0;
       return { ...item, current, change };
     }).sort((a, b) => Math.abs(b.change) - Math.abs(a.change));
-    const strongestSource = sourceSignals[0];
+    const strongestSource = sourceSignals[0] || { shortName: "Revenue", change: 0 };
     const leader = bestDayPart(latest)?.part;
     const leadingVideo = topVideoByViews();
     const audience = activeAudience("viewers");
@@ -157,7 +175,8 @@
     const total = currentFollowers();
     const gained = periodFollowerGain();
     const base = total - gained;
-    return (days.length ? days : [data.days[data.days.length - 1]]).map((day, index, list) => ({
+    const allDays = list("days");
+    return (days.length ? days : [allDays[allDays.length - 1] || { date: "No date" }]).map((day, index, list) => ({
       date: day.date,
       value: Math.round(base + gained * ((index + 1) / Math.max(1, list.length)))
     }));
@@ -165,7 +184,8 @@
 
   function viewTimeline() {
     const days = filteredDays();
-    return (days.length ? days : [data.days[data.days.length - 1]]).map((day) => ({
+    const allDays = list("days");
+    return (days.length ? days : [allDays[allDays.length - 1] || { date: "No date" }]).map((day) => ({
       date: day.date,
       value: filteredVideos().filter((item) => item.date === day.date).reduce((sum, item) => sum + item.views, 0)
     }));
@@ -197,24 +217,24 @@
   }
 
   function filteredVideos(extra = {}) {
-    return data.videos
+    return list("videos")
       .filter(accountMatches)
       .filter((item) => inRange(item.date))
       .filter((item) => !extra.productId || item.productId === extra.productId)
-      .filter((item) => !extra.sourceId || item.sourceIds.includes(extra.sourceId));
+      .filter((item) => !extra.sourceId || itemSources(item).includes(extra.sourceId));
   }
 
   function filteredProducts(extra = {}) {
     const visibleVideos = filteredVideos(extra);
     const ids = new Set(visibleVideos.map((item) => item.productId));
-    return data.products
+    return list("products")
       .filter(accountMatches)
       .filter((item) => ids.has(item.id) || (item.type === "sample" && inRange(item.updatedAt)))
       .filter((item) => !extra.sourceId || item.type === "sample" || visibleVideos.some((v) => v.productId === item.id));
   }
 
   function filteredOrders(extra = {}) {
-    return data.shopOrders
+    return list("shopOrders")
       .filter(accountMatches)
       .filter((item) => inRange(item.date))
       .filter((item) => !extra.productId || item.productId === extra.productId)
@@ -236,13 +256,13 @@
     const summary = { organic_video: { ...base }, shop_ad: { ...base }, all: { ...base } };
     orders.forEach((item) => {
       const key = item.attributionType;
-      [summary[key], summary.all].forEach((bucket) => {
+      [summary[key] || summary.all, summary.all].forEach((bucket) => {
         bucket.orders += 1;
-        bucket.units += item.quantity;
+        bucket.units += Number(item.quantity || 0);
         bucket.gmv += orderGmv(item);
         bucket.commission += commissionValue(item);
-        bucket.rateBase += item.commissionBase;
-        bucket.weightedRate += item.commissionBase * item.commissionRate;
+        bucket.rateBase += Number(item.commissionBase || 0);
+        bucket.weightedRate += Number(item.commissionBase || 0) * Number(item.commissionRate || 0);
       });
     });
     Object.values(summary).forEach((bucket) => {
@@ -260,29 +280,34 @@
   }
 
   function selectedAudienceRecord(accountId = state.accountId) {
-    const records = data.audience.filter((item) => accountId === "all" || item.accountId === accountId);
-    if (accountId !== "all") return records[0];
+    const records = list("audience").filter((item) => accountId === "all" || item.accountId === accountId);
+    if (!records.length) return { accountId, range: state.dateRange, viewers: defaultAudience(), followers: defaultAudience() };
+    if (accountId !== "all") {
+      const record = records[0];
+      return { ...record, viewers: { ...defaultAudience(), ...(record.viewers || {}) }, followers: { ...defaultAudience(), ...(record.followers || {}) } };
+    }
     const merged = { accountId: "all", range: "month", viewers: {}, followers: {} };
     ["viewers", "followers"].forEach((mode) => {
-      const first = records[0][mode];
-      const total = records.reduce((sum, item) => sum + item[mode].total, 0);
-      const combinePercent = (field) => Object.fromEntries(Object.keys(first[field]).map((key) => [
+      const normalized = records.map((item) => ({ ...item, [mode]: { ...defaultAudience(), ...(item[mode] || {}) } }));
+      const first = normalized[0][mode];
+      const total = normalized.reduce((sum, item) => sum + item[mode].total, 0);
+      const combinePercent = (field) => Object.fromEntries(Object.keys(first[field] || {}).map((key) => [
         key,
-        Math.round(records.reduce((sum, item) => sum + item[mode][field][key] * item[mode].total, 0) / Math.max(1, total))
+        Math.round(normalized.reduce((sum, item) => sum + (item[mode][field]?.[key] || 0) * item[mode].total, 0) / Math.max(1, total))
       ]));
-      const sumArray = (field) => first[field].map((_, index) => records.reduce((sum, item) => sum + item[mode][field][index], 0));
+      const sumArray = (field) => (first[field] || []).map((_, index) => normalized.reduce((sum, item) => sum + (item[mode][field]?.[index] || 0), 0));
       merged[mode] = {
         total,
-        new: records.reduce((sum, item) => sum + (item[mode].new || 0), 0),
-        returning: records.reduce((sum, item) => sum + (item[mode].returning || 0), 0),
-        netNew: records.reduce((sum, item) => sum + (item[mode].netNew || 0), 0),
-        gained: records.reduce((sum, item) => sum + (item[mode].gained || 0), 0),
-        lost: records.reduce((sum, item) => sum + (item[mode].lost || 0), 0),
+        new: normalized.reduce((sum, item) => sum + (item[mode].new || 0), 0),
+        returning: normalized.reduce((sum, item) => sum + (item[mode].returning || 0), 0),
+        netNew: normalized.reduce((sum, item) => sum + (item[mode].netNew || 0), 0),
+        gained: normalized.reduce((sum, item) => sum + (item[mode].gained || 0), 0),
+        lost: normalized.reduce((sum, item) => sum + (item[mode].lost || 0), 0),
         gender: combinePercent("gender"),
         age: combinePercent("age"),
         locations: combinePercent("locations"),
         hourly: sumArray("hourly"),
-        weekdays: Object.fromEntries(Object.keys(first.weekdays).map((key) => [key, records.reduce((sum, item) => sum + item[mode].weekdays[key], 0)])),
+        weekdays: Object.fromEntries(Object.keys(first.weekdays || {}).map((key) => [key, normalized.reduce((sum, item) => sum + (item[mode].weekdays?.[key] || 0), 0)])),
         trend: sumArray("trend")
       };
     });
@@ -291,30 +316,31 @@
 
   function activeAudience(mode = state.audienceMode) {
     const record = selectedAudienceRecord();
-    return record?.[mode] || selectedAudienceRecord("all")[mode];
+    return record?.[mode] || selectedAudienceRecord("all")?.[mode] || defaultAudience();
   }
 
   function largestEntry(object) {
-    return Object.entries(object).sort((a, b) => b[1] - a[1])[0];
+    return Object.entries(object || { Unknown: 0 }).sort((a, b) => b[1] - a[1])[0] || ["Unknown", 0];
   }
 
   function bestHourLabel(values) {
-    const index = values.indexOf(Math.max(...values));
+    const hours = Array.isArray(values) && values.length ? values : Array.from({ length: 24 }, () => 0);
+    const index = hours.indexOf(Math.max(...hours));
     const next = (index + 1) % 24;
     const fmt = (hour) => new Date(`2026-07-16T${String(hour).padStart(2, "0")}:00:00`).toLocaleTimeString("en-US", { hour: "numeric" });
     return `${fmt(index)}-${fmt(next)}`;
   }
 
   function sourceDays(sourceId) {
-    return data.days.filter((day) => inRange(day.date)).map((day) => {
+    return list("days").filter((day) => inRange(day.date)).map((day) => {
       const parts = accountIds().map((id) => accountPart(day, id));
       const orders = sourceId === "shop" ? filteredOrders().filter((item) => item.date === day.date) : [];
       const shopEarnings = orders.reduce((sum, item) => sum + commissionValue(item), 0);
       return {
         date: day.date,
         earnings: sourceId === "shop" ? shopEarnings : parts.reduce((sum, part) => sum + (part[sourceId] || 0), 0),
-        videos: parts.reduce((sum, part) => sum + part.videos, 0),
-        units: sourceId === "shop" ? orders.reduce((sum, item) => sum + item.quantity, 0) : parts.reduce((sum, part) => sum + (sourceId === "go" ? part.bookings || part.units || 0 : part.units || 0), 0),
+        videos: parts.reduce((sum, part) => sum + (part.videos || 0), 0),
+        units: sourceId === "shop" ? orders.reduce((sum, item) => sum + Number(item.quantity || 0), 0) : parts.reduce((sum, part) => sum + (sourceId === "go" ? part.bookings || part.units || 0 : part.units || 0), 0),
         bestVideo: parts.find((part) => part[sourceId])?.bestVideo || parts[0]?.bestVideo || "No video",
         bestProduct: parts.find((part) => part[sourceId])?.bestProduct || parts[0]?.bestProduct || "No product",
         time: parts.find((part) => part[sourceId])?.time || parts[0]?.time || "N/A"
@@ -324,10 +350,10 @@
 
   function totalEarnings() {
     const shop = filteredOrders().reduce((sum, item) => sum + commissionValue(item), 0);
-    return data.days.filter((day) => inRange(day.date)).reduce((sum, day) => (
+    return list("days").filter((day) => inRange(day.date)).reduce((sum, day) => (
       sum + accountIds().reduce((inner, id) => {
         const part = accountPart(day, id);
-        return inner + part.rewards + part.go;
+        return inner + (part.rewards || 0) + (part.go || 0);
       }, 0)
     ), shop);
   }
@@ -337,23 +363,23 @@
     const products = filteredProducts(sourceId ? { sourceId } : {});
     const days = sourceId ? sourceDays(sourceId) : [];
     const earnings = sourceId ? days.reduce((sum, day) => sum + day.earnings, 0) : totalEarnings();
-    const rewardVideos = videos.filter((item) => item.sourceIds.includes("rewards"));
-    const goVideos = videos.filter((item) => item.sourceIds.includes("go"));
+    const rewardVideos = videos.filter((item) => itemSources(item).includes("rewards"));
+    const goVideos = videos.filter((item) => itemSources(item).includes("go"));
     return {
-      followers: state.accountId === "all" ? data.accounts.reduce((sum, item) => sum + item.followers, 0) : account().followers,
-      views: videos.reduce((sum, item) => sum + item.views, 0),
+      followers: state.accountId === "all" ? list("accounts").reduce((sum, item) => sum + (item.followers || 0), 0) : (account()?.followers || 0),
+      views: videos.reduce((sum, item) => sum + (item.views || 0), 0),
       videos: videos.length,
       earnings,
-      commission: sourceId === "shop" ? earnings : sourceId === "go" ? earnings : videos.reduce((sum, item) => sum + ((!sourceId && item.sourceIds.includes("shop")) ? item.earnings : 0), 0),
-      gmv: sourceId === "shop" ? filteredOrders().reduce((sum, item) => sum + orderGmv(item), 0) : videos.reduce((sum, item) => sum + item.gmv, 0),
-      units: sourceId === "shop" ? filteredOrders().reduce((sum, item) => sum + item.quantity, 0) : videos.reduce((sum, item) => sum + item.units, 0),
+      commission: sourceId === "shop" ? earnings : sourceId === "go" ? earnings : videos.reduce((sum, item) => sum + ((!sourceId && itemSources(item).includes("shop")) ? (item.earnings || 0) : 0), 0),
+      gmv: sourceId === "shop" ? filteredOrders().reduce((sum, item) => sum + orderGmv(item), 0) : videos.reduce((sum, item) => sum + (item.gmv || 0), 0),
+      units: sourceId === "shop" ? filteredOrders().reduce((sum, item) => sum + Number(item.quantity || 0), 0) : videos.reduce((sum, item) => sum + (item.units || 0), 0),
       productsEarning: products.filter((item) => item.type === "product" && item.earnings > 0).length,
-      rewardsEarned: sourceId === "rewards" ? earnings : rewardVideos.reduce((sum, item) => sum + Math.round(item.earnings * 0.34), 0),
-      qualifiedViews: rewardVideos.reduce((sum, item) => sum + item.qualifiedViews, 0),
+      rewardsEarned: sourceId === "rewards" ? earnings : rewardVideos.reduce((sum, item) => sum + Math.round((item.earnings || 0) * 0.34), 0),
+      qualifiedViews: rewardVideos.reduce((sum, item) => sum + (item.qualifiedViews || 0), 0),
       eligibleVideos: rewardVideos.length,
-      rpm: rewardVideos.reduce((sum, item) => sum + Math.round(item.earnings * 0.34), 0) / Math.max(1, rewardVideos.reduce((sum, item) => sum + item.qualifiedViews, 0) / 1000),
-      linkClicks: goVideos.reduce((sum, item) => sum + item.linkClicks, 0),
-      bookings: goVideos.reduce((sum, item) => sum + item.bookings, 0),
+      rpm: rewardVideos.reduce((sum, item) => sum + Math.round((item.earnings || 0) * 0.34), 0) / Math.max(1, rewardVideos.reduce((sum, item) => sum + (item.qualifiedViews || 0), 0) / 1000),
+      linkClicks: goVideos.reduce((sum, item) => sum + (item.linkClicks || 0), 0),
+      bookings: goVideos.reduce((sum, item) => sum + (item.bookings || 0), 0),
       placesEarning: products.filter((item) => item.type === "place" && item.earnings > 0).length
     };
   }
@@ -367,7 +393,7 @@
   function identity(accountId = state.accountId) {
     if (accountId === "all") return `<span class="avatar avatar-all"><i>RR</i><i>TT</i></span>`;
     const item = account(accountId);
-    return `<span class="avatar avatar-${item.id}"><i>${item.initials}</i></span>`;
+    return `<span class="avatar avatar-${item?.id || "all"}"><i>${item?.initials || "NS"}</i></span>`;
   }
 
   function setPage(page, id = null, push = true) {
@@ -407,7 +433,7 @@
     if (sourceId === "shop") {
       const orders = filteredOrders().filter((item) => item.date === day.date);
       if (key === "gmv") return orders.reduce((sum, item) => sum + orderGmv(item), 0);
-      if (key === "units") return orders.reduce((sum, item) => sum + item.quantity, 0);
+      if (key === "units") return orders.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
       if (key === "productsEarning") return new Set(orders.map((item) => item.productId)).size;
     }
     if (key === "gmv") return Math.round(day.earnings * 7.6);
@@ -419,6 +445,7 @@
 
   function activeMetricFor(sourceId) {
     const item = source(sourceId);
+    if (!item?.metrics?.length) return "earnings";
     return item.metrics.some((entry) => entry.key === state.activeMetric) ? state.activeMetric : item.metrics[0].key;
   }
 
@@ -469,7 +496,7 @@
       </section>
       <section class="section">
         ${heading("Revenue Compass", "See what is guiding your earnings.")}
-        <div class="source-grid">${data.revenueSources.map(sourceCard).join("")}</div>
+        <div class="source-grid">${list("revenueSources").map(sourceCard).join("") || empty("No revenue sources are available yet.")}</div>
       </section>
       <button class="audience-glance section" type="button" data-page="audience" data-audience-mode="viewers">
         ${icon("Audience")}
@@ -504,7 +531,7 @@
     const bestDay = largestEntry(item.weekdays);
     const bestTime = bestHourLabel(item.hourly);
     const accountBreakdown = state.accountId === "all"
-      ? `<section class="section"><div class="section-heading"><div><p class="eyebrow">Account Breakdown</p><h3>Followers by account</h3></div></div><div class="breakdown-cards">${data.accounts.map((item) => `<article><span>${identity(item.id)}</span><strong>${number.format(currentFollowers(item.id))}</strong><small>${item.name} · +${number.format(periodFollowerGain(item.id))} in ${readableRange()}</small></article>`).join("")}</div></section>`
+      ? `<section class="section"><div class="section-heading"><div><p class="eyebrow">Account Breakdown</p><h3>Followers by account</h3></div></div><div class="breakdown-cards">${list("accounts").map((item) => `<article><span>${identity(item.id)}</span><strong>${number.format(currentFollowers(item.id))}</strong><small>${item.name} · +${number.format(periodFollowerGain(item.id))} in ${readableRange()}</small></article>`).join("")}</div></section>`
       : "";
     const insight = isViewers
       ? `${largestAge[0]} viewers and ${bestDay[0]} activity are the clearest planning signals for ${accountName()} in this sandbox view.`
@@ -518,7 +545,7 @@
         ${metricCard("Best Day", bestDay[0], `${number.format(bestDay[1])} activity points`, "white")}
         ${metricCard("Best Time", bestTime, "Most active hour window", "white")}
       </section>
-      <section class="section trend-section">${heading(isViewers ? "Viewer Trend" : "Follower Growth", "Selected-period timeline", "Audience")}${miniTrend(item.trend.map((value, index) => ({ date: data.days[index]?.date || `Day ${index + 1}`, value })), number.format)}</section>
+      <section class="section trend-section">${heading(isViewers ? "Viewer Trend" : "Follower Growth", "Selected-period timeline", "Audience")}${miniTrend((item.trend || []).map((value, index) => ({ date: list("days")[index]?.date || `Day ${index + 1}`, value })), number.format)}</section>
       <section class="split-grid">
         <div class="section">${heading("Audience", "Demographics")}<div class="segmented sub-tabs"><button class="${state.audienceDemo === "gender" ? "active" : ""}" type="button" data-action="audience-demo" data-id="gender">Gender</button><button class="${state.audienceDemo === "age" ? "active" : ""}" type="button" data-action="audience-demo" data-id="age">Age</button><button class="${state.audienceDemo === "locations" ? "active" : ""}" type="button" data-action="audience-demo" data-id="locations">Locations</button></div>${demographicPanel(item)}</div>
         <div class="section">${heading("Audience", "Most Active")}<div class="segmented sub-tabs"><button class="${state.activityMode === "hours" ? "active" : ""}" type="button" data-action="activity-mode" data-id="hours">Hours</button><button class="${state.activityMode === "days" ? "active" : ""}" type="button" data-action="activity-mode" data-id="days">Days</button></div>${activityPanel(item)}</div>
@@ -542,11 +569,13 @@
   function activityPanel(item) {
     if (state.activityMode === "days") {
       const strongest = largestEntry(item.weekdays)[0];
-      return `<div class="activity-bars day-bars">${Object.entries(item.weekdays).map(([label, value]) => `<button type="button" class="${label === strongest ? "active" : ""}" title="${label}: ${number.format(value)}"><b style="--height:${Math.max(12, value / Math.max(...Object.values(item.weekdays)) * 100)}%"></b><span>${label}</span></button>`).join("")}</div><p class="muted activity-summary">Your ${state.audienceMode} were most active on ${strongest}.</p>`;
+      const maxDay = Math.max(...Object.values(item.weekdays || { Unknown: 0 }), 1);
+      return `<div class="activity-bars day-bars">${Object.entries(item.weekdays || { Unknown: 0 }).map(([label, value]) => `<button type="button" class="${label === strongest ? "active" : ""}" title="${label}: ${number.format(value)}"><b style="--height:${Math.max(12, value / maxDay * 100)}%"></b><span>${label}</span></button>`).join("")}</div><p class="muted activity-summary">Your ${state.audienceMode} were most active on ${strongest}.</p>`;
     }
-    const max = Math.max(...item.hourly);
-    const strongest = item.hourly.indexOf(max);
-    return `<div class="activity-bars">${item.hourly.map((value, hour) => `<button type="button" class="${hour === strongest ? "active" : ""}" title="${hour}:00 · ${number.format(value)}"><b style="--height:${Math.max(8, value / max * 100)}%"></b><span>${hour % 6 === 0 ? hour : ""}</span></button>`).join("")}</div><p class="muted activity-summary">Your ${state.audienceMode} were most active between ${bestHourLabel(item.hourly)}.</p>`;
+    const hours = Array.isArray(item.hourly) && item.hourly.length ? item.hourly : defaultAudience().hourly;
+    const max = Math.max(...hours, 1);
+    const strongest = hours.indexOf(Math.max(...hours));
+    return `<div class="activity-bars">${hours.map((value, hour) => `<button type="button" class="${hour === strongest ? "active" : ""}" title="${hour}:00 · ${number.format(value)}"><b style="--height:${Math.max(8, value / max * 100)}%"></b><span>${hour % 6 === 0 ? hour : ""}</span></button>`).join("")}</div><p class="muted activity-summary">Your ${state.audienceMode} were most active between ${bestHourLabel(hours)}.</p>`;
   }
 
   function renderViewPerformance() {
@@ -575,13 +604,16 @@
   function renderEarnings() {
     return `
       <section class="page-intro"><div><p class="eyebrow">Earnings</p><h2>Source-specific revenue, trends, and contributors.</h2><p>Morning Brief shows what matters now. Earnings explains why it happened.</p></div></section>
-      <div class="source-grid">${data.revenueSources.map(sourceCard).join("")}</div>
+      <div class="source-grid">${list("revenueSources").map(sourceCard).join("") || empty("No revenue sources are available yet.")}</div>
       ${renderRevenueStory("shop")}
     `;
   }
 
   function renderSourceDetail() {
     const item = source();
+    if (!item) {
+      return `${backButton()}<section class="section">${heading("Earnings", "Revenue source unavailable", "Revenue Compass")}${empty("Choose a revenue source from Earnings to see details.")}</section>`;
+    }
     const total = totals(item.id);
     const metric = activeMetricFor(item.id);
     const shopDetails = item.id === "shop" ? renderShopAttributionDetail() : "";
@@ -630,6 +662,9 @@
 
   function renderOrderDetail() {
     const item = order(state.selectedOrderId) || filteredOrders()[0];
+    if (!item) {
+      return `${backButton()}<section class="section">${heading("Order Detail", "No order selected", "Revenue Compass")}${empty("Orders will appear here when TikTok Shop attribution data is available in this sandbox.")}</section>`;
+    }
     const linkedProduct = product(item.productId);
     const linkedVideo = video(item.videoId);
     return `
@@ -652,6 +687,9 @@
 
   function renderRevenueStory(sourceId) {
     const item = source(sourceId);
+    if (!item) {
+      return `<section class="section chart-section">${heading("Earnings Over Time", "Revenue source unavailable", "Revenue Compass")}${empty("No revenue-source timeline is available for this filter.")}</section>`;
+    }
     const metric = activeMetricFor(sourceId);
     const days = sourceDays(sourceId);
     return `
@@ -667,6 +705,7 @@
   }
 
   function timelineView(days, sourceId, metric) {
+    if (!days.length) return empty("No daily earnings in this filter.");
     const max = Math.max(...days.map((day) => dayMetric(day, sourceId, metric)), 1);
     const points = days.map((day, index) => {
       const value = dayMetric(day, sourceId, metric);
@@ -677,7 +716,7 @@
     return `
       <div class="story-grid">
         <div class="timeline-card">
-          <svg viewBox="0 0 800 282" role="img" aria-label="${source(sourceId).name} ${metric} trend">
+          <svg viewBox="0 0 800 282" role="img" aria-label="${source(sourceId)?.name || "Revenue source"} ${metric} trend">
             <polyline points="${line}" fill="none" stroke="var(--source-color)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></polyline>
             ${points.map((point) => `<g class="svg-button" tabindex="0" role="button" data-action="select-day" data-id="${point.date}"><circle cx="${point.x}" cy="${point.y}" r="${point.date === activeDay.date ? 8 : 5}"></circle><title>${point.date}: ${metricFormat(metric, point.value)}</title></g>`).join("")}
             ${points.map((point, index) => index % 3 === 0 ? `<text x="${point.x}" y="265" text-anchor="middle">${new Date(`${point.date}T12:00:00`).toLocaleDateString("en-US", { weekday: "short" })}</text>` : "").join("")}
@@ -689,16 +728,19 @@
   }
 
   function calendarView(days, sourceId, metric) {
+    if (!days.length) return empty("No daily earnings in this filter.");
     const max = Math.max(...days.map((day) => dayMetric(day, sourceId, metric)), 1);
     const activeDay = days.find((day) => day.date === state.selectedDay) || days[days.length - 1];
     return `<div class="story-grid"><div class="heatmap">${days.map((day) => `<button type="button" class="${day.date === activeDay.date ? "active" : ""}" style="--heat:${Math.max(.12, dayMetric(day, sourceId, metric) / max)}" data-action="select-day" data-id="${day.date}"><span>${new Date(`${day.date}T12:00:00`).getDate()}</span><strong>${metricFormat(metric, dayMetric(day, sourceId, metric))}</strong></button>`).join("")}</div>${dayDetail(activeDay, sourceId, metric)}</div>`;
   }
 
   function dayDetail(day, sourceId, metric) {
+    if (!day) return `<aside class="detail-panel">${empty("No day selected.")}</aside>`;
+    const metricLabel = source(sourceId)?.metrics?.find((entry) => entry.key === metric)?.label || "Selected metric";
     return `
       <aside class="detail-panel"><p class="eyebrow">Daily Detail</p><h3>${day.date}</h3>
       <dl>
-        <div><dt>${source(sourceId).metrics.find((entry) => entry.key === metric)?.label}</dt><dd>${metricFormat(metric, dayMetric(day, sourceId, metric))}</dd></div>
+        <div><dt>${metricLabel}</dt><dd>${metricFormat(metric, dayMetric(day, sourceId, metric))}</dd></div>
         <div><dt>Videos posted</dt><dd>${day.videos}</dd></div>
         <div><dt>Best video</dt><dd>${day.bestVideo}</dd></div>
         <div><dt>${sourceId === "go" ? "Place" : "Product"}</dt><dd>${day.bestProduct}</dd></div>
@@ -714,7 +756,7 @@
   }
 
   function renderOpportunities() {
-    const items = data.opportunities.filter((item) => state.accountId === "all" || item.accountId === state.accountId).slice(0, 4);
+    const items = list("opportunities").filter((item) => state.accountId === "all" || item.accountId === state.accountId).slice(0, 4);
     return `<section class="page-intro"><div><p class="eyebrow">Opportunity Center</p><h2>Small, actionable signals worth acting on.</h2></div></section><div class="opportunity-grid">${items.map(opportunityCard).join("")}</div>`;
   }
 
@@ -723,9 +765,13 @@
   }
 
   function renderOpportunityDetail() {
-    const item = data.opportunities.find((opp) => opp.id === state.selectedOpportunityId);
+    const item = list("opportunities").find((opp) => opp.id === state.selectedOpportunityId);
+    if (!item) {
+      return `${backButton()}<section class="section">${heading("Opportunity", "No opportunity selected", "Opportunity Center")}${empty("Open an opportunity from the Opportunity Center to see the full direction.")}</section>`;
+    }
     const destination = item.targetType === "video" ? video(item.targetId) : product(item.targetId);
-    return `${backButton()}<section class="product-studio"><div><p class="eyebrow">Opportunity</p><h2>${item.noticed}</h2><p>${item.why}</p></div><button class="primary-button" type="button" data-action="open-${item.targetType}" data-id="${item.targetId}">Open ${item.targetType === "video" ? "Video Detail" : "Product Studio"}</button></section><section class="section"><h3>Recommended action</h3><p>${item.action}</p><p class="muted">Destination: ${destination.name || destination.title}</p></section>`;
+    const destinationName = destination?.name || destination?.title || "Selected item";
+    return `${backButton()}<section class="product-studio"><div><p class="eyebrow">Opportunity</p><h2>${item.noticed}</h2><p>${item.why}</p></div><button class="primary-button" type="button" data-action="open-${item.targetType}" data-id="${item.targetId}">Open ${item.targetType === "video" ? "Video Detail" : "Product Studio"}</button></section><section class="section"><h3>Recommended action</h3><p>${item.action}</p><p class="muted">Destination: ${destinationName}</p></section>`;
   }
 
   function renderProducts() {
@@ -740,6 +786,9 @@
 
   function renderProductDetail() {
     const item = product(state.selectedProductId) || filteredProducts()[0];
+    if (!item) {
+      return `${backButton()}<section class="section">${heading("Product Studio", "No product selected", "Product Studio")}${empty("Products and samples will appear here when they match the current account and date filter.")}</section>`;
+    }
     const videos = sortVideos(filteredVideos({ productId: item.id }));
     const orderSummary = attributionSummary({ productId: item.id });
     return `
@@ -758,6 +807,9 @@
 
   function renderVideoDetail() {
     const item = video(state.selectedVideoId) || filteredVideos()[0];
+    if (!item) {
+      return `${backButton()}<section class="section">${heading("Video Detail", "No video selected", "View Performance")}${empty("Videos will appear here when they match the current account and date filter.")}</section>`;
+    }
     const linked = product(item.productId);
     const orderSummary = attributionSummary({ videoId: item.id });
     const totalOrders = orderSummary.all.orders;
@@ -765,15 +817,16 @@
     const insight = totalOrders
       ? shopShare > 0 ? `Shop Ads generated ${shopShare}% of this video's shop commission, but organic sales paid a different average rate.` : "This video is currently earning from organic product-linked traffic in the sandbox data."
       : "No TikTok Shop orders are connected to this video in the sandbox data yet.";
-    return `${backButton()}<section class="product-studio"><span class="product-image large">${item.thumbnail}</span><div><p class="eyebrow">Video Detail</p><h2>${item.title}</h2><p>${accountName(item.accountId)} · Posted ${item.date} at ${item.time}</p></div></section><section class="metric-grid compact">${metricCard("Views", number.format(item.views), "Public video metric", "white")}${metricCard("Earnings", money.format(item.earnings), item.sourceIds.map((id) => source(id).name).join(" + "), "selected")}${metricCard("Units Sold", number.format(item.units), linked?.name || "Linked product", "white")}${metricCard("Shares", number.format(item.shares), "Audience signal", "white")}</section><section class="section attribution-section">${heading("Sales Attribution", "Video earnings by origin", "Revenue Compass")}<div class="attribution-grid">${orderSummary.organic_video.orders ? attributionSummaryCard("organic_video", orderSummary.organic_video) : ""}${orderSummary.shop_ad.orders ? attributionSummaryCard("shop_ad", orderSummary.shop_ad) : ""}</div>${insightCard(insight)}</section>`;
+    const sourceNames = itemSources(item).map((id) => source(id)?.name).filter(Boolean).join(" + ") || "No source linked";
+    return `${backButton()}<section class="product-studio"><span class="product-image large">${item.thumbnail}</span><div><p class="eyebrow">Video Detail</p><h2>${item.title}</h2><p>${accountName(item.accountId)} · Posted ${item.date} at ${item.time}</p></div></section><section class="metric-grid compact">${metricCard("Views", number.format(item.views), "Public video metric", "white")}${metricCard("Earnings", money.format(item.earnings), sourceNames, "selected")}${metricCard("Units Sold", number.format(item.units), linked?.name || "Linked product", "white")}${metricCard("Shares", number.format(item.shares), "Audience signal", "white")}</section><section class="section attribution-section">${heading("Sales Attribution", "Video earnings by origin", "Revenue Compass")}<div class="attribution-grid">${orderSummary.organic_video.orders ? attributionSummaryCard("organic_video", orderSummary.organic_video) : ""}${orderSummary.shop_ad.orders ? attributionSummaryCard("shop_ad", orderSummary.shop_ad) : ""}</div>${insightCard(insight)}</section>`;
   }
 
   function renderDataHub() {
-    return `<section class="page-intro"><div><p class="eyebrow">Data Hub</p><h2>Sandbox source readiness by data category.</h2><p>No live TikTok service is connected in this prototype.</p></div></section><section class="section data-source-grid">${data.dataHubSources.map((item) => `<article><span class="status-dot ${item.status.toLowerCase().replaceAll(" ", "-")}"></span><strong>${item.name}</strong><small>${item.status}</small><dl><div><dt>Last updated</dt><dd>${item.lastUpdated}</dd></div><div><dt>Records</dt><dd>${number.format(item.records)}</dd></div><div><dt>Source</dt><dd>${item.dataSource.replaceAll("_", " ")}</dd></div></dl></article>`).join("")}</section>`;
+    return `<section class="page-intro"><div><p class="eyebrow">Data Hub</p><h2>Sandbox source readiness by data category.</h2><p>No live TikTok service is connected in this prototype.</p></div></section><section class="section data-source-grid">${list("dataHubSources").map((item) => `<article><span class="status-dot ${(item.status || "unknown").toLowerCase().replaceAll(" ", "-")}"></span><strong>${item.name}</strong><small>${item.status}</small><dl><div><dt>Last updated</dt><dd>${item.lastUpdated || "Not available"}</dd></div><div><dt>Records</dt><dd>${number.format(item.records || 0)}</dd></div><div><dt>Source</dt><dd>${(item.dataSource || "sandbox").replaceAll("_", " ")}</dd></div></dl></article>`).join("") || empty("No source readiness records are available.")}</section>`;
   }
 
   function renderSettings() {
-    return `<section class="page-intro"><div><p class="eyebrow">Settings</p><h2>Useful preferences only.</h2></div></section><div class="settings-grid"><section class="section"><h3>Accounts</h3>${data.accounts.map((item) => `<p>${identity(item.id)} ${item.name} <span class="muted">${item.handle}</span></p>`).join("")}</section><section class="section revenue-settings"><h3>Revenue Sources</h3>${data.revenueSources.map((item) => `<p><span class="source-dot ${item.accent}"></span><strong>${item.name}</strong><small>${item.shortName}</small></p>`).join("")}<button class="secondary-button" type="button" data-action="mock-modal" data-id="Add Revenue Source">Add Revenue Source</button></section><section class="section"><h3>Appearance</h3><label class="mini-control">Dashboard View<select><option>Comfortable</option><option>Compact</option></select></label><label class="mini-control">Theme<select><option>System</option><option>Light</option><option>Dark</option></select></label></section></div>`;
+    return `<section class="page-intro"><div><p class="eyebrow">Settings</p><h2>Useful preferences only.</h2></div></section><div class="settings-grid"><section class="section"><h3>Accounts</h3>${list("accounts").map((item) => `<p>${identity(item.id)} ${item.name} <span class="muted">${item.handle}</span></p>`).join("") || empty("No account settings are available.")}</section><section class="section revenue-settings"><h3>Revenue Sources</h3>${list("revenueSources").map((item) => `<p><span class="source-dot ${item.accent}"></span><strong>${item.name}</strong><small>${item.shortName}</small></p>`).join("") || empty("No revenue sources are available.")}<button class="secondary-button" type="button" data-action="mock-modal" data-id="Add Revenue Source">Add Revenue Source</button></section><section class="section"><h3>Appearance</h3><label class="mini-control">Dashboard View<select><option>Comfortable</option><option>Compact</option></select></label><label class="mini-control">Theme<select><option>System</option><option>Light</option><option>Dark</option></select></label></section></div>`;
   }
 
   function productRow(item) {
@@ -795,25 +848,26 @@
 
   function sortProducts(items) {
     return [...items].sort((a, b) => {
-      if (state.productSort === "views") return b.views - a.views;
+      if (state.productSort === "views") return (b.views || 0) - (a.views || 0);
       if (state.productSort === "updated") return new Date(b.updatedAt) - new Date(a.updatedAt);
-      return b.earnings - a.earnings;
+      return (b.earnings || 0) - (a.earnings || 0);
     });
   }
 
   function sortVideos(items) {
     const key = state.page === "product-detail" ? state.productVideoSort : state.videoSort;
     return [...items].sort((a, b) => {
-      if (key === "views") return b.views - a.views;
-      if (key === "sales") return b.units - a.units;
-      if (key === "earnings") return b.earnings - a.earnings;
-      if (key === "time") return a.time.localeCompare(b.time);
+      if (key === "views") return (b.views || 0) - (a.views || 0);
+      if (key === "sales") return (b.units || 0) - (a.units || 0);
+      if (key === "earnings") return (b.earnings || 0) - (a.earnings || 0);
+      if (key === "time") return String(a.time || "").localeCompare(String(b.time || ""));
       return new Date(b.date) - new Date(a.date);
     });
   }
 
   function workflow(step) {
-    return `<div class="workflow">${["Sample", "Content", "Videos", "Earnings"].map((label, index) => `<span class="${index + 1 <= step ? "done" : ""}">${label}</span>`).join("")}</div>`;
+    const activeStep = Number(step || 0);
+    return `<div class="workflow">${["Sample", "Content", "Videos", "Earnings"].map((label, index) => `<span class="${index + 1 <= activeStep ? "done" : ""}">${label}</span>`).join("")}</div>`;
   }
 
   const backButton = () => `<button class="back-button" type="button" data-action="back">← Back</button>`;
@@ -824,6 +878,10 @@
     const item = product(productId);
     const output = document.getElementById("generatorOutput");
     if (!output) return;
+    if (!item) {
+      output.innerHTML = `<strong>${tool}</strong><p>Select a product first so Northstar can generate a focused creative direction.</p>`;
+      return;
+    }
     output.innerHTML = `<strong>${tool}</strong><p>${item.name}: Lead with "${item.bestHook}" and show the practical payoff in the first five seconds.</p><small>Mock Northstar creative direction · ${accountName(item.accountId)}</small>`;
   }
 
@@ -831,12 +889,13 @@
     const activeNav = ["audience", "view-performance"].includes(state.page) ? "brief" : ["source-detail", "order-detail"].includes(state.page) ? "earnings" : state.page;
     els.nav.innerHTML = navItems.map(([id, label]) => `<button class="${activeNav === id ? "active" : ""}" type="button" data-page="${id}">${label}</button>`).join("");
     const active = account();
-    els.accountAvatar.className = `avatar ${state.accountId === "all" ? "avatar-all" : `avatar-${active.id}`}`;
-    els.accountAvatar.innerHTML = state.accountId === "all" ? "<i>RR</i><i>TT</i>" : `<i>${active.initials}</i>`;
+    els.accountAvatar.className = `avatar ${state.accountId === "all" ? "avatar-all" : `avatar-${active?.id || "all"}`}`;
+    els.accountAvatar.innerHTML = state.accountId === "all" ? "<i>RR</i><i>TT</i>" : `<i>${active?.initials || "NS"}</i>`;
     els.accountLabel.textContent = accountName();
     els.dateLabel.textContent = state.dateRange === "custom" ? `${state.customStart} → ${state.customEnd}` : readableRange();
-    els.accountMenu.innerHTML = [`<button role="option" data-action="account" data-id="all">${identity("all")}<span>All Accounts<small>Combined view</small></span></button>`, ...data.accounts.map((item) => `<button role="option" data-action="account" data-id="${item.id}">${identity(item.id)}<span>${item.name}<small>${item.focus}</small></span></button>`)].join("");
-    els.dateMenu.querySelector(".date-options").innerHTML = dateRanges.map(([id, label]) => `<button class="${state.dateRange === id ? "active" : ""}" type="button" data-action="date-range" data-id="${id}">${label}</button>`).join("");
+    els.accountMenu.innerHTML = [`<button role="option" data-action="account" data-id="all">${identity("all")}<span>All Accounts<small>Combined view</small></span></button>`, ...list("accounts").map((item) => `<button role="option" data-action="account" data-id="${item.id}">${identity(item.id)}<span>${item.name}<small>${item.focus}</small></span></button>`)].join("");
+    const dateOptions = els.dateMenu.querySelector(".date-options");
+    if (dateOptions) dateOptions.innerHTML = dateRanges.map(([id, label]) => `<button class="${state.dateRange === id ? "active" : ""}" type="button" data-action="date-range" data-id="${id}">${label}</button>`).join("");
   }
 
   function render() {
@@ -844,7 +903,11 @@
     const titles = { brief: "Morning Brief", audience: "Audience", "view-performance": "View Performance", opportunities: "Opportunity Center", earnings: "Earnings", products: "Products", videos: "Videos", data: "Data Hub", settings: "Settings", "product-detail": "Product Studio", "video-detail": "Video Detail", "source-detail": source()?.name || "Revenue Source", "opportunity-detail": "Opportunity Detail", "order-detail": "Order Detail" };
     const pages = { brief: renderBrief, audience: renderAudience, "view-performance": renderViewPerformance, opportunities: renderOpportunities, earnings: renderEarnings, products: renderProducts, videos: renderVideos, data: renderDataHub, settings: renderSettings, "product-detail": renderProductDetail, "video-detail": renderVideoDetail, "source-detail": renderSourceDetail, "opportunity-detail": renderOpportunityDetail, "order-detail": renderOrderDetail };
     els.title.textContent = titles[state.page] || "Morning Brief";
-    els.content.innerHTML = pages[state.page]();
+    try {
+      els.content.innerHTML = (pages[state.page] || renderBrief)();
+    } catch {
+      els.content.innerHTML = `<section class="section">${heading("Morning Brief", "Northstar hit missing optional sandbox data", "Northstar Pulse")}${empty("Use the account and date selectors to continue, or return to Morning Brief. The prototype shell is still available.")}<button class="primary-button" type="button" data-action="morning-back">Return to Morning Brief</button></section>`;
+    }
   }
 
   document.addEventListener("click", (event) => {
