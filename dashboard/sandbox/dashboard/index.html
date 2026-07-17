@@ -9,8 +9,41 @@
   <body>
     <div class="app-shell">
       <aside class="sidebar" aria-label="Primary navigation">
+        <svg class="sidebar-compass-watermark" viewBox="0 0 240 240" aria-hidden="true">
+          <defs>
+            <radialGradient id="watermarkSpark" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#fff7c8" stop-opacity=".95"/>
+              <stop offset="35%" stop-color="#d4a72c" stop-opacity=".58"/>
+              <stop offset="72%" stop-color="#2f7c7a" stop-opacity=".16"/>
+              <stop offset="100%" stop-color="#2f7c7a" stop-opacity="0"/>
+            </radialGradient>
+            <linearGradient id="watermarkNorth" x1="120" y1="18" x2="120" y2="120">
+              <stop offset="0%" stop-color="#fff4bf"/>
+              <stop offset="52%" stop-color="#d4a72c"/>
+              <stop offset="100%" stop-color="#fdf4d0" stop-opacity=".4"/>
+            </linearGradient>
+            <linearGradient id="watermarkTeal" x1="26" y1="120" x2="214" y2="120">
+              <stop offset="0%" stop-color="#7de0d8" stop-opacity=".65"/>
+              <stop offset="50%" stop-color="#fff7c8" stop-opacity=".35"/>
+              <stop offset="100%" stop-color="#7de0d8" stop-opacity=".65"/>
+            </linearGradient>
+          </defs>
+          <circle cx="120" cy="120" r="74" fill="none" stroke="#7de0d8" stroke-width="1.2" stroke-dasharray="54 28" opacity=".42"/>
+          <circle cx="120" cy="120" r="44" fill="none" stroke="#d4a72c" stroke-width="1" opacity=".38"/>
+          <path d="M120 14 134 112 120 124 106 112Z" fill="url(#watermarkNorth)"/>
+          <path d="M120 226 106 128 120 116 134 128Z" fill="#fdf4d0" opacity=".68"/>
+          <path d="M14 120 112 106 124 120 112 134Z" fill="url(#watermarkTeal)"/>
+          <path d="M226 120 128 134 116 120 128 106Z" fill="#fdf4d0" opacity=".7"/>
+          <path d="M70 70 92 105M170 70 148 105M70 170 92 135M170 170 148 135" fill="none" stroke="#d4a72c" stroke-width="2.2" stroke-linecap="round" opacity=".62"/>
+          <circle cx="120" cy="120" r="31" fill="#071522" opacity=".78"/>
+          <circle cx="120" cy="120" r="26" fill="none" stroke="#d4a72c" stroke-width="2" opacity=".7"/>
+          <circle cx="120" cy="120" r="42" fill="url(#watermarkSpark)"/>
+          <path d="M120 91 127 113 149 120 127 127 120 149 113 127 91 120 113 113Z" fill="#fff4bf"/>
+          <path d="M101 101 111 116 101 139 124 129 139 139 129 116 139 101 116 111Z" fill="#d4a72c" opacity=".68"/>
+        </svg>
         <a class="brand-lockup" href="#brief" aria-label="Northstar Morning Brief">
           <img src="assets/northstar-logo-sidebar.svg" alt="Northstar">
+          <span class="brand-message">One place to guide every creator decision.</span>
           <span>Data Becomes Direction.</span>
         </a>
         <nav id="sidebarNav" class="nav-list" aria-label="Sandbox pages"></nav>

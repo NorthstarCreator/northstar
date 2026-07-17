@@ -163,6 +163,18 @@
     return [...filteredVideos()].sort((a, b) => b.views - a.views)[0];
   }
 
+  function compactName(value, max = 30) {
+    const text = String(value || "").trim();
+    return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+  }
+
+  function periodLabel() {
+    if (state.dateRange === "today") return "today";
+    if (state.dateRange === "week") return "this week";
+    if (state.dateRange === "custom") return "selected period";
+    return "this month";
+  }
+
   function pulseItems() {
     const days = filteredDays();
     const allDays = list("days");
@@ -180,12 +192,12 @@
     const audience = activeAudience("viewers");
     const bestDay = largestEntry(audience.weekdays);
     const direction = strongestSource.change >= 0 ? "up" : "down";
-    const changeText = strongestSource.change === 0 ? "is steady" : `is ${direction} ${Math.abs(strongestSource.change)}%`;
+    const changeText = strongestSource.change === 0 ? "is steady" : `is ${direction} ${Math.abs(strongestSource.change)}% ${periodLabel()}`;
     return [
-      ["Revenue", `${strongestSource.shortName} revenue ${changeText} in this filter.`],
-      ["Top seller", `${leader?.bestProduct || "A leading product"} is the strongest seller.`],
-      ["Audience", `${bestDay?.[0] || "Thursday"} remains the strongest viewer day.`],
-      ["Views", `${leadingVideo?.title || "Top videos"} leads with ${number.format(leadingVideo?.views || 0)} views.`]
+      ["Revenue", `${strongestSource.shortName} revenue ${changeText}.`],
+      ["Top seller", `${compactName(leader?.bestProduct || "A leading product")} leads shop earnings.`],
+      ["Audience", `${bestDay?.[0] || "Thursday"} is your strongest audience day.`],
+      ["Views", `${compactName(leadingVideo?.title || "Top video")} leads with ${number.format(leadingVideo?.views || 0)} views.`]
     ];
   }
 
@@ -508,9 +520,9 @@
         </aside>
       </section>
       <section class="metric-grid">
-        ${metricCard("Followers", number.format(total.followers), `+${number.format(periodFollowerGain())} in ${readableRange()}`, "white", 'data-page="audience"')}
+        ${metricCard("Followers", number.format(total.followers), `+${number.format(periodFollowerGain())} ${periodLabel()}`, "white", 'data-page="audience"')}
         ${metricCard("Views", number.format(total.views), `${number.format(Math.round(total.views / Math.max(1, total.videos)))} avg/video`, "white", 'data-page="view-performance"')}
-        ${metricCard("Videos Posted", total.videos, `${readableRange()} · 32/month goal`, "white", 'data-page="videos"')}
+        ${metricCard("Videos Posted", total.videos, `Posted ${periodLabel()} · Goal 32 videos/month`, "white", 'data-page="videos"')}
         ${metricCard("Total Earnings", money.format(total.earnings), "Shop + Rewards + GO", "white", 'data-page="earnings"')}
       </section>
       <section class="section">
@@ -550,7 +562,7 @@
     const bestDay = largestEntry(item.weekdays);
     const bestTime = bestHourLabel(item.hourly);
     const accountBreakdown = state.accountId === "all"
-      ? `<section class="section"><div class="section-heading"><div><p class="eyebrow">Account Breakdown</p><h3>Followers by account</h3></div></div><div class="breakdown-cards">${list("accounts").map((item) => `<article><span>${identity(item.id)}</span><strong>${number.format(currentFollowers(item.id))}</strong><small>${item.name} · +${number.format(periodFollowerGain(item.id))} in ${readableRange()}</small></article>`).join("")}</div></section>`
+      ? `<section class="section"><div class="section-heading"><div><p class="eyebrow">Account Breakdown</p><h3>Followers by account</h3></div></div><div class="breakdown-cards">${list("accounts").map((item) => `<article><span>${identity(item.id)}</span><strong>${number.format(currentFollowers(item.id))}</strong><small>${item.name} · +${number.format(periodFollowerGain(item.id))} ${periodLabel()}</small></article>`).join("")}</div></section>`
       : "";
     const insight = isViewers
       ? `${largestAge[0]} viewers and ${bestDay[0]} activity are the clearest planning signals for ${accountName()} in this sandbox view.`
