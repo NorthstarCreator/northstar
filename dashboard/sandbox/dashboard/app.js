@@ -71,6 +71,103 @@
   const accountIds = () => state.accountId === "all" ? data.accounts.map((item) => item.id) : [state.accountId];
   const accountMatches = (item) => state.accountId === "all" || item.accountId === state.accountId;
   const accountPart = (day, id) => day[id === "raised-right" ? "raisedRight" : "truthTunedTribe"];
+  const filteredDays = () => data.days.filter((day) => inRange(day.date));
+
+  function periodFollowerGain(accountId = state.accountId) {
+    const days = Math.max(1, filteredDays().length);
+    const scale = Math.min(1, days / Math.max(1, data.days.length));
+    if (accountId === "all") return data.accounts.reduce((sum, item) => sum + periodFollowerGain(item.id), 0);
+    return Math.round((account(accountId)?.followerChange || 0) * scale);
+  }
+
+  function currentFollowers(accountId = state.accountId) {
+    if (accountId === "all") return data.accounts.reduce((sum, item) => sum + item.followers, 0);
+    return account(accountId)?.followers || 0;
+  }
+
+  function sourceValue(day, sourceId) {
+    return accountIds().reduce((sum, id) => {
+      const part = accountPart(day, id);
+      return sum + (part[sourceId] || 0);
+    }, 0);
+  }
+
+  function bestDayPart(day) {
+    return accountIds()
+      .map((id) => ({ id, part: accountPart(day, id) }))
+      .sort((a, b) => (b.part.shop + b.part.rewards + b.part.go) - (a.part.shop + a.part.rewards + a.part.go))[0];
+  }
+
+  function topVideoByViews() {
+    return [...filteredVideos()].sort((a, b) => b.views - a.views)[0];
+  }
+
+  function pulseItems() {
+    const days = filteredDays();
+    const latest = days[days.length - 1] || data.days[data.days.length - 1];
+    const previous = days[days.length - 2] || data.days[Math.max(0, data.days.indexOf(latest) - 1)] || latest;
+    const sourceSignals = data.revenueSources.map((item) => {
+      const current = sourceValue(latest, item.id);
+      const prior = sourceValue(previous, item.id);
+      const change = prior ? Math.round(((current - prior) / prior) * 100) : 0;
+      return { ...item, current, change };
+    }).sort((a, b) => Math.abs(b.change) - Math.abs(a.change));
+    const strongestSource = sourceSignals[0];
+    const leader = bestDayPart(latest)?.part;
+    const leadingVideo = topVideoByViews();
+    const direction = strongestSource.change >= 0 ? "up" : "down";
+    const changeText = strongestSource.change === 0 ? "is steady" : `is ${direction} ${Math.abs(strongestSource.change)}%`;
+    return [
+      ["Revenue", `${strongestSource.shortName} revenue ${changeText} in this filter.`],
+      ["Top seller", `${leader?.bestProduct || "A leading product"} is the strongest seller.`],
+      ["Posting window", `Strongest posting window begins near ${leader?.time || "7:30 PM"}.`],
+      ["Views", `${leadingVideo?.title || "Top videos"} leads with ${number.format(leadingVideo?.views || 0)} views.`]
+    ];
+  }
+
+  function followerTimeline() {
+    const days = filteredDays();
+    const total = currentFollowers();
+    const gained = periodFollowerGain();
+    const base = total - gained;
+    return (days.length ? days : [data.days[data.days.length - 1]]).map((day, index, list) => ({
+      date: day.date,
+      value: Math.round(base + gained * ((index + 1) / Math.max(1, list.length)))
+    }));
+  }
+
+  function viewTimeline() {
+    const days = filteredDays();
+    return (days.length ? days : [data.days[data.days.length - 1]]).map((day) => ({
+      date: day.date,
+      value: filteredVideos().filter((item) => item.date === day.date).reduce((sum, item) => sum + item.views, 0)
+    }));
+  }
+
+  function miniTrend(items, formatter = number.format) {
+    const max = Math.max(...items.map((item) => item.value), 1);
+    const min = Math.min(...items.map((item) => item.value), 0);
+    const span = Math.max(1, max - min);
+    const points = items.map((item, index) => {
+      const x = 18 + index * (464 / Math.max(1, items.length - 1));
+      const y = 138 - ((item.value - min) / span) * 96;
+      return { ...item, x, y };
+    });
+    const line = points.map((point) => `${point.x},${point.y}`).join(" ");
+    return `
+      <div class="mini-trend" role="img" aria-label="Selected period trend">
+        <svg viewBox="0 0 500 170">
+          <polyline points="${line}" fill="none" stroke="var(--teal)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></polyline>
+          ${points.map((point) => `<circle cx="${point.x}" cy="${point.y}" r="4"><title>${point.date}: ${formatter(point.value)}</title></circle>`).join("")}
+        </svg>
+        <div class="trend-caption"><span>${items[0]?.date || "Start"}</span><strong>${formatter(items[items.length - 1]?.value || 0)}</strong><span>${items[items.length - 1]?.date || "End"}</span></div>
+      </div>
+    `;
+  }
+
+  function insightCard(message) {
+    return `<section class="section insight-card"><span class="mini-mark" aria-hidden="true">✦</span><div><p class="eyebrow">Northstar Insight</p><p>${message}</p></div></section>`;
+  }
 
   function filteredVideos(extra = {}) {
     return data.videos
@@ -213,11 +310,7 @@
     const topProducts = [...filteredProducts()].filter((item) => item.type !== "sample").sort((a, b) => b.earnings - a.earnings).slice(0, 3);
     const topVideos = [...filteredVideos()].sort((a, b) => b.views - a.views).slice(0, 3);
     const samples = filteredProducts().filter((item) => item.type === "sample").slice(0, 3);
-    const latest = data.days.filter((day) => inRange(day.date)).slice(-1)[0] || data.days[data.days.length - 1];
-    const pulseParts = accountIds().map((id) => accountPart(latest, id));
-    const pulseEarnings = pulseParts.reduce((sum, part) => sum + part.shop + part.rewards + part.go, 0);
-    const pulseVideos = pulseParts.reduce((sum, part) => sum + part.videos, 0);
-    const pulseLeader = [...pulseParts].sort((a, b) => (b.shop + b.rewards + b.go) - (a.shop + a.rewards + a.go))[0];
+    const pulse = pulseItems();
     return `
       <section class="brief-hero alive">
         <div>
@@ -229,16 +322,13 @@
         <aside class="pulse-panel">
           <p class="eyebrow">Northstar Pulse</p>
           <dl>
-            <div><dt>Earned today</dt><dd>${money.format(pulseEarnings)}</dd></div>
-            <div><dt>Videos posted</dt><dd>${pulseVideos}</dd></div>
-            <div><dt>Top video</dt><dd>${pulseLeader.bestVideo}</dd></div>
-            <div><dt>Momentum</dt><dd>Strong near ${pulseLeader.time}</dd></div>
+            ${pulse.map(([label, text]) => `<div><dt>${label}</dt><dd>${text}</dd></div>`).join("")}
           </dl>
         </aside>
       </section>
       <section class="metric-grid">
-        ${metricCard("Followers", number.format(total.followers), state.accountId === "all" ? "+804 this month" : `+${account().followerChange} this month`, "white", 'data-page="videos"')}
-        ${metricCard("Views", number.format(total.views), "+12.4% versus last period", "white", 'data-page="videos"')}
+        ${metricCard("Followers", number.format(total.followers), `+${number.format(periodFollowerGain())} in ${readableRange()}`, "white", 'data-page="audience"')}
+        ${metricCard("Views", number.format(total.views), `${number.format(Math.round(total.views / Math.max(1, total.videos)))} avg/video`, "white", 'data-page="view-performance"')}
         ${metricCard("Videos Posted", total.videos, `${readableRange()} · 32/month goal`, "white", 'data-page="videos"')}
         ${metricCard("Total Earnings", money.format(total.earnings), "Shop + Rewards + GO", "white", 'data-page="earnings"')}
       </section>
@@ -259,6 +349,53 @@
     const primary = total.earnings;
     const detail = item.id === "shop" ? `${total.productsEarning} products earning` : item.id === "rewards" ? `${total.eligibleVideos} eligible videos` : `${total.placesEarning} places earning`;
     return `<button class="source-card ${item.accent}" type="button" data-action="open-source" data-id="${item.id}"><span class="source-dot"></span><small>${item.name}</small><strong>${money.format(primary)}</strong><p>${detail}</p></button>`;
+  }
+
+  function renderAudience() {
+    const total = totals();
+    const gain = periodFollowerGain();
+    const accountBreakdown = state.accountId === "all"
+      ? `<section class="section"><div class="section-heading"><div><p class="eyebrow">Account Breakdown</p><h3>Followers by account</h3></div></div><div class="breakdown-cards">${data.accounts.map((item) => `<article><span>${identity(item.id)}</span><strong>${number.format(currentFollowers(item.id))}</strong><small>${item.name} · +${number.format(periodFollowerGain(item.id))} in ${readableRange()}</small></article>`).join("")}</div></section>`
+      : "";
+    const insight = state.accountId === "all"
+      ? "Truth Tuned Tribe is contributing the larger share of new followers in this selected period, while Raised Right keeps a strong commerce audience base."
+      : `${accountName()} gained ${number.format(gain)} followers in this selected period, with content volume and evening posting windows carrying the signal.`;
+    return `
+      ${morningBackButton()}
+      <section class="page-intro"><div><p class="eyebrow">Audience</p><h2>Follower movement for ${accountName()}.</h2><p>${readableRange()} · Lightweight prototype view with no demographic assumptions.</p></div></section>
+      <section class="metric-grid compact">
+        ${metricCard("Current Followers", number.format(total.followers), "Matches Morning Brief", "white")}
+        ${metricCard("Followers Gained", `+${number.format(gain)}`, readableRange(), "gold")}
+        ${metricCard("Videos Posted", number.format(total.videos), "Content in this period", "white", 'data-page="videos"')}
+        ${metricCard("Total Views", number.format(total.views), "Audience reach signal", "white", 'data-page="view-performance"')}
+      </section>
+      <section class="section trend-section"><div class="section-heading"><div><p class="eyebrow">Follower Growth</p><h3>Selected-period timeline</h3></div></div>${miniTrend(followerTimeline(), number.format)}</section>
+      ${accountBreakdown}
+      ${insightCard(insight)}
+    `;
+  }
+
+  function renderViewPerformance() {
+    const total = totals();
+    const videos = [...filteredVideos()].sort((a, b) => b.views - a.views);
+    const top = videos[0];
+    const shownViews = videos.reduce((sum, item) => sum + item.views, 0);
+    const insight = top
+      ? `${top.title} is carrying the strongest view signal for ${accountName()} in ${readableRange()}. Use it as the benchmark for the next hook.`
+      : "No videos are available in this filter yet. Once video data appears, Northstar will summarize the strongest view signal here.";
+    return `
+      ${morningBackButton()}
+      <section class="page-intro"><div><p class="eyebrow">View Performance</p><h2>What is driving attention right now.</h2><p>${accountName()} · ${readableRange()}</p></div></section>
+      <section class="metric-grid compact">
+        ${metricCard("Total Views", number.format(total.views), "Matches Morning Brief", "white")}
+        ${metricCard("Avg Views / Video", number.format(Math.round(total.views / Math.max(1, total.videos))), `${total.videos} videos posted`, "gold")}
+        ${metricCard("Highest Viewed", top ? number.format(top.views) : "0", top?.title || "No video in filter", "white", top ? `data-action="open-video" data-id="${top.id}"` : "")}
+        ${metricCard("Videos Posted", number.format(total.videos), "Open Videos page", "white", 'data-page="videos"')}
+      </section>
+      <section class="section trend-section"><div class="section-heading"><div><p class="eyebrow">Views Over Time</p><h3>Daily contribution by posted video</h3></div></div>${miniTrend(viewTimeline(), number.format)}</section>
+      <section class="section"><div class="section-heading"><div><p class="eyebrow">Top Contributing Videos</p><h3>Click a row to open Video Detail</h3></div></div><div class="video-table">${videos.map(videoTableRow).join("") || empty("No videos in this filter.")}</div><p class="contributor-total">Displayed video total: ${number.format(shownViews)} views</p></section>
+      ${insightCard(insight)}
+    `;
   }
 
   function renderEarnings() {
@@ -442,6 +579,7 @@
   }
 
   const backButton = () => `<button class="back-button" type="button" data-action="back">← Back</button>`;
+  const morningBackButton = () => `<button class="back-button morning-back" type="button" data-action="morning-back">← Morning Brief</button>`;
   const empty = (message) => `<p class="empty">${message}</p>`;
 
   function showGenerator(tool, productId) {
@@ -452,7 +590,8 @@
   }
 
   function renderChrome() {
-    els.nav.innerHTML = navItems.map(([id, label]) => `<button class="${state.page === id ? "active" : ""}" type="button" data-page="${id}">${label}</button>`).join("");
+    const activeNav = ["audience", "view-performance"].includes(state.page) ? "brief" : state.page === "source-detail" ? "earnings" : state.page;
+    els.nav.innerHTML = navItems.map(([id, label]) => `<button class="${activeNav === id ? "active" : ""}" type="button" data-page="${id}">${label}</button>`).join("");
     const active = account();
     els.accountAvatar.className = `avatar ${state.accountId === "all" ? "avatar-all" : `avatar-${active.id}`}`;
     els.accountAvatar.innerHTML = state.accountId === "all" ? "<i>RR</i><i>TT</i>" : `<i>${active.initials}</i>`;
@@ -464,8 +603,8 @@
 
   function render() {
     renderChrome();
-    const titles = { brief: "Morning Brief", opportunities: "Opportunity Center", earnings: "Earnings", products: "Products", videos: "Videos", data: "Data Hub", settings: "Settings", "product-detail": "Product Studio", "video-detail": "Video Detail", "source-detail": source()?.name || "Revenue Source", "opportunity-detail": "Opportunity Detail" };
-    const pages = { brief: renderBrief, opportunities: renderOpportunities, earnings: renderEarnings, products: renderProducts, videos: renderVideos, data: renderDataHub, settings: renderSettings, "product-detail": renderProductDetail, "video-detail": renderVideoDetail, "source-detail": renderSourceDetail, "opportunity-detail": renderOpportunityDetail };
+    const titles = { brief: "Morning Brief", audience: "Audience", "view-performance": "View Performance", opportunities: "Opportunity Center", earnings: "Earnings", products: "Products", videos: "Videos", data: "Data Hub", settings: "Settings", "product-detail": "Product Studio", "video-detail": "Video Detail", "source-detail": source()?.name || "Revenue Source", "opportunity-detail": "Opportunity Detail" };
+    const pages = { brief: renderBrief, audience: renderAudience, "view-performance": renderViewPerformance, opportunities: renderOpportunities, earnings: renderEarnings, products: renderProducts, videos: renderVideos, data: renderDataHub, settings: renderSettings, "product-detail": renderProductDetail, "video-detail": renderVideoDetail, "source-detail": renderSourceDetail, "opportunity-detail": renderOpportunityDetail };
     els.title.textContent = titles[state.page] || "Morning Brief";
     els.content.innerHTML = pages[state.page]();
   }
@@ -495,6 +634,7 @@
     if (action.dataset.action === "select-day") { state.selectedDay = id; render(); }
     if (action.dataset.action === "metric-breakdown") { state.activeMetric = id; render(); }
     if (action.dataset.action === "back") goBack();
+    if (action.dataset.action === "morning-back") setPage("brief", null, false);
     if (action.dataset.action === "generate") showGenerator(id, action.dataset.product);
     if (action.dataset.action === "cancel-custom") { els.customPanel.hidden = true; els.dateMenu.hidden = true; }
     if (action.dataset.action === "mock-modal") alert(`${id} is a visual prototype action.`);
