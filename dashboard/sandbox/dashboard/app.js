@@ -514,7 +514,7 @@
     const lead = active?.summary || "Across both accounts, shop earnings are leading while creator rewards and local discovery add useful secondary signals.";
     const topProducts = [...filteredProducts()].filter((item) => item.type !== "sample").sort((a, b) => b.earnings - a.earnings).slice(0, 3);
     const topVideos = [...filteredVideos()].sort((a, b) => b.views - a.views).slice(0, 3);
-    const samples = filteredProducts().filter((item) => item.type === "sample").slice(0, 3);
+    const samples = filteredProducts().filter((item) => item.type === "sample").slice(0, 2);
     const pulse = pulseItems();
     const audience = activeAudience("viewers");
     const gender = audience.gender;
@@ -542,20 +542,21 @@
         ${metricCard("Videos Posted", total.videos, `Posted this month<br>Goal: 32 videos/month`, "white", 'data-page="videos"', "videos")}
         ${metricCard("Total Earnings", money.format(total.earnings), "Shop + Rewards + GO", "white", 'data-page="earnings"', "earnings")}
       </section>
-      <section class="brief-lower-grid">
-        <section class="section revenue-compact">
+      <section class="brief-lower-layout">
+        <section class="section revenue-compact brief-full">
           ${heading("Revenue Compass", "See what is guiding your earnings.")}
           <div class="source-grid">${list("revenueSources").map(sourceCard).join("") || empty("No revenue sources are available yet.")}</div>
         </section>
-        <button class="audience-glance section" type="button" data-page="audience" data-audience-mode="viewers">
-          <span class="glance-header">${icon("Audience")}<span><strong>Audience<br>at a Glance</strong></span></span>
-          <span><small>Audience mix</small><b>${gender.Female}% Women · ${gender.Male}% Men</b></span>
+        <button class="audience-glance section brief-full" type="button" data-page="audience" data-audience-mode="viewers">
+          <span class="glance-header">${icon("Audience")}<span><strong>Audience at a Glance</strong><b>${gender.Female}% Women · ${gender.Male}% Men</b></span></span>
           <span><small>Largest group</small><b>${largestAge[0]}</b></span>
           <span><small>Best day</small><b>${bestDay[0]}</b></span>
           <span><small>Best time</small><b>${bestHour}</b></span>
         </button>
-        <section class="section product-compass-card">${heading("Product Compass", "Products carrying momentum")}<div class="stack">${topProducts.map(productRow).join("")}</div></section>
-        <section class="section view-compact-card">${heading("View Performance", "Videos with useful signals")}<div class="stack">${topVideos.map(videoRow).join("")}</div></section>
+        <div class="brief-split-row">
+          <section class="section product-compass-card">${heading("Product Compass", "Products carrying momentum")}<div class="stack">${topProducts.map(productRow).join("")}</div></section>
+          <section class="section view-compact-card">${heading("View Performance", "Videos with useful signals")}<div class="stack">${topVideos.map(videoRow).join("")}</div></section>
+        </div>
       </section>
       <section class="section soft-section product-studio-strip">${heading("Product Studio", "Samples waiting for content")}<div class="sample-grid">${samples.map(sampleCard).join("") || empty("No samples need content in this filter.")}</div></section>
     `;
