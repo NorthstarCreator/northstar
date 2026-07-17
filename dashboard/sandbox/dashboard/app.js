@@ -77,23 +77,42 @@
   const order = (id) => list("shopOrders").find((item) => item.id === id);
   const itemSources = (item) => Array.isArray(item?.sourceIds) ? item.sourceIds : [];
 
+  const sectionAccent = {
+    "Revenue Compass": "#d4a72c",
+    "Product Compass": "#2f7c7a",
+    "Product Studio": "#d96f56",
+    "Northstar Pulse": "#f2bd3e",
+    "Northstar Insight": "#58c7c2",
+    "Opportunity Center": "#7c63d9",
+    "Audience": "#42c9c4",
+    "View Performance": "#3d7edb",
+    "Sales Attribution": "#36b9b4",
+    "Data Hub": "#3ea7d8",
+    "Settings": "#c6a85b"
+  };
+
   const sectionIcon = {
-    "Revenue Compass": "M12 3l2.6 6.4L21 12l-6.4 2.6L12 21l-2.6-6.4L3 12l6.4-2.6L12 3zm0 5.6L10.6 12l1.4 3.4 1.4-3.4L12 8.6z",
-    "Product Compass": "M5 7.5 12 4l7 3.5v8.9L12 20l-7-3.6V7.5zm7 4.1 7-3.6M12 11.6 5 8m7 3.6V20",
-    "Product Studio": "M12 2l1.6 5.6L19 9l-5.4 1.4L12 16l-1.6-5.6L5 9l5.4-1.4L12 2zm7 12 1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3z",
-    "Northstar Pulse": "M3 13h4l2-7 4 13 2-6h6M18 4l.8 2.2L21 7l-2.2.8L18 10l-.8-2.2L15 7l2.2-.8L18 4z",
-    "Northstar Insight": "M12 3a6 6 0 0 0-3.3 11v2.5h6.6V14A6 6 0 0 0 12 3zm-2 17h4",
-    "Opportunity Center": "M4 18c5-1 9-5 10-10l2 2 4-6-7 1 2 2C14 11 10 15 4 18zM5 6h4v4H5z",
-    "Audience": "M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 20c.7-4 3-6 5-6s4.3 2 5 6m-2 0c.7-3.2 2.7-5 5-5 2 0 4 1.7 5 5",
-    "View Performance": "M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6zm9.5 3a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"
+    "Revenue Compass": `<svg viewBox="0 0 24 24"><circle class="fill-soft" cx="12" cy="12" r="8"></circle><path class="muted-stroke" d="M12 3v3M12 18v3M3 12h3M18 12h3"></path><path d="M6 16.5c2.7-3.1 5-4.5 8.1-4.5H18"></path><path d="m15.4 9.5 2.8 2.5-2.8 2.5"></path><path d="m12 5.8 1.3 4.9L18 12l-4.7 1.3L12 18.2l-1.3-4.9L6 12l4.7-1.3L12 5.8z"></path></svg>`,
+    "Product Compass": `<svg viewBox="0 0 24 24"><path class="fill-soft" d="M6 8.2 12 5l6 3.2v7.6L12 19l-6-3.2z"></path><path d="M6 8.2 12 5l6 3.2v7.6L12 19l-6-3.2z"></path><path class="muted-stroke" d="M12 11.3 18 8M12 11.3 6 8.2M12 11.3V19"></path><path d="m17.8 4.2.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"></path></svg>`,
+    "Product Studio": `<svg viewBox="0 0 24 24"><path class="fill-soft" d="M6 9.2 12 6l6 3.2V16l-6 3-6-3z"></path><path d="M6 9.2 12 6l6 3.2V16l-6 3-6-3zM12 12.2 18 9M12 12.2 6 9.2"></path><path class="muted-stroke" d="M4 4.5c4.2-2.4 9-2.4 13.4-.2"></path><path d="m18.5 4 .8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"></path></svg>`,
+    "Northstar Pulse": `<svg viewBox="0 0 24 24"><path class="muted-stroke" d="M3 13h4l1.7-6 4.2 12 2.1-6h3.4"></path><path d="m19 5 .9 2.1L22 8l-2.1.9L19 11l-.9-2.1L16 8l2.1-.9z"></path><path d="M12 3.8 13 7l3.2 1L13 9l-1 3.2L11 9 7.8 8 11 7z"></path></svg>`,
+    "Northstar Insight": `<svg viewBox="0 0 24 24"><circle class="fill-soft" cx="12" cy="12" r="6.5"></circle><path d="M3 12s3.6-5.8 9-5.8S21 12 21 12s-3.6 5.8-9 5.8S3 12 3 12z"></path><path d="m12 7.8.9 2.9 2.9.9-2.9.9-.9 2.9-.9-2.9-2.9-.9 2.9-.9z"></path><path class="muted-stroke" d="M12 3v2M12 19v2"></path></svg>`,
+    "Opportunity Center": `<svg viewBox="0 0 24 24"><path class="fill-soft" d="M5 17c5.9-1.1 9.9-4.7 11.7-10.6"></path><path d="M5 17c5.9-1.1 9.9-4.7 11.7-10.6"></path><path d="m15.4 5.2 4.8-.8-1.4 4.6"></path><path class="muted-stroke" d="M5 7.5a7.5 7.5 0 0 1 8.6-3.3M4.2 15.5A8.2 8.2 0 0 1 3.7 10"></path><path d="m18 14.5.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"></path></svg>`,
+    "Audience": `<svg viewBox="0 0 24 24"><circle class="fill-soft" cx="12" cy="9" r="6.5"></circle><path d="M12 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 20c1-3.4 3-5.1 6-5.1s5 1.7 6 5.1"></path><path class="muted-stroke" d="M5.2 11a2.2 2.2 0 1 0 0-4.4M18.8 11a2.2 2.2 0 1 0 0-4.4M3.5 18.5c.6-1.7 1.6-2.8 3.2-3.2M20.5 18.5c-.6-1.7-1.6-2.8-3.2-3.2"></path><path d="m18.7 3.5.5 1.2 1.3.5-1.3.5-.5 1.3-.5-1.3-1.2-.5 1.2-.5z"></path></svg>`,
+    "View Performance": `<svg viewBox="0 0 24 24"><path class="fill-soft" d="M3 12s3.5-5.5 9-5.5 9 5.5 9 5.5-3.5 5.5-9 5.5S3 12 3 12z"></path><path d="M3 12s3.5-5.5 9-5.5 9 5.5 9 5.5-3.5 5.5-9 5.5S3 12 3 12z"></path><path d="m12 8.6.8 2.6 2.6.8-2.6.8-.8 2.6-.8-2.6-2.6-.8 2.6-.8z"></path><path class="muted-stroke" d="M16.2 5.6c1.1-.9 2.4-1.5 3.8-1.8M18.4 7.4 20.6 4"></path></svg>`,
+    "Sales Attribution": `<svg viewBox="0 0 24 24"><circle class="fill-soft" cx="12" cy="12" r="4.3"></circle><path d="M12 8.2v7.6M8.2 12h7.6"></path><path class="muted-stroke" d="M4 7c4.7 0 6 2.8 8 5M20 7c-4.7 0-6 2.8-8 5M4 17c4.7 0 6-2.8 8-5M20 17c-4.7 0-6-2.8-8-5"></path><path d="m4 7 2-1.5M20 7l-2-1.5M4 17l2 1.5M20 17l-2 1.5"></path></svg>`,
+    "Data Hub": `<svg viewBox="0 0 24 24"><circle class="fill-soft" cx="12" cy="12" r="4"></circle><path d="M12 8.5v7M8.5 12h7"></path><circle cx="5" cy="6" r="2"></circle><circle cx="19" cy="6" r="2"></circle><circle cx="5" cy="18" r="2"></circle><circle cx="19" cy="18" r="2"></circle><path class="muted-stroke" d="M7 7.3 10 10M17 7.3 14 10M7 16.7 10 14M17 16.7 14 14"></path></svg>`,
+    "Settings": `<svg viewBox="0 0 24 24"><circle class="fill-soft" cx="12" cy="12" r="5.5"></circle><path d="M12 8.5v7M8.5 12h7"></path><path class="muted-stroke" d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6"></path></svg>`
   };
 
   function icon(name) {
-    return `<span class="heading-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="${sectionIcon[name] || sectionIcon["Northstar Insight"]}"></path></svg></span>`;
+    const iconName = sectionIcon[name] ? name : "Northstar Insight";
+    return `<span class="heading-icon" data-icon="${iconName}" role="img" aria-label="${iconName} icon">${sectionIcon[iconName]}</span>`;
   }
 
   function heading(eyebrow, title, iconName = eyebrow) {
-    return `<div class="section-heading"><div class="heading-title">${icon(iconName)}<div><p class="eyebrow">${eyebrow}</p><h3>${title}</h3></div></div></div>`;
+    const accentName = sectionAccent[iconName] ? iconName : "Northstar Insight";
+    return `<div class="section-heading"><div class="heading-title" style="--section-accent:${sectionAccent[accentName]}">${icon(iconName)}<div><p class="eyebrow">${eyebrow}</p><h3>${title}</h3></div></div></div>`;
   }
 
   function dateWindow() {
@@ -635,7 +654,7 @@
     const orders = filteredOrders({ ...extra, attributionType: filter }).sort((a, b) => new Date(b.date) - new Date(a.date));
     return `
       <section class="section attribution-section">
-        ${heading("Sales Attribution", "Organic Video and Shop Ads commission", "Revenue Compass")}
+        ${heading("Sales Attribution", "Organic Video and Shop Ads commission", "Sales Attribution")}
         <div class="segmented attribution-filter">
           <button class="${state.attributionFilter === "all" ? "active" : ""}" type="button" data-action="attribution-filter" data-id="all">All Sales</button>
           <button class="${state.attributionFilter === "organic_video" ? "active" : ""}" type="button" data-action="attribution-filter" data-id="organic_video">Organic Video</button>
@@ -795,7 +814,7 @@
       ${backButton()}
       <section class="product-studio"><span class="product-image large">${item.image}</span><div><p class="eyebrow">Product Studio</p><h2>${item.name}</h2><p>${accountName(item.accountId)} · ${item.type === "sample" ? "Sample" : `${money.format(item.earnings)} current earnings`}${item.dueDate ? ` · Post by ${item.dueDate}` : ""}</p>${workflow(item.workflowStep)}</div></section>
       <section class="split-grid"><div class="section"><div class="section-heading"><div><p class="eyebrow">Create Content</p><h3>Northstar tools</h3></div></div><div class="tool-grid">${["Generate Hooks", "Generate Script", "Generate Caption", "Generate Hashtags", "Generate Talking Points", "Generate CTA"].map((label) => `<button class="tool-button" type="button" data-action="generate" data-id="${label}" data-product="${item.id}">${label}<span>✦</span></button>`).join("")}</div><div id="generatorOutput" class="workspace-output">Choose a tool to generate a mock creator-ready direction for this product.</div></div><div class="section"><p class="eyebrow">Product Intelligence</p><h3>${item.bestHook}</h3><p>${item.insight}</p><dl class="mini-stats"><div><dt>Earnings</dt><dd>${money.format(item.earnings)}</dd></div><div><dt>GMV</dt><dd>${money.format(item.gmv)}</dd></div><div><dt>Units</dt><dd>${number.format(item.units)}</dd></div></dl></div></section>
-      <section class="section attribution-section">${heading("Sales Attribution", "How this product earned", "Revenue Compass")}<div class="attribution-grid">${attributionSummaryCard("organic_video", orderSummary.organic_video)}${attributionSummaryCard("shop_ad", orderSummary.shop_ad)}</div></section>
+      <section class="section attribution-section">${heading("Sales Attribution", "How this product earned", "Sales Attribution")}<div class="attribution-grid">${attributionSummaryCard("organic_video", orderSummary.organic_video)}${attributionSummaryCard("shop_ad", orderSummary.shop_ad)}</div></section>
       <section class="section"><div class="section-heading"><div><p class="eyebrow">Product Videos</p><h3>Posting time stays visible</h3></div><label class="mini-control">Sort<select data-action="product-video-sort"><option value="date">Date</option><option value="time">Posting time</option><option value="views">Views</option><option value="sales">Sales</option><option value="earnings">Earnings</option></select></label></div><div class="video-table">${videos.map(videoTableRow).join("") || empty("More product videos appear here after import.")}</div></section>
     `;
   }
@@ -818,15 +837,15 @@
       ? shopShare > 0 ? `Shop Ads generated ${shopShare}% of this video's shop commission, but organic sales paid a different average rate.` : "This video is currently earning from organic product-linked traffic in the sandbox data."
       : "No TikTok Shop orders are connected to this video in the sandbox data yet.";
     const sourceNames = itemSources(item).map((id) => source(id)?.name).filter(Boolean).join(" + ") || "No source linked";
-    return `${backButton()}<section class="product-studio"><span class="product-image large">${item.thumbnail}</span><div><p class="eyebrow">Video Detail</p><h2>${item.title}</h2><p>${accountName(item.accountId)} · Posted ${item.date} at ${item.time}</p></div></section><section class="metric-grid compact">${metricCard("Views", number.format(item.views), "Public video metric", "white")}${metricCard("Earnings", money.format(item.earnings), sourceNames, "selected")}${metricCard("Units Sold", number.format(item.units), linked?.name || "Linked product", "white")}${metricCard("Shares", number.format(item.shares), "Audience signal", "white")}</section><section class="section attribution-section">${heading("Sales Attribution", "Video earnings by origin", "Revenue Compass")}<div class="attribution-grid">${orderSummary.organic_video.orders ? attributionSummaryCard("organic_video", orderSummary.organic_video) : ""}${orderSummary.shop_ad.orders ? attributionSummaryCard("shop_ad", orderSummary.shop_ad) : ""}</div>${insightCard(insight)}</section>`;
+    return `${backButton()}<section class="product-studio"><span class="product-image large">${item.thumbnail}</span><div><p class="eyebrow">Video Detail</p><h2>${item.title}</h2><p>${accountName(item.accountId)} · Posted ${item.date} at ${item.time}</p></div></section><section class="metric-grid compact">${metricCard("Views", number.format(item.views), "Public video metric", "white")}${metricCard("Earnings", money.format(item.earnings), sourceNames, "selected")}${metricCard("Units Sold", number.format(item.units), linked?.name || "Linked product", "white")}${metricCard("Shares", number.format(item.shares), "Audience signal", "white")}</section><section class="section attribution-section">${heading("Sales Attribution", "Video earnings by origin", "Sales Attribution")}<div class="attribution-grid">${orderSummary.organic_video.orders ? attributionSummaryCard("organic_video", orderSummary.organic_video) : ""}${orderSummary.shop_ad.orders ? attributionSummaryCard("shop_ad", orderSummary.shop_ad) : ""}</div>${insightCard(insight)}</section>`;
   }
 
   function renderDataHub() {
-    return `<section class="page-intro"><div><p class="eyebrow">Data Hub</p><h2>Sandbox source readiness by data category.</h2><p>No live TikTok service is connected in this prototype.</p></div></section><section class="section data-source-grid">${list("dataHubSources").map((item) => `<article><span class="status-dot ${(item.status || "unknown").toLowerCase().replaceAll(" ", "-")}"></span><strong>${item.name}</strong><small>${item.status}</small><dl><div><dt>Last updated</dt><dd>${item.lastUpdated || "Not available"}</dd></div><div><dt>Records</dt><dd>${number.format(item.records || 0)}</dd></div><div><dt>Source</dt><dd>${(item.dataSource || "sandbox").replaceAll("_", " ")}</dd></div></dl></article>`).join("") || empty("No source readiness records are available.")}</section>`;
+    return `<section class="page-intro"><div class="intro-heading" style="--section-accent:${sectionAccent["Data Hub"]}">${icon("Data Hub")}<div><p class="eyebrow">Data Hub</p><h2>Sandbox source readiness by data category.</h2><p>No live TikTok service is connected in this prototype.</p></div></div></section><section class="section data-source-grid">${list("dataHubSources").map((item) => `<article><span class="status-dot ${(item.status || "unknown").toLowerCase().replaceAll(" ", "-")}"></span><strong>${item.name}</strong><small>${item.status}</small><dl><div><dt>Last updated</dt><dd>${item.lastUpdated || "Not available"}</dd></div><div><dt>Records</dt><dd>${number.format(item.records || 0)}</dd></div><div><dt>Source</dt><dd>${(item.dataSource || "sandbox").replaceAll("_", " ")}</dd></div></dl></article>`).join("") || empty("No source readiness records are available.")}</section>`;
   }
 
   function renderSettings() {
-    return `<section class="page-intro"><div><p class="eyebrow">Settings</p><h2>Useful preferences only.</h2></div></section><div class="settings-grid"><section class="section"><h3>Accounts</h3>${list("accounts").map((item) => `<p>${identity(item.id)} ${item.name} <span class="muted">${item.handle}</span></p>`).join("") || empty("No account settings are available.")}</section><section class="section revenue-settings"><h3>Revenue Sources</h3>${list("revenueSources").map((item) => `<p><span class="source-dot ${item.accent}"></span><strong>${item.name}</strong><small>${item.shortName}</small></p>`).join("") || empty("No revenue sources are available.")}<button class="secondary-button" type="button" data-action="mock-modal" data-id="Add Revenue Source">Add Revenue Source</button></section><section class="section"><h3>Appearance</h3><label class="mini-control">Dashboard View<select><option>Comfortable</option><option>Compact</option></select></label><label class="mini-control">Theme<select><option>System</option><option>Light</option><option>Dark</option></select></label></section></div>`;
+    return `<section class="page-intro"><div class="intro-heading" style="--section-accent:${sectionAccent.Settings}">${icon("Settings")}<div><p class="eyebrow">Settings</p><h2>Useful preferences only.</h2></div></div></section><div class="settings-grid"><section class="section"><h3>Accounts</h3>${list("accounts").map((item) => `<p>${identity(item.id)} ${item.name} <span class="muted">${item.handle}</span></p>`).join("") || empty("No account settings are available.")}</section><section class="section revenue-settings"><h3>Revenue Sources</h3>${list("revenueSources").map((item) => `<p><span class="source-dot ${item.accent}"></span><strong>${item.name}</strong><small>${item.shortName}</small></p>`).join("") || empty("No revenue sources are available.")}<button class="secondary-button" type="button" data-action="mock-modal" data-id="Add Revenue Source">Add Revenue Source</button></section><section class="section"><h3>Appearance</h3><label class="mini-control">Dashboard View<select><option>Comfortable</option><option>Compact</option></select></label><label class="mini-control">Theme<select><option>System</option><option>Light</option><option>Dark</option></select></label></section></div>`;
   }
 
   function productRow(item) {

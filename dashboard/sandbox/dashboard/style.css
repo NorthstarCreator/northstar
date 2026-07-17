@@ -4,6 +4,10 @@
   --ink: #172033;
   --muted: #6b7280;
   --teal: #2f7c7a;
+  --aqua: #58c7c2;
+  --blue: #3d7edb;
+  --violet: #7c63d9;
+  --coral: #d96f56;
   --gold: #d4a72c;
   --ivory: #faf8f2;
   --paper: #ffffff;
@@ -46,16 +50,18 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   position: sticky;
   top: 0;
   height: 100vh;
-  padding: 28px 22px;
+  padding: 26px 20px;
   color: white;
   background:
-    radial-gradient(circle at 54% 6%, rgba(212, 167, 44, .28), transparent 17rem),
-    radial-gradient(circle at 2% 42%, rgba(47, 124, 122, .18), transparent 18rem),
-    linear-gradient(180deg, #10243d 0%, #091421 58%, #050b14 100%);
+    radial-gradient(circle at 50% 11%, rgba(212, 167, 44, .28), transparent 10rem),
+    radial-gradient(circle at 22% 6%, rgba(88, 199, 194, .24), transparent 15rem),
+    radial-gradient(circle at 82% 24%, rgba(15, 58, 95, .55), transparent 18rem),
+    linear-gradient(158deg, #143f55 0%, #0e2740 20%, #081727 55%, #040a13 100%);
   display: flex;
   flex-direction: column;
   gap: 22px;
   overflow: hidden;
+  box-shadow: inset -1px 0 0 rgba(255,255,255,.08), 18px 0 60px rgba(3, 10, 19, .16);
 }
 
 .sidebar::before {
@@ -63,39 +69,60 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  opacity: .17;
+  opacity: .24;
   background:
-    linear-gradient(90deg, transparent 49.5%, rgba(255,255,255,.18) 50%, transparent 50.5%),
-    linear-gradient(0deg, transparent 49.5%, rgba(255,255,255,.12) 50%, transparent 50.5%),
-    radial-gradient(circle at 50% 16%, transparent 0 9rem, rgba(255,255,255,.14) 9.04rem, rgba(255,255,255,.14) 9.12rem, transparent 9.2rem);
-  mask-image: linear-gradient(180deg, black 0 45%, transparent 78%);
+    linear-gradient(120deg, transparent 0 31%, rgba(255,255,255,.12) 31.2%, transparent 31.7% 68%, rgba(212,167,44,.08) 68.3%, transparent 68.8%),
+    linear-gradient(90deg, transparent 49.5%, rgba(255,255,255,.14) 50%, transparent 50.5%),
+    radial-gradient(circle at 50% 15%, transparent 0 8.4rem, rgba(255,255,255,.2) 8.48rem, rgba(255,255,255,.2) 8.56rem, transparent 8.66rem),
+    radial-gradient(circle at 50% 15%, transparent 0 4.5rem, rgba(212,167,44,.15) 4.56rem, transparent 4.65rem);
+  mask-image: linear-gradient(180deg, black 0 50%, transparent 83%);
+}
+
+.sidebar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at center, transparent 0 54%, rgba(0,0,0,.26) 100%),
+    linear-gradient(180deg, transparent, rgba(0,0,0,.22));
 }
 
 .brand-lockup {
+  position: relative;
+  z-index: 1;
   display: grid;
-  gap: 13px;
-  padding: 8px 8px 24px;
+  gap: 16px;
+  padding: 8px 4px 26px;
   text-decoration: none;
   color: white;
-  border-bottom: 1px solid rgba(255,255,255,.1);
+  border-bottom: 1px solid rgba(255,255,255,.14);
 }
 
 .brand-lockup img {
-  width: 350px;
+  width: 100%;
   max-width: 100%;
+  justify-self: center;
   filter: drop-shadow(0 14px 34px rgba(212, 167, 44, .24));
 }
 
 .brand-lockup span {
-  color: #ffd36b;
-  font-size: 1.08rem;
-  font-weight: 760;
-  letter-spacing: .01em;
+  color: #f6c85a;
+  font-size: 1.18rem;
+  font-weight: 820;
+  letter-spacing: .015em;
+  line-height: 1.2;
   white-space: nowrap;
-  text-shadow: 0 0 18px rgba(212, 167, 44, .22);
+  text-shadow: 0 0 14px rgba(212, 167, 44, .42), 0 0 34px rgba(212, 167, 44, .18);
+  padding-left: 2px;
 }
 
-.nav-list { display: grid; gap: 8px; }
+.nav-list {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 8px;
+}
 
 .nav-list button,
 .sidebar-action {
@@ -104,31 +131,36 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   border: 1px solid transparent;
   border-radius: 16px;
   padding: 13px 14px;
-  color: rgba(255,255,255,.82);
+  color: rgba(255,255,255,.9);
   background: transparent;
   text-align: left;
   font-size: .96rem;
-  font-weight: 780;
+  font-weight: 830;
   letter-spacing: .005em;
-  transition: transform .18s ease, background .18s ease, color .18s ease, border-color .18s ease;
+  text-shadow: 0 1px 12px rgba(88,199,194,.13);
+  transition: transform .18s ease, background .18s ease, color .18s ease, border-color .18s ease, box-shadow .18s ease;
 }
 
 .nav-list button:hover,
 .nav-list button.active,
 .sidebar-action:hover {
   color: white;
-  border-color: rgba(255,255,255,.12);
-  background: rgba(255,255,255,.08);
-  transform: translateY(-1px);
+  border-color: rgba(255,255,255,.16);
+  background:
+    radial-gradient(circle at 96% 50%, rgba(212,167,44,.22), transparent 4.2rem),
+    linear-gradient(90deg, rgba(212,167,44,.13), rgba(88,199,194,.08) 42%, rgba(255,255,255,.06));
+  box-shadow: inset 2px 0 0 rgba(212,167,44,.74), 0 10px 26px rgba(0,0,0,.14), 0 0 24px rgba(88,199,194,.08);
+  transform: translateX(2px);
 }
 
 .nav-list button.active {
   background:
-    linear-gradient(90deg, rgba(212,167,44,.2), rgba(255,255,255,.08)),
-    rgba(255,255,255,.08);
-  box-shadow: inset 3px 0 0 var(--gold), 0 10px 28px rgba(0,0,0,.16), 0 0 34px rgba(212,167,44,.06);
+    radial-gradient(circle at 94% 50%, rgba(212,167,44,.28), transparent 4.6rem),
+    linear-gradient(90deg, rgba(212,167,44,.2), rgba(88,199,194,.12) 54%, rgba(255,255,255,.08));
+  box-shadow: inset 3px 0 0 var(--gold), 0 10px 28px rgba(0,0,0,.18), 0 0 34px rgba(212,167,44,.1);
 }
 
+.nav-list button:hover::after,
 .nav-list button.active::after {
   content: "✦";
   position: absolute;
@@ -159,6 +191,8 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 
 .sidebar-note {
+  position: relative;
+  z-index: 1;
   padding: 16px;
   border: 1px solid rgba(255,255,255,.13);
   border-radius: 20px;
@@ -380,6 +414,13 @@ select, input {
   border: 1px solid rgba(13,27,42,.08);
 }
 
+.intro-heading {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
 .brief-hero {
   position: relative;
   display: grid;
@@ -427,6 +468,25 @@ select, input {
   gap: 10px;
   margin: 18px 0 10px;
   font-weight: 800;
+  min-width: 0;
+}
+
+.brief-account > span:not(.avatar) {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.brief-account strong,
+.brief-account small {
+  display: block;
+  line-height: 1.2;
+}
+
+.brief-account small {
+  color: var(--muted);
+  font-weight: 760;
+  overflow-wrap: anywhere;
 }
 
 .hero-mark {
@@ -618,17 +678,34 @@ select, input {
 }
 
 .heading-icon {
+  --icon-accent: var(--section-accent, var(--gold));
   width: 38px;
   height: 38px;
   flex: 0 0 38px;
   display: grid;
   place-items: center;
   border-radius: 14px;
-  color: var(--gold);
+  color: var(--icon-accent);
   background:
-    radial-gradient(circle at 50% 30%, rgba(212,167,44,.18), transparent 58%),
+    radial-gradient(circle at 72% 26%, color-mix(in srgb, var(--icon-accent) 38%, transparent), transparent 58%),
     linear-gradient(135deg, rgba(13,27,42,.95), rgba(20,41,67,.9));
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.09), 0 10px 24px rgba(13,27,42,.09);
+}
+
+.heading-icon[data-icon="Revenue Compass"] { --icon-accent: var(--gold); }
+.heading-icon[data-icon="Product Compass"] { --icon-accent: var(--teal); }
+.heading-icon[data-icon="Product Studio"] { --icon-accent: var(--coral); }
+.heading-icon[data-icon="Northstar Pulse"] { --icon-accent: #f2bd3e; }
+.heading-icon[data-icon="Northstar Insight"] { --icon-accent: var(--aqua); }
+.heading-icon[data-icon="Audience"] { --icon-accent: #42c9c4; }
+.heading-icon[data-icon="View Performance"] { --icon-accent: var(--blue); }
+.heading-icon[data-icon="Opportunity Center"] { --icon-accent: var(--violet); }
+.heading-icon[data-icon="Sales Attribution"] { --icon-accent: #36b9b4; }
+.heading-icon[data-icon="Data Hub"] { --icon-accent: #3ea7d8; }
+.heading-icon[data-icon="Settings"] { --icon-accent: #c6a85b; }
+
+.heading-title .eyebrow {
+  color: color-mix(in srgb, var(--section-accent, var(--teal)) 82%, var(--teal));
 }
 
 .heading-icon svg {
@@ -640,6 +717,10 @@ select, input {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+.heading-icon svg .fill-soft { fill: color-mix(in srgb, var(--icon-accent) 18%, transparent); stroke: none; }
+.heading-icon svg .fill-accent { fill: currentColor; stroke: none; }
+.heading-icon svg .muted-stroke { stroke: rgba(255,255,255,.58); }
 
 .split-grid,
 .story-grid {
