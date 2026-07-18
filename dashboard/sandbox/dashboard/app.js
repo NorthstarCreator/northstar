@@ -11,7 +11,10 @@
     storyView: "timeline",
     selectedDay: null,
     productSort: "earnings",
-    videoSort: "date",
+    productSearch: "",
+    videoSort: "newest",
+    videoSearch: "",
+    videoSourceFilter: "all",
     productVideoSort: "date",
     selectedProductId: null,
     selectedVideoId: null,
@@ -21,6 +24,7 @@
     audienceDemo: "gender",
     activityMode: "hours",
     attributionFilter: "all",
+    generator: { productId: null, tool: null, variant: 0, saved: false },
     history: []
   };
 
@@ -73,8 +77,18 @@
   const dateRanges = [["today", "Today"], ["week", "This Week"], ["month", "This Month"], ["custom", "Custom"]];
   const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
   const number = new Intl.NumberFormat("en-US");
+  let searchDebounce = null;
 
   const list = (key) => Array.isArray(data[key]) ? data[key] : [];
+  const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
+  const escapeAttr = escapeHtml;
+  const normalizeSearch = (value) => String(value ?? "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^\w\s#@.-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
   const defaultAudience = () => ({
     total: 0,
     new: 0,
@@ -277,6 +291,86 @@
       .filter((item) => !extra.sourceId || item.type === "sample" || visibleVideos.some((v) => v.productId === item.id));
   }
 
+  function productSearchText(item) {
+    const relatedVideos = list("videos").filter((entry) => entry.productId === item.id);
+    const creative = item.creativeProfile || {};
+    const text = [
+      item.name,
+      item.id,
+      item.productId,
+      item.sku,
+      item.notes,
+      item.keywords,
+      item.insight,
+      item.bestHook,
+      item.type,
+      accountName(item.accountId),
+      creative.audienceAngle,
+      creative.primaryBenefit,
+      creative.painPoint,
+      creative.proofPoint,
+      creative.visualDemo,
+      creative.tone,
+      creative.suggestedCTA,
+      ...(creative.suggestedKeywords || []),
+      ...(creative.suggestedHashtags || []),
+      ...relatedVideos.flatMap((entry) => [entry.title, entry.caption, entry.date, entry.time, ...(entry.tags || [])])
+    ];
+    return normalizeSearch(text.filter(Boolean).join(" "));
+  }
+
+  function videoSearchText(item) {
+    const linked = product(item.productId);
+    const text = [
+      item.title,
+      item.caption,
+      item.id,
+      item.date,
+      item.time,
+      item.place,
+      accountName(item.accountId),
+      linked?.name,
+      linked?.id,
+      ...(item.tags || []),
+      ...itemSources(item).map((id) => source(id)?.name || id)
+    ];
+    return normalizeSearch(text.filter(Boolean).join(" "));
+  }
+
+  function searchedProducts(items) {
+    const query = normalizeSearch(state.productSearch);
+    if (!query) return items;
+    return items.filter((item) => productSearchText(item).includes(query));
+  }
+
+  function searchedVideos(items) {
+    const query = normalizeSearch(state.videoSearch);
+    if (!query) return items;
+    return items.filter((item) => videoSearchText(item).includes(query));
+  }
+
+  function productImage(item, size = "", fallback = "") {
+    const label = item?.imageAlt || item?.name || item?.title || "Northstar product image";
+    const fallbackText = escapeHtml(fallback || item?.image || item?.thumbnail || "✦");
+    const classes = ["product-image", size, item?.imageUrl || item?.productImage || item?.thumbnailUrl || item?.coverImage ? "" : "image-fallback"].filter(Boolean).join(" ");
+    const imageUrl = item?.imageUrl || item?.productImage || item?.thumbnailUrl || item?.coverImage || "";
+    if (!imageUrl) return `<span class="${classes}" role="img" aria-label="${escapeAttr(label)}">${fallbackText}</span>`;
+    return `<span class="${classes}" data-fallback="${escapeAttr(fallbackText)}"><img src="${escapeAttr(imageUrl)}" alt="${escapeAttr(label)}" loading="lazy" onerror="this.remove();this.parentElement.classList.add('image-fallback');this.parentElement.textContent=this.parentElement.dataset.fallback || '✦';"></span>`;
+  }
+
+  function searchToolbar(kind, count, total) {
+    const isProduct = kind === "product";
+    const query = isProduct ? state.productSearch : state.videoSearch;
+    const placeholder = isProduct ? "Search products by name, account, or video…" : "Search videos by title, product, account, or caption…";
+    const action = isProduct ? "product-search" : "video-search";
+    const clearAction = isProduct ? "clear-product-search" : "clear-video-search";
+    const label = isProduct ? "Search products" : "Search videos";
+    const countLabel = query
+      ? `${number.format(count)} ${isProduct ? "products" : "videos"} matching “${escapeHtml(query)}”`
+      : `${number.format(total)} ${isProduct ? "products" : "videos"}`;
+    return `<div class="search-wrap"><label class="search-box"><span aria-hidden="true">⌕</span><span class="sr-only">${label}</span><input type="search" data-action="${action}" value="${escapeAttr(query)}" placeholder="${placeholder}" autocomplete="off" aria-label="${label}">${query ? `<button class="clear-search" type="button" data-action="${clearAction}" aria-label="Clear ${label.toLowerCase()}">×</button>` : ""}</label><p class="result-count">${countLabel}</p></div>`;
+  }
+
   function filteredOrders(extra = {}) {
     return list("shopOrders")
       .filter(accountMatches)
@@ -443,7 +537,10 @@
   function setPage(page, id = null, push = true) {
     if (push) state.history.push({ page: state.page, id: state.selectedProductId || state.selectedVideoId || state.selectedOpportunityId || state.selectedOrderId || state.activeSource });
     state.page = page;
-    if (page === "product-detail") state.selectedProductId = id;
+    if (page === "product-detail") {
+      if (state.selectedProductId !== id) state.generator = { productId: id, tool: null, variant: 0, saved: false };
+      state.selectedProductId = id;
+    }
     if (page === "video-detail") state.selectedVideoId = id;
     if (page === "opportunity-detail") state.selectedOpportunityId = id;
     if (page === "order-detail") state.selectedOrderId = id;
@@ -706,7 +803,7 @@
   function orderRow(item) {
     const linkedProduct = product(item.productId);
     const linkedVideo = video(item.videoId);
-    return `<button class="order-row" type="button" data-action="open-order" data-id="${item.id}"><span class="product-image small">${linkedProduct?.image || "✦"}</span><span><strong>${linkedProduct?.name || "Linked product"}</strong><small>${item.status} · ${linkedVideo?.title || "No video linked"}</small></span>${attributionBadge(item.attributionType)}<span>${money.format(item.price)} × ${item.quantity}</span><span>${Math.round(item.commissionRate * 1000) / 10}%</span><strong>${money.format(commissionValue(item))}</strong></button>`;
+    return `<button class="order-row" type="button" data-action="open-order" data-id="${item.id}">${productImage(linkedProduct || {}, "small")}<span><strong>${linkedProduct?.name || "Linked product"}</strong><small>${item.status} · ${linkedVideo?.title || "No video linked"}</small></span>${attributionBadge(item.attributionType)}<span>${money.format(item.price)} × ${item.quantity}</span><span>${Math.round(item.commissionRate * 1000) / 10}%</span><strong>${money.format(commissionValue(item))}</strong></button>`;
   }
 
   function renderOrderDetail() {
@@ -718,7 +815,7 @@
     const linkedVideo = video(item.videoId);
     return `
       ${backButton()}
-      <section class="product-studio"><span class="product-image large">${linkedProduct?.image || "✦"}</span><div><p class="eyebrow">Order Detail</p><h2>${linkedProduct?.name || "TikTok Shop order"}</h2><p>${accountName(item.accountId)} · ${item.date} · ${item.status}</p>${attributionBadge(item.attributionType)}</div></section>
+      <section class="product-studio">${productImage(linkedProduct || {}, "large")}<div><p class="eyebrow">Order Detail</p><h2>${linkedProduct?.name || "TikTok Shop order"}</h2><p>${accountName(item.accountId)} · ${item.date} · ${item.status}</p>${attributionBadge(item.attributionType)}</div></section>
       <section class="section"><dl class="detail-list">
         <div><dt>Order ID</dt><dd>${item.id}</dd></div>
         <div><dt>Attribution</dt><dd>${attributionLabel(item.attributionType)}</dd></div>
@@ -824,13 +921,14 @@
   }
 
   function renderProducts() {
-    const products = sortProducts(filteredProducts());
-    return `<section class="page-intro"><div><p class="eyebrow">Product Compass</p><h2>Sample to earnings, without the clutter.</h2><p>Samples needing content and products already earning each open into Product Studio.</p></div><label class="mini-control">Sort products<select data-action="product-sort"><option value="earnings">Earnings</option><option value="views">Views</option><option value="updated">Updated</option></select></label></section><div class="product-grid">${products.map(productCard).join("")}</div>`;
+    const visibleProducts = filteredProducts();
+    const products = sortProducts(searchedProducts(visibleProducts));
+    return `<section class="page-intro"><div><p class="eyebrow">Product Compass</p><h2>Sample to earnings, without the clutter.</h2><p>Samples needing content and products already earning each open into Product Studio.</p></div></section><section class="toolbar-card">${searchToolbar("product", products.length, visibleProducts.length)}<label class="mini-control">Sort products<select data-action="product-sort"><option value="earnings" ${state.productSort === "earnings" ? "selected" : ""}>Earnings</option><option value="sales" ${state.productSort === "sales" ? "selected" : ""}>Sales</option><option value="views" ${state.productSort === "views" ? "selected" : ""}>Views</option><option value="updated" ${state.productSort === "updated" ? "selected" : ""}>Recent activity</option><option value="name" ${state.productSort === "name" ? "selected" : ""}>Product name</option></select></label></section>${products.length ? `<div class="product-grid">${products.map(productCard).join("")}</div>` : `<section class="section empty-state"><h3>No matching products</h3><p>Try another product name, account, or keyword.</p></section>`}`;
   }
 
   function productCard(item) {
     const isSample = item.type === "sample";
-    return `<button class="product-card ${isSample ? "sample" : ""}" type="button" data-action="open-product" data-id="${item.id}"><span class="product-image">${item.image}</span><span class="pill ${isSample ? "sample-pill" : "earning-pill"}">${isSample ? "Sample" : "Products Earning"}</span><h3>${item.name}</h3><p>${accountName(item.accountId)}</p>${isSample && item.dueDate ? `<small>Post by ${item.dueDate}</small>` : `<small>${money.format(item.earnings)} earned · ${number.format(item.units)} units</small>`}${workflow(item.workflowStep)}</button>`;
+    return `<button class="product-card ${isSample ? "sample" : ""}" type="button" data-action="open-product" data-id="${item.id}">${productImage(item)}<span class="pill ${isSample ? "sample-pill" : "earning-pill"}">${isSample ? "Sample" : "Products Earning"}</span><h3 title="${escapeAttr(item.name)}">${item.name}</h3><p>${accountName(item.accountId)}</p>${isSample && item.dueDate ? `<small>Post by ${item.dueDate}</small>` : `<small>${money.format(item.earnings)} earned · ${number.format(item.units)} units</small>`}${workflow(item.workflowStep)}</button>`;
   }
 
   function renderProductDetail() {
@@ -842,16 +940,18 @@
     const orderSummary = attributionSummary({ productId: item.id });
     return `
       ${backButton()}
-      <section class="product-studio"><span class="product-image large">${item.image}</span><div><p class="eyebrow">Product Studio</p><h2>${item.name}</h2><p>${accountName(item.accountId)} · ${item.type === "sample" ? "Sample" : `${money.format(item.earnings)} current earnings`}${item.dueDate ? ` · Post by ${item.dueDate}` : ""}</p>${workflow(item.workflowStep)}</div></section>
-      <section class="split-grid"><div class="section"><div class="section-heading"><div><p class="eyebrow">Create Content</p><h3>Northstar tools</h3></div></div><div class="tool-grid">${["Generate Hooks", "Generate Script", "Generate Caption", "Generate Hashtags", "Generate Talking Points", "Generate CTA"].map((label) => `<button class="tool-button" type="button" data-action="generate" data-id="${label}" data-product="${item.id}">${label}<span>✦</span></button>`).join("")}</div><div id="generatorOutput" class="workspace-output">Choose a tool to generate a mock creator-ready direction for this product.</div></div><div class="section"><p class="eyebrow">Product Intelligence</p><h3>${item.bestHook}</h3><p>${item.insight}</p><dl class="mini-stats"><div><dt>Earnings</dt><dd>${money.format(item.earnings)}</dd></div><div><dt>GMV</dt><dd>${money.format(item.gmv)}</dd></div><div><dt>Units</dt><dd>${number.format(item.units)}</dd></div></dl></div></section>
+      <section class="product-studio">${productImage(item, "large")}<div><p class="eyebrow">Product Studio</p><h2>${item.name}</h2><p>${accountName(item.accountId)} · ${item.type === "sample" ? "Sample" : `${money.format(item.earnings)} current earnings`}${item.dueDate ? ` · Post by ${item.dueDate}` : ""}</p>${workflow(item.workflowStep)}</div></section>
+      <section class="split-grid"><div class="section"><div class="section-heading"><div><p class="eyebrow">Create Content</p><h3>Northstar tools</h3></div></div><div class="tool-grid">${["Generate Hooks", "Generate Script", "Generate Caption", "Generate Hashtags", "Generate Talking Points", "Generate CTA"].map((label) => `<button class="tool-button" type="button" data-action="generate" data-id="${label}" data-product="${item.id}">${label}<span>✦</span></button>`).join("")}</div><div id="generatorOutput" class="workspace-output">${state.generator.productId === item.id && state.generator.tool ? renderGeneratorOutput(item, state.generator.tool, state.generator.variant, state.generator.saved) : "Choose a tool to generate a mock creator-ready direction for this product."}</div></div><div class="section"><p class="eyebrow">Product Intelligence</p><h3>${item.bestHook}</h3><p>${item.insight}</p><dl class="mini-stats"><div><dt>Earnings</dt><dd>${money.format(item.earnings)}</dd></div><div><dt>GMV</dt><dd>${money.format(item.gmv)}</dd></div><div><dt>Units</dt><dd>${number.format(item.units)}</dd></div></dl></div></section>
       <section class="section attribution-section">${heading("Sales Attribution", "How this product earned", "Sales Attribution")}<div class="attribution-grid">${attributionSummaryCard("organic_video", orderSummary.organic_video)}${attributionSummaryCard("shop_ad", orderSummary.shop_ad)}</div></section>
       <section class="section"><div class="section-heading"><div><p class="eyebrow">Product Videos</p><h3>Posting time stays visible</h3></div><label class="mini-control">Sort<select data-action="product-video-sort"><option value="date">Date</option><option value="time">Posting time</option><option value="views">Views</option><option value="sales">Sales</option><option value="earnings">Earnings</option></select></label></div><div class="video-table">${videos.map(videoTableRow).join("") || empty("More product videos appear here after import.")}</div></section>
     `;
   }
 
   function renderVideos() {
-    const videos = sortVideos(filteredVideos());
-    return `<section class="page-intro"><div><p class="eyebrow">Videos</p><h2>Video performance with posting time preserved.</h2></div><label class="mini-control">Sort videos<select data-action="video-sort"><option value="date">Date</option><option value="time">Posting time</option><option value="views">Views</option><option value="sales">Sales</option><option value="earnings">Earnings</option></select></label></section><div class="video-table">${videos.map(videoTableRow).join("")}</div>`;
+    const sourceId = state.videoSourceFilter === "all" ? null : state.videoSourceFilter;
+    const visibleVideos = filteredVideos({ sourceId });
+    const videos = sortVideos(searchedVideos(visibleVideos));
+    return `<section class="page-intro"><div><p class="eyebrow">Videos</p><h2>Video performance with posting time preserved.</h2></div></section><section class="toolbar-card">${searchToolbar("video", videos.length, visibleVideos.length)}<label class="mini-control">Revenue Source<select data-action="video-source-filter"><option value="all" ${state.videoSourceFilter === "all" ? "selected" : ""}>All sources</option>${list("revenueSources").map((item) => `<option value="${item.id}" ${state.videoSourceFilter === item.id ? "selected" : ""}>${item.name}</option>`).join("")}</select></label><label class="mini-control">Sort videos<select data-action="video-sort"><option value="views" ${state.videoSort === "views" ? "selected" : ""}>Views</option><option value="earnings" ${state.videoSort === "earnings" ? "selected" : ""}>Earnings</option><option value="sales" ${state.videoSort === "sales" ? "selected" : ""}>Sales</option><option value="time" ${state.videoSort === "time" ? "selected" : ""}>Posting time</option><option value="newest" ${state.videoSort === "newest" || state.videoSort === "date" ? "selected" : ""}>Newest</option><option value="oldest" ${state.videoSort === "oldest" ? "selected" : ""}>Oldest</option></select></label></section>${videos.length ? `<div class="video-table">${videos.map(videoTableRow).join("")}</div>` : `<section class="section empty-state"><h3>No matching videos</h3><p>Try another title, product, account, or keyword.</p></section>`}`;
   }
 
   function renderVideoDetail() {
@@ -867,7 +967,7 @@
       ? shopShare > 0 ? `Shop Ads generated ${shopShare}% of this video's shop commission, but organic sales paid a different average rate.` : "This video is currently earning from organic product-linked traffic in the sandbox data."
       : "No TikTok Shop orders are connected to this video in the sandbox data yet.";
     const sourceNames = itemSources(item).map((id) => source(id)?.name).filter(Boolean).join(" + ") || "No source linked";
-    return `${backButton()}<section class="product-studio"><span class="product-image large">${item.thumbnail}</span><div><p class="eyebrow">Video Detail</p><h2>${item.title}</h2><p>${accountName(item.accountId)} · Posted ${item.date} at ${item.time}</p></div></section><section class="metric-grid compact">${metricCard("Views", number.format(item.views), "Public video metric", "white")}${metricCard("Earnings", money.format(item.earnings), sourceNames, "selected")}${metricCard("Units Sold", number.format(item.units), linked?.name || "Linked product", "white")}${metricCard("Shares", number.format(item.shares), "Audience signal", "white")}</section><section class="section attribution-section">${heading("Sales Attribution", "Video earnings by origin", "Sales Attribution")}<div class="attribution-grid">${orderSummary.organic_video.orders ? attributionSummaryCard("organic_video", orderSummary.organic_video) : ""}${orderSummary.shop_ad.orders ? attributionSummaryCard("shop_ad", orderSummary.shop_ad) : ""}</div>${insightCard(insight)}</section>`;
+    return `${backButton()}<section class="product-studio">${productImage(item, "large")}<div><p class="eyebrow">Video Detail</p><h2>${item.title}</h2><p>${accountName(item.accountId)} · Posted ${item.date} at ${item.time}</p></div></section><section class="metric-grid compact">${metricCard("Views", number.format(item.views), "Public video metric", "white")}${metricCard("Earnings", money.format(item.earnings), sourceNames, "selected")}${metricCard("Units Sold", number.format(item.units), linked?.name || "Linked product", "white")}${metricCard("Shares", number.format(item.shares), "Audience signal", "white")}</section><section class="section attribution-section">${heading("Sales Attribution", "Video earnings by origin", "Sales Attribution")}<div class="attribution-grid">${orderSummary.organic_video.orders ? attributionSummaryCard("organic_video", orderSummary.organic_video) : ""}${orderSummary.shop_ad.orders ? attributionSummaryCard("shop_ad", orderSummary.shop_ad) : ""}</div>${insightCard(insight)}</section>`;
   }
 
   function renderDataHub() {
@@ -879,26 +979,28 @@
   }
 
   function productRow(item) {
-    return `<button class="list-row" type="button" data-action="open-product" data-id="${item.id}"><span class="product-image small">${item.image}</span><span><strong>${item.name}</strong><small>${accountName(item.accountId)} · ${money.format(item.earnings)}</small></span><em>→</em></button>`;
+    return `<button class="list-row" type="button" data-action="open-product" data-id="${item.id}">${productImage(item, "small")}<span><strong>${item.name}</strong><small>${accountName(item.accountId)} · ${money.format(item.earnings)}</small></span><em>→</em></button>`;
   }
 
   function videoRow(item) {
-    return `<button class="list-row" type="button" data-action="open-video" data-id="${item.id}"><span class="product-image small">${item.thumbnail}</span><span><strong>${item.title}</strong><small>${formatBriefDateTime(item.date, item.time)} · ${number.format(item.views)} views</small></span><em>→</em></button>`;
+    return `<button class="list-row" type="button" data-action="open-video" data-id="${item.id}">${productImage(item, "small")}<span><strong>${item.title}</strong><small>${formatBriefDateTime(item.date, item.time)} · ${number.format(item.views)} views</small></span><em>→</em></button>`;
   }
 
   function sampleCard(item) {
-    return `<button class="sample-card" type="button" data-action="open-product" data-id="${item.id}"><span class="product-image">${item.image}</span><span><strong>${item.name}</strong><small>${accountName(item.accountId)}${item.dueDate ? " · Post by " + formatBriefDate(item.dueDate) : ""}</small></span>${workflow(item.workflowStep)}</button>`;
+    return `<button class="sample-card" type="button" data-action="open-product" data-id="${item.id}">${productImage(item)}<span><strong>${item.name}</strong><small>${accountName(item.accountId)}${item.dueDate ? " · Post by " + formatBriefDate(item.dueDate) : ""}</small></span>${workflow(item.workflowStep)}</button>`;
   }
 
   function videoTableRow(item) {
     const orderTypes = [...new Set(filteredOrders({ videoId: item.id }).map((entry) => entry.attributionType))];
-    return `<button class="video-row" type="button" data-action="open-video" data-id="${item.id}"><span class="product-image small">${item.thumbnail}</span><strong>${item.title}</strong><span>${accountName(item.accountId)}</span><span>${item.date}<b>${item.time}</b></span><span>${number.format(item.views)}</span><span>${number.format(item.units)}</span><span>${money.format(item.gmv)}</span><span>${money.format(item.earnings)}${orderTypes.length ? `<small class="badge-stack">${orderTypes.map(attributionBadge).join("")}</small>` : ""}</span></button>`;
+    return `<button class="video-row" type="button" data-action="open-video" data-id="${item.id}">${productImage(item, "small")}<strong title="${escapeAttr(item.title)}">${item.title}</strong><span>${accountName(item.accountId)}</span><span>${item.date}<b>${item.time}</b></span><span>${number.format(item.views)}</span><span>${number.format(item.units)}</span><span>${money.format(item.gmv)}</span><span>${money.format(item.earnings)}${orderTypes.length ? `<small class="badge-stack">${orderTypes.map(attributionBadge).join("")}</small>` : ""}</span></button>`;
   }
 
   function sortProducts(items) {
     return [...items].sort((a, b) => {
       if (state.productSort === "views") return (b.views || 0) - (a.views || 0);
+      if (state.productSort === "sales") return (b.units || 0) - (a.units || 0);
       if (state.productSort === "updated") return new Date(b.updatedAt) - new Date(a.updatedAt);
+      if (state.productSort === "name") return String(a.name || "").localeCompare(String(b.name || ""));
       return (b.earnings || 0) - (a.earnings || 0);
     });
   }
@@ -910,6 +1012,7 @@
       if (key === "sales") return (b.units || 0) - (a.units || 0);
       if (key === "earnings") return (b.earnings || 0) - (a.earnings || 0);
       if (key === "time") return String(a.time || "").localeCompare(String(b.time || ""));
+      if (key === "oldest") return new Date(a.date) - new Date(b.date);
       return new Date(b.date) - new Date(a.date);
     });
   }
@@ -923,6 +1026,90 @@
   const morningBackButton = () => `<button class="back-button morning-back" type="button" data-action="morning-back">← Morning Brief</button>`;
   const empty = (message) => `<p class="empty">${message}</p>`;
 
+  const generatorTitles = {
+    "Generate Hooks": "Generated Hooks",
+    "Generate Script": "Generated Script",
+    "Generate Caption": "Generated Caption",
+    "Generate Hashtags": "Generated Hashtags",
+    "Generate Talking Points": "Generated Talking Points",
+    "Generate CTA": "Generated CTA"
+  };
+
+  function creativeProfile(item) {
+    const fallback = {
+      audienceAngle: accountName(item.accountId),
+      primaryBenefit: item.insight || "clear next-step product context",
+      painPoint: "the audience needs a practical reason to care",
+      proofPoint: item.bestHook || "the product already has a useful content angle",
+      visualDemo: "show the product in use with a clear before and after",
+      tone: "clear, useful, creator-led",
+      prohibitedClaims: "Keep claims practical and avoid unsupported guarantees.",
+      suggestedKeywords: [item.name, accountName(item.accountId), item.type],
+      suggestedHashtags: ["#TikTokShopFinds", "#CreatorTools", "#NorthstarPlanning"],
+      suggestedCTA: "Tap the product link to see the current details.",
+      contentHooks: [item.bestHook || `Here is why ${item.name} is worth a closer look.`],
+      scriptOutline: ["Open with the audience problem.", "Show the product in use.", "Name the practical payoff.", "End with a soft product-link CTA."],
+      captions: [`Testing ${item.name} with a practical creator angle.`],
+      talkingPoints: [item.insight || "Lead with what changed and why it matters."],
+      ctaVariants: ["Tap the product link to see the current price."]
+    };
+    return { ...fallback, ...(item.creativeProfile || {}) };
+  }
+
+  function rotate(listItems, variant = 0, count = 3) {
+    const items = Array.isArray(listItems) && listItems.length ? listItems : [];
+    if (!items.length) return [];
+    return Array.from({ length: Math.min(count, items.length) }, (_, index) => items[(variant + index) % items.length]);
+  }
+
+  function generatorPayload(item, tool, variant = 0) {
+    const profile = creativeProfile(item);
+    const hooks = rotate(profile.contentHooks, variant, 3);
+    const captions = rotate(profile.captions, variant, 1);
+    const ctas = rotate(profile.ctaVariants, variant, 1);
+    if (tool === "Generate Hooks") {
+      return {
+        title: generatorTitles[tool],
+        plain: hooks.map((hook, index) => `${index + 1}. ${hook}`).join("\n"),
+        html: `<ol class="generated-list">${hooks.map((hook) => `<li>${escapeHtml(hook)}</li>`).join("")}</ol>`
+      };
+    }
+    if (tool === "Generate Script") {
+      const steps = profile.scriptOutline || [];
+      return {
+        title: generatorTitles[tool],
+        plain: steps.map((step, index) => `${index + 1}. ${step}`).join("\n"),
+        html: `<div class="script-block">${steps.map((step, index) => `<p><strong>${index + 1}</strong>${escapeHtml(step)}</p>`).join("")}</div>`
+      };
+    }
+    if (tool === "Generate Caption") {
+      const caption = captions[0] || `${item.name} is the next product to test.`;
+      return { title: generatorTitles[tool], plain: caption, html: `<p class="caption-copy">${escapeHtml(caption)}</p>` };
+    }
+    if (tool === "Generate Hashtags") {
+      const tags = rotate(profile.suggestedHashtags, variant, 12);
+      return { title: generatorTitles[tool], plain: tags.join(" "), html: `<div class="hashtag-list">${tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>` };
+    }
+    if (tool === "Generate Talking Points") {
+      const points = [
+        `Audience angle: ${profile.audienceAngle}`,
+        `Pain point: ${profile.painPoint}`,
+        `Benefit: ${profile.primaryBenefit}`,
+        `Proof: ${profile.proofPoint}`,
+        `Visual demo: ${profile.visualDemo}`,
+        `Caution: ${profile.prohibitedClaims}`
+      ];
+      return { title: generatorTitles[tool], plain: points.join("\n"), html: `<ul class="generated-list">${points.map((point) => `<li>${escapeHtml(point)}</li>`).join("")}</ul>` };
+    }
+    const cta = ctas[0] || profile.suggestedCTA;
+    return { title: generatorTitles[tool] || tool, plain: cta, html: `<p class="cta-copy">${escapeHtml(cta)}</p>` };
+  }
+
+  function renderGeneratorOutput(item, tool, variant = 0, saved = false) {
+    const payload = generatorPayload(item, tool, variant);
+    return `<div class="generated-card"><div><p class="eyebrow">${escapeHtml(payload.title)}</p><h4>${escapeHtml(item.name)}</h4><small>${accountName(item.accountId)} · ${creativeProfile(item).tone}</small></div><div class="generated-content">${payload.html}</div><div class="generated-actions"><button class="secondary-button" type="button" data-action="generator-copy">Copy</button><button class="secondary-button" type="button" data-action="generator-regenerate">Regenerate mock</button><button class="secondary-button" type="button" data-action="generator-save">Save to Product</button></div>${saved ? `<p class="save-confirmation">Saved to this product</p>` : ""}</div>`;
+  }
+
   function showGenerator(tool, productId) {
     const item = product(productId);
     const output = document.getElementById("generatorOutput");
@@ -931,7 +1118,27 @@
       output.innerHTML = `<strong>${tool}</strong><p>Select a product first so Northstar can generate a focused creative direction.</p>`;
       return;
     }
-    output.innerHTML = `<strong>${tool}</strong><p>${item.name}: Lead with "${item.bestHook}" and show the practical payoff in the first five seconds.</p><small>Mock Northstar creative direction · ${accountName(item.accountId)}</small>`;
+    state.generator = { productId, tool, variant: state.generator.productId === productId && state.generator.tool === tool ? state.generator.variant : 0, saved: false };
+    output.innerHTML = renderGeneratorOutput(item, tool, state.generator.variant, false);
+  }
+
+  function updateGenerator({ variantDelta = 0, saved = false } = {}) {
+    const { productId, tool } = state.generator;
+    const item = product(productId);
+    const output = document.getElementById("generatorOutput");
+    if (!item || !tool || !output) return;
+    state.generator.variant = Math.max(0, state.generator.variant + variantDelta);
+    state.generator.saved = saved;
+    output.innerHTML = renderGeneratorOutput(item, tool, state.generator.variant, saved);
+  }
+
+  function copyGenerator() {
+    const { productId, tool, variant } = state.generator;
+    const item = product(productId);
+    if (!item || !tool) return;
+    const text = generatorPayload(item, tool, variant).plain;
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) navigator.clipboard.writeText(text).catch(() => {});
+    updateGenerator({ saved: false });
   }
 
   function renderChrome() {
@@ -994,6 +1201,11 @@
     if (action.dataset.action === "back") goBack();
     if (action.dataset.action === "morning-back") setPage("brief", null, false);
     if (action.dataset.action === "generate") showGenerator(id, action.dataset.product);
+    if (action.dataset.action === "generator-copy") copyGenerator();
+    if (action.dataset.action === "generator-regenerate") updateGenerator({ variantDelta: 1, saved: false });
+    if (action.dataset.action === "generator-save") updateGenerator({ saved: true });
+    if (action.dataset.action === "clear-product-search") { state.productSearch = ""; render(); }
+    if (action.dataset.action === "clear-video-search") { state.videoSearch = ""; render(); }
     if (action.dataset.action === "cancel-custom") { els.customPanel.hidden = true; els.dateMenu.hidden = true; }
     if (action.dataset.action === "mock-modal") alert(`${id} is a visual prototype action.`);
   });
@@ -1002,8 +1214,33 @@
     const action = event.target.dataset.action;
     if (action === "product-sort") { state.productSort = event.target.value; render(); }
     if (action === "video-sort") { state.videoSort = event.target.value; render(); }
+    if (action === "video-source-filter") { state.videoSourceFilter = event.target.value; render(); }
     if (action === "product-video-sort") { state.productVideoSort = event.target.value; render(); }
     if (action === "source-metric") { state.activeMetric = event.target.value; render(); }
+  });
+
+  document.addEventListener("input", (event) => {
+    const action = event.target.dataset.action;
+    if (!["product-search", "video-search"].includes(action)) return;
+    const value = event.target.value;
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => {
+      if (action === "product-search") state.productSearch = value;
+      if (action === "video-search") state.videoSearch = value;
+      render();
+      const selector = action === "product-search" ? "[data-action='product-search']" : "[data-action='video-search']";
+      els.content.querySelector(selector)?.focus();
+    }, 150);
+  });
+
+  document.addEventListener("keydown", (event) => {
+    const action = event.target.dataset.action;
+    if (event.key !== "Escape" || !["product-search", "video-search"].includes(action)) return;
+    if (action === "product-search") state.productSearch = "";
+    if (action === "video-search") state.videoSearch = "";
+    render();
+    const selector = action === "product-search" ? "[data-action='product-search']" : "[data-action='video-search']";
+    els.content.querySelector(selector)?.focus();
   });
 
   els.accountButton.addEventListener("click", () => {
