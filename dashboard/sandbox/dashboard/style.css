@@ -683,6 +683,7 @@ select, input {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
+  align-items: stretch;
 }
 
 .metric-grid.compact { grid-template-columns: repeat(4, minmax(0, 1fr)); }
@@ -720,15 +721,17 @@ select, input {
 }
 
 .metric-card {
-  min-height: 126px;
-  padding: 17px 42px 17px 18px;
+  min-height: 136px;
+  padding: 18px 42px 18px 18px;
   text-align: left;
   position: relative;
   overflow: hidden;
   display: grid;
   grid-template-columns: 44px minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(32px, 1fr);
   align-content: start;
   column-gap: 12px;
+  row-gap: 4px;
 }
 
 .metric-card::before {
@@ -743,10 +746,12 @@ select, input {
 .metric-card .metric-label, .source-card small {
   display: block;
   color: var(--muted);
-  font-size: .74rem;
-  font-weight: 800;
+  font-size: .78rem;
+  font-weight: 840;
+  line-height: 1.18;
   letter-spacing: .1em;
   text-transform: uppercase;
+  min-width: 0;
 }
 
 .metric-icon {
@@ -786,7 +791,41 @@ select, input {
   letter-spacing: -.04em;
 }
 
-.metric-card small { color: var(--muted); line-height: 1.35; }
+.metric-card .metric-icon ~ .metric-label,
+.metric-card .metric-icon ~ .metric-value,
+.metric-card .metric-icon ~ .metric-support {
+  grid-column: 2;
+}
+
+.metric-card:not(:has(.metric-icon)) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.metric-card:not(:has(.metric-icon)) .metric-label,
+.metric-card:not(:has(.metric-icon)) .metric-value,
+.metric-card:not(:has(.metric-icon)) .metric-support {
+  grid-column: 1;
+}
+
+.metric-card .metric-value {
+  display: block;
+  margin: 3px 0 1px;
+  font-size: clamp(1.75rem, 2.4vw, 2.32rem);
+  line-height: 1.02;
+  letter-spacing: -.04em;
+  white-space: normal;
+}
+
+.metric-card .metric-support {
+  display: block;
+  color: var(--muted);
+  font-size: .86rem;
+  font-weight: 700;
+  line-height: 1.34;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
 .metric-card em { position: absolute; right: 16px; top: 18px; color: var(--teal); font-style: normal; }
 .metric-card.navy { color: white; background: linear-gradient(135deg, var(--navy), #19395f); }
 .metric-card.navy span, .metric-card.navy small { color: #c8d5e3; }
@@ -934,11 +973,15 @@ select, input {
 
 .source-card {
   --source-color: var(--gold);
-  min-height: 168px;
+  min-height: 188px;
   padding: 19px 20px 18px;
   text-align: left;
   position: relative;
   overflow: hidden;
+  display: grid;
+  grid-template-rows: auto auto auto auto minmax(24px, 1fr);
+  align-content: start;
+  gap: 7px;
   border-color: color-mix(in srgb, var(--source-color) 16%, rgba(13,27,42,.08));
   background:
     linear-gradient(180deg, rgba(255,255,255,.94), rgba(255,253,248,.86)),
@@ -963,7 +1006,7 @@ select, input {
 .chart-section.shop { --source-color: var(--shop); }
 .chart-section.rewards { --source-color: var(--rewards); }
 .chart-section.go { --source-color: var(--go); }
-.source-card p { color: var(--muted); margin: 0; line-height: 1.35; }
+.source-card p { position: relative; z-index: 1; color: var(--muted); margin: 0; line-height: 1.35; }
 .source-card small {
   position: relative;
   z-index: 1;
@@ -974,7 +1017,8 @@ select, input {
 .source-card strong {
   position: relative;
   z-index: 1;
-  margin: 12px 0 9px;
+  margin: 0;
+  line-height: 1.02;
 }
 .source-dot {
   width: 12px;
@@ -982,8 +1026,19 @@ select, input {
   border-radius: 999px;
   background: var(--source-color);
   display: inline-block;
-  margin-bottom: 12px;
   box-shadow: 0 0 0 5px color-mix(in srgb, var(--source-color) 12%, transparent), 0 0 18px color-mix(in srgb, var(--source-color) 30%, transparent);
+}
+.source-card-spacer {
+  position: relative;
+  z-index: 1;
+  display: block;
+  min-height: 24px;
+}
+.source-card .attribution-line {
+  margin: 0;
+  color: var(--muted);
+  font-size: .84rem;
+  font-weight: 780;
 }
 .source-dot.shop { background: var(--shop); }
 .source-dot.rewards { background: var(--rewards); }
@@ -1026,7 +1081,6 @@ select, input {
 }
 
 .revenue-compact .source-card strong {
-  margin: 8px 0 5px;
   font-size: clamp(1.45rem, 1.8vw, 1.8rem);
 }
 
@@ -1050,7 +1104,6 @@ select, input {
 .revenue-compact .source-dot {
   width: 9px;
   height: 9px;
-  margin-bottom: 9px;
 }
 
 .source-intro { background: linear-gradient(135deg, rgba(255,255,255,.94), rgba(255,255,255,.78)), radial-gradient(circle at 92% 8%, var(--source-color), transparent 24rem); }
@@ -1170,10 +1223,10 @@ select, input {
 
 .search-box {
   display: grid;
-  grid-template-columns: 22px minmax(0, 1fr) 28px;
+  grid-template-columns: 24px minmax(0, 1fr) 32px;
   align-items: center;
   gap: 8px;
-  min-height: 48px;
+  min-height: 50px;
   padding: 0 10px 0 14px;
   border: 1px solid rgba(13,27,42,.1);
   border-radius: 16px;
@@ -1203,8 +1256,8 @@ select, input {
 }
 
 .clear-search {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   display: grid;
   place-items: center;
   padding: 0;
@@ -1212,6 +1265,12 @@ select, input {
   color: var(--muted);
   background: rgba(13,27,42,.06);
   box-shadow: none;
+}
+
+.clear-search[hidden] {
+  display: grid !important;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .clear-search:hover,
@@ -1226,6 +1285,7 @@ select, input {
   color: var(--muted);
   font-size: .84rem;
   font-weight: 750;
+  min-height: 20px;
 }
 
 .empty-state {
@@ -2132,9 +2192,11 @@ select, input {
   align-items: center;
   gap: 10px;
   text-align: left;
+  min-width: 0;
 }
 
-.video-row span { color: var(--muted); font-size: .9rem; min-width: 0; }
+.video-row > * { min-width: 0; }
+.video-row span { color: var(--muted); font-size: .9rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .video-row b { display: block; color: var(--navy); font-size: .78rem; margin-top: 2px; }
 
 .settings-grid p {

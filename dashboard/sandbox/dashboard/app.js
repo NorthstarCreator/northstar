@@ -77,7 +77,22 @@
   const dateRanges = [["today", "Today"], ["week", "This Week"], ["month", "This Month"], ["custom", "Custom"]];
   const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
   const number = new Intl.NumberFormat("en-US");
-  let searchDebounce = null;
+  const pageLabels = {
+    brief: "Morning Brief",
+    audience: "Audience",
+    "view-performance": "View Performance",
+    opportunities: "Opportunity Center",
+    earnings: "Earnings",
+    products: "Products",
+    videos: "Videos",
+    data: "Data Hub",
+    settings: "Settings",
+    "product-detail": "Product Studio",
+    "video-detail": "Video Detail",
+    "source-detail": "Earnings",
+    "opportunity-detail": "Opportunity Center",
+    "order-detail": "Order Detail"
+  };
 
   const list = (key) => Array.isArray(data[key]) ? data[key] : [];
   const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
@@ -211,12 +226,30 @@
   }
 
   function formatBriefDate(date) {
-    if (!date) return "No date";
-    return new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    return formatDate(date);
   }
 
   function formatBriefDateTime(date, time) {
-    return `${new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" })} · ${time || "No time"}`;
+    return `${formatDate(date, { month: "short", day: "numeric" })} · ${time || "No time"}`;
+  }
+
+  function formatDate(date, options = { month: "short", day: "numeric", year: "numeric" }) {
+    if (!date) return "No date";
+    const parsed = new Date(`${date}T12:00:00`);
+    if (Number.isNaN(parsed.getTime())) return String(date);
+    return parsed.toLocaleDateString("en-US", options);
+  }
+
+  function formatHour(hour) {
+    return new Date(`2026-07-16T${String(hour).padStart(2, "0")}:00:00`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  }
+
+  function formatHourWindow(start, end) {
+    return `${formatHour(start)}–${formatHour(end)}`;
+  }
+
+  function weekdayName(label) {
+    return ({ Mon: "Monday", Tue: "Tuesday", Wed: "Wednesday", Thu: "Thursday", Fri: "Friday", Sat: "Saturday", Sun: "Sunday" })[label] || label || "Unknown";
   }
 
   function pulseItems() {
@@ -365,10 +398,72 @@
     const action = isProduct ? "product-search" : "video-search";
     const clearAction = isProduct ? "clear-product-search" : "clear-video-search";
     const label = isProduct ? "Search products" : "Search videos";
-    const countLabel = query
-      ? `${number.format(count)} ${isProduct ? "products" : "videos"} matching “${escapeHtml(query)}”`
-      : `${number.format(total)} ${isProduct ? "products" : "videos"}`;
-    return `<div class="search-wrap"><label class="search-box"><span aria-hidden="true">⌕</span><span class="sr-only">${label}</span><input type="search" data-action="${action}" value="${escapeAttr(query)}" placeholder="${placeholder}" autocomplete="off" aria-label="${label}">${query ? `<button class="clear-search" type="button" data-action="${clearAction}" aria-label="Clear ${label.toLowerCase()}">×</button>` : ""}</label><p class="result-count">${countLabel}</p></div>`;
+    return `<div class="search-wrap"><label class="search-box"><span aria-hidden="true">⌕</span><span class="sr-only">${label}</span><input type="search" data-action="${action}" value="${escapeAttr(query)}" placeholder="${placeholder}" autocomplete="off" aria-label="${label}"><button class="clear-search" type="button" data-action="${clearAction}" aria-label="Clear ${label.toLowerCase()}" ${query ? "" : "hidden"}>×</button></label><p id="${kind}ResultCount" class="result-count">${searchResultLabel(kind, count, total)}</p></div>`;
+  }
+
+  function pluralLabel(count, singular) {
+    return `${number.format(count)} ${count === 1 ? singular : `${singular}s`}`;
+  }
+
+  function searchResultLabel(kind, count, total) {
+    const query = kind === "product" ? state.productSearch : state.videoSearch;
+    const noun = kind === "product" ? "product" : "video";
+    return query ? `${pluralLabel(count, noun)} matching "${escapeHtml(query)}"` : pluralLabel(total, noun);
+  }
+
+  function productResultsMarkup(products) {
+    return products.length
+      ? `<div class="product-grid">${products.map(productCard).join("")}</div>`
+      : `<section class="section empty-state"><h3>No matching products</h3><p>Try another product name, account, or keyword.</p></section>`;
+  }
+
+  function videoResultsMarkup(videos) {
+    return videos.length
+      ? `<div class="video-table">${videos.map(videoTableRow).join("")}</div>`
+      : `<section class="section empty-state"><h3>No matching videos</h3><p>Try another title, product, account, or keyword.</p></section>`;
+  }
+
+  function renderProductResultsOnly() {
+    const visibleProducts = filteredProducts();
+    const products = sortProducts(searchedProducts(visibleProducts));
+    const count = document.getElementById("productResultCount");
+    const results = document.getElementById("productResults");
+    const clear = els.content.querySelector("[data-action='clear-product-search']");
+    if (count) count.innerHTML = searchResultLabel("product", products.length, visibleProducts.length);
+    if (results) results.innerHTML = productResultsMarkup(products);
+    if (clear) clear.hidden = !state.productSearch;
+  }
+
+  function renderVideoResultsOnly() {
+    const sourceId = state.videoSourceFilter === "all" ? null : state.videoSourceFilter;
+    const visibleVideos = filteredVideos({ sourceId });
+    const videos = sortVideos(searchedVideos(visibleVideos));
+    const count = document.getElementById("videoResultCount");
+    const results = document.getElementById("videoResults");
+    const clear = els.content.querySelector("[data-action='clear-video-search']");
+    if (count) count.innerHTML = searchResultLabel("video", videos.length, visibleVideos.length);
+    if (results) results.innerHTML = videoResultsMarkup(videos);
+    if (clear) clear.hidden = !state.videoSearch;
+  }
+
+  function updateSearch(action, value) {
+    if (action === "product-search") {
+      state.productSearch = value;
+      if (state.page === "products") return renderProductResultsOnly();
+    }
+    if (action === "video-search") {
+      state.videoSearch = value;
+      if (state.page === "videos") return renderVideoResultsOnly();
+    }
+    render();
+  }
+
+  function clearSearch(kind) {
+    const action = kind === "product" ? "product-search" : "video-search";
+    const input = els.content.querySelector(`[data-action='${action}']`);
+    if (input) input.value = "";
+    updateSearch(action, "");
+    input?.focus();
   }
 
   function filteredOrders(extra = {}) {
@@ -465,8 +560,7 @@
     const hours = Array.isArray(values) && values.length ? values : Array.from({ length: 24 }, () => 0);
     const index = hours.indexOf(Math.max(...hours));
     const next = (index + 1) % 24;
-    const fmt = (hour) => new Date(`2026-07-16T${String(hour).padStart(2, "0")}:00:00`).toLocaleTimeString("en-US", { hour: "numeric" });
-    return `${fmt(index)}-${fmt(next)}`;
+    return formatHourWindow(index, next);
   }
 
   function sourceDays(sourceId) {
@@ -524,7 +618,7 @@
 
   function readableRange() {
     return state.dateRange === "custom"
-      ? `${state.customStart} to ${state.customEnd}`
+      ? `${formatBriefDate(state.customStart)} to ${formatBriefDate(state.customEnd)}`
       : dateRanges.find(([id]) => id === state.dateRange)?.[1] || "This Month";
   }
 
@@ -598,8 +692,8 @@
       <button class="metric-card ${tone}" type="button" ${attrs}>
         ${iconMarkup}
         <span class="metric-label">${label}</span>
-        <strong>${value}</strong>
-        <small>${detail}</small>
+        <strong class="metric-value">${value}</strong>
+        <small class="metric-support">${detail}</small>
         <em aria-hidden="true">→</em>
       </button>
     `;
@@ -662,10 +756,10 @@
   function sourceCard(item) {
     const total = totals(item.id);
     const primary = total.earnings;
-    const detail = item.id === "shop" ? `${total.productsEarning} products earning` : item.id === "rewards" ? `${total.eligibleVideos} eligible videos` : `${total.placesEarning} places earning`;
+    const detail = item.id === "shop" ? `${total.productsEarning} products earning` : item.id === "rewards" ? `${total.eligibleVideos} eligible videos` : `${total.placesEarning} ${total.placesEarning === 1 ? "place" : "places"} earning`;
     const attribution = attributionSummary();
     const attributionLine = item.id === "shop" ? `<p class="attribution-line">${money.format(attribution.organic_video.commission)} Organic · ${money.format(attribution.shop_ad.commission)} Shop Ads</p>` : "";
-    return `<button class="source-card ${item.accent}" type="button" data-action="open-source" data-id="${item.id}"><span class="source-dot"></span><small>${item.name}</small><strong>${money.format(primary)}</strong><p>${detail}</p>${attributionLine}</button>`;
+    return `<button class="source-card ${item.accent}" type="button" data-action="open-source" data-id="${item.id}"><span class="source-dot"></span><small>${item.name.toUpperCase()}</small><strong>${money.format(primary)}</strong><p>${detail}</p><div class="source-card-spacer">${attributionLine}</div></button>`;
   }
 
   function renderAudience() {
@@ -679,17 +773,18 @@
     const accountBreakdown = state.accountId === "all"
       ? `<section class="section"><div class="section-heading"><div><p class="eyebrow">Account Breakdown</p><h3>Followers by account</h3></div></div><div class="breakdown-cards">${list("accounts").map((item) => `<article><span>${identity(item.id)}</span><strong>${number.format(currentFollowers(item.id))}</strong><small>${item.name} · +${number.format(periodFollowerGain(item.id))} ${periodLabel()}</small></article>`).join("")}</div></section>`
       : "";
+    const bestDayLabel = weekdayName(bestDay[0]);
     const insight = isViewers
-      ? `${largestAge[0]} viewers and ${bestDay[0]} activity are the clearest planning signals for ${accountName()} in this sandbox view.`
+      ? `${largestAge[0]} viewers and ${bestDayLabel} activity are the clearest planning signals for ${accountName()}.`
       : `${largestGender[0]} followers are leading the audience mix, with the strongest follower activity around ${bestTime}.`;
     return `
-      ${morningBackButton()}
-      <section class="page-intro"><div><p class="eyebrow">Audience</p><h2>${isViewers ? "Viewer" : "Follower"} intelligence for ${accountName()}.</h2><p>${readableRange()} · Sandbox mock data structured for future authorized sources.</p></div><div class="segmented"><button class="${state.audienceMode === "viewers" ? "active" : ""}" type="button" data-action="audience-mode" data-id="viewers">Viewers</button><button class="${state.audienceMode === "followers" ? "active" : ""}" type="button" data-action="audience-mode" data-id="followers">Followers</button></div></section>
+      ${backButton("brief")}
+      <section class="page-intro"><div><p class="eyebrow">Audience</p><h2>${isViewers ? "Viewer" : "Follower"} intelligence for ${accountName()}.</h2><p>${readableRange()} · Signals structured for future authorized sources.</p></div><div class="segmented"><button class="${state.audienceMode === "viewers" ? "active" : ""}" type="button" data-action="audience-mode" data-id="viewers">Viewers</button><button class="${state.audienceMode === "followers" ? "active" : ""}" type="button" data-action="audience-mode" data-id="followers">Followers</button></div></section>
       <section class="metric-grid compact">
-        ${isViewers ? metricCard("Total Viewers", number.format(item.total), "Selected account/date", "white") : metricCard("Total Followers", number.format(item.total), "Current audience base", "white")}
-        ${isViewers ? metricCard("New Viewers", number.format(item.new), "Sandbox viewer signal", "gold") : metricCard("Net Followers", `+${number.format(item.netNew)}`, `${number.format(item.gained)} gained · ${number.format(item.lost)} lost`, "gold")}
-        ${metricCard("Best Day", bestDay[0], `${number.format(bestDay[1])} activity points`, "white")}
-        ${metricCard("Best Time", bestTime, "Most active hour window", "white")}
+        ${isViewers ? metricCard("Total Viewers", number.format(item.total), "Current selected audience", "white") : metricCard("Total Followers", number.format(item.total), "Current audience base", "white")}
+        ${isViewers ? metricCard("New Viewers", number.format(item.new), "New this period", "gold") : metricCard("Net New Followers", `+${number.format(item.netNew)}`, `${number.format(item.gained)} gained · ${number.format(item.lost)} lost`, "gold")}
+        ${metricCard("Best Day", bestDayLabel, isViewers ? `${number.format(bestDay[1])} active viewers` : "Strongest follower day", "white")}
+        ${metricCard("Best Time", bestTime, "Most active window", "white")}
       </section>
       <section class="section trend-section">${heading(isViewers ? "Viewer Trend" : "Follower Growth", "Selected-period timeline", "Audience")}${miniTrend((item.trend || []).map((value, index) => ({ date: list("days")[index]?.date || `Day ${index + 1}`, value })), number.format)}</section>
       <section class="split-grid">
@@ -716,12 +811,19 @@
     if (state.activityMode === "days") {
       const strongest = largestEntry(item.weekdays)[0];
       const maxDay = Math.max(...Object.values(item.weekdays || { Unknown: 0 }), 1);
-      return `<div class="activity-bars day-bars">${Object.entries(item.weekdays || { Unknown: 0 }).map(([label, value]) => `<button type="button" class="${label === strongest ? "active" : ""}" title="${label}: ${number.format(value)}"><b style="--height:${Math.max(12, value / maxDay * 100)}%"></b><span>${label}</span></button>`).join("")}</div><p class="muted activity-summary">Your ${state.audienceMode} were most active on ${strongest}.</p>`;
+      return `<div class="activity-bars day-bars">${Object.entries(item.weekdays || { Unknown: 0 }).map(([label, value]) => `<button type="button" class="${label === strongest ? "active" : ""}" title="${weekdayName(label)}: ${number.format(value)}"><b style="--height:${Math.max(12, value / maxDay * 100)}%"></b><span>${weekdayName(label)}</span></button>`).join("")}</div><p class="muted activity-summary">Your ${state.audienceMode} were most active on ${weekdayName(strongest)}.</p>`;
     }
     const hours = Array.isArray(item.hourly) && item.hourly.length ? item.hourly : defaultAudience().hourly;
     const max = Math.max(...hours, 1);
     const strongest = hours.indexOf(Math.max(...hours));
-    return `<div class="activity-bars">${hours.map((value, hour) => `<button type="button" class="${hour === strongest ? "active" : ""}" title="${hour}:00 · ${number.format(value)}"><b style="--height:${Math.max(8, value / max * 100)}%"></b><span>${hour % 6 === 0 ? hour : ""}</span></button>`).join("")}</div><p class="muted activity-summary">Your ${state.audienceMode} were most active between ${bestHourLabel(hours)}.</p>`;
+    return `<div class="activity-bars">${hours.map((value, hour) => `<button type="button" class="${hour === strongest ? "active" : ""}" title="${formatHour(hour)} · ${number.format(value)}"><b style="--height:${Math.max(8, value / max * 100)}%"></b><span>${hour % 6 === 0 ? formatHour(hour).replace(":00", "") : ""}</span></button>`).join("")}</div><p class="muted activity-summary">Your ${state.audienceMode} were most active between ${bestHourLabel(hours)}.</p>`;
+  }
+
+  function videoTopic(item) {
+    const linked = product(item?.productId);
+    if (linked?.category) return linked.category;
+    if (linked?.name) return compactName(linked.name, 24);
+    return compactName(item?.title || "No video in filter", 24);
   }
 
   function renderViewPerformance() {
@@ -733,13 +835,13 @@
       ? `${top.title} is carrying the strongest view signal for ${accountName()} in ${readableRange()}. Use it as the benchmark for the next hook.`
       : "No videos are available in this filter yet. Once video data appears, Northstar will summarize the strongest view signal here.";
     return `
-      ${morningBackButton()}
+      ${backButton("brief")}
       <section class="page-intro"><div><p class="eyebrow">View Performance</p><h2>What is driving attention right now.</h2><p>${accountName()} · ${readableRange()}</p></div></section>
       <section class="metric-grid compact">
-        ${metricCard("Total Views", number.format(total.views), "Matches Morning Brief", "white")}
-        ${metricCard("Avg Views / Video", number.format(Math.round(total.views / Math.max(1, total.videos))), `${total.videos} videos posted`, "gold")}
-        ${metricCard("Highest Viewed", top ? number.format(top.views) : "0", top?.title || "No video in filter", "white", top ? `data-action="open-video" data-id="${top.id}"` : "")}
-        ${metricCard("Videos Posted", number.format(total.videos), "Open Videos page", "white", 'data-page="videos"')}
+        ${metricCard("Total Views", number.format(total.views), readableRange(), "white")}
+        ${metricCard("Average Views / Video", number.format(Math.round(total.views / Math.max(1, total.videos))), `${total.videos} videos posted`, "gold")}
+        ${metricCard("Highest-Viewed Video", top ? number.format(top.views) : "0", videoTopic(top), "white", top ? `data-action="open-video" data-id="${top.id}"` : "")}
+        ${metricCard("Videos Posted", number.format(total.videos), state.dateRange === "month" ? "This month" : readableRange(), "white", 'data-page="videos"')}
       </section>
       <section class="section trend-section"><div class="section-heading"><div><p class="eyebrow">Views Over Time</p><h3>Daily contribution by posted video</h3></div></div>${miniTrend(viewTimeline(), number.format)}</section>
       <section class="section"><div class="section-heading"><div><p class="eyebrow">Top Contributing Videos</p><h3>Click a row to open Video Detail</h3></div></div><div class="video-table">${videos.map(videoTableRow).join("") || empty("No videos in this filter.")}</div><p class="contributor-total">Displayed video total: ${number.format(shownViews)} views</p></section>
@@ -767,7 +869,7 @@
       ${backButton()}
       <section class="page-intro source-intro ${item.accent}"><div><p class="eyebrow">${item.name}</p><h2>${item.description}</h2><p>${accountName()} · ${readableRange()}</p></div></section>
       <section class="metric-grid compact">
-        ${item.metrics.map((entry) => metricCard(entry.label, metricFormat(entry.key, total[entry.key] || 0), entry.key === metric ? "Selected chart metric" : "Click for breakdown", entry.key === metric ? "selected" : "white", `data-action="metric-breakdown" data-id="${entry.key}"`)).join("")}
+        ${item.metrics.map((entry) => metricCard(entry.label, metricFormat(entry.key, total[entry.key] || 0), entry.key === metric ? "Active breakdown" : "Open breakdown", entry.key === metric ? "selected" : "white", `data-action="metric-breakdown" data-id="${entry.key}"`)).join("")}
       </section>
       ${shopDetails}
       ${renderRevenueStory(item.id)}
@@ -815,7 +917,7 @@
     const linkedVideo = video(item.videoId);
     return `
       ${backButton()}
-      <section class="product-studio">${productImage(linkedProduct || {}, "large")}<div><p class="eyebrow">Order Detail</p><h2>${linkedProduct?.name || "TikTok Shop order"}</h2><p>${accountName(item.accountId)} · ${item.date} · ${item.status}</p>${attributionBadge(item.attributionType)}</div></section>
+      <section class="product-studio">${productImage(linkedProduct || {}, "large")}<div><p class="eyebrow">Order Detail</p><h2>${linkedProduct?.name || "TikTok Shop order"}</h2><p>${accountName(item.accountId)} · ${formatBriefDate(item.date)} · ${item.status}</p>${attributionBadge(item.attributionType)}</div></section>
       <section class="section"><dl class="detail-list">
         <div><dt>Order ID</dt><dd>${item.id}</dd></div>
         <div><dt>Attribution</dt><dd>${attributionLabel(item.attributionType)}</dd></div>
@@ -864,7 +966,7 @@
         <div class="timeline-card">
           <svg viewBox="0 0 800 282" role="img" aria-label="${source(sourceId)?.name || "Revenue source"} ${metric} trend">
             <polyline points="${line}" fill="none" stroke="var(--source-color)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></polyline>
-            ${points.map((point) => `<g class="svg-button" tabindex="0" role="button" data-action="select-day" data-id="${point.date}"><circle cx="${point.x}" cy="${point.y}" r="${point.date === activeDay.date ? 8 : 5}"></circle><title>${point.date}: ${metricFormat(metric, point.value)}</title></g>`).join("")}
+            ${points.map((point) => `<g class="svg-button" tabindex="0" role="button" data-action="select-day" data-id="${point.date}"><circle cx="${point.x}" cy="${point.y}" r="${point.date === activeDay.date ? 8 : 5}"></circle><title>${formatBriefDate(point.date)}: ${metricFormat(metric, point.value)}</title></g>`).join("")}
             ${points.map((point, index) => index % 3 === 0 ? `<text x="${point.x}" y="265" text-anchor="middle">${new Date(`${point.date}T12:00:00`).toLocaleDateString("en-US", { weekday: "short" })}</text>` : "").join("")}
           </svg>
         </div>
@@ -884,7 +986,7 @@
     if (!day) return `<aside class="detail-panel">${empty("No day selected.")}</aside>`;
     const metricLabel = source(sourceId)?.metrics?.find((entry) => entry.key === metric)?.label || "Selected metric";
     return `
-      <aside class="detail-panel"><p class="eyebrow">Daily Detail</p><h3>${day.date}</h3>
+      <aside class="detail-panel"><p class="eyebrow">Daily Detail</p><h3>${formatBriefDate(day.date)}</h3>
       <dl>
         <div><dt>${metricLabel}</dt><dd>${metricFormat(metric, dayMetric(day, sourceId, metric))}</dd></div>
         <div><dt>Videos posted</dt><dd>${day.videos}</dd></div>
@@ -923,12 +1025,12 @@
   function renderProducts() {
     const visibleProducts = filteredProducts();
     const products = sortProducts(searchedProducts(visibleProducts));
-    return `<section class="page-intro"><div><p class="eyebrow">Product Compass</p><h2>Sample to earnings, without the clutter.</h2><p>Samples needing content and products already earning each open into Product Studio.</p></div></section><section class="toolbar-card">${searchToolbar("product", products.length, visibleProducts.length)}<label class="mini-control">Sort products<select data-action="product-sort"><option value="earnings" ${state.productSort === "earnings" ? "selected" : ""}>Earnings</option><option value="sales" ${state.productSort === "sales" ? "selected" : ""}>Sales</option><option value="views" ${state.productSort === "views" ? "selected" : ""}>Views</option><option value="updated" ${state.productSort === "updated" ? "selected" : ""}>Recent activity</option><option value="name" ${state.productSort === "name" ? "selected" : ""}>Product name</option></select></label></section>${products.length ? `<div class="product-grid">${products.map(productCard).join("")}</div>` : `<section class="section empty-state"><h3>No matching products</h3><p>Try another product name, account, or keyword.</p></section>`}`;
+    return `<section class="page-intro"><div><p class="eyebrow">Product Compass</p><h2>Sample to earnings, without the clutter.</h2><p>Samples needing content and products already earning each open into Product Studio.</p></div></section><section class="toolbar-card">${searchToolbar("product", products.length, visibleProducts.length)}<label class="mini-control">Sort products<select data-action="product-sort"><option value="earnings" ${state.productSort === "earnings" ? "selected" : ""}>Earnings</option><option value="sales" ${state.productSort === "sales" ? "selected" : ""}>Sales</option><option value="views" ${state.productSort === "views" ? "selected" : ""}>Views</option><option value="updated" ${state.productSort === "updated" ? "selected" : ""}>Recent activity</option><option value="name" ${state.productSort === "name" ? "selected" : ""}>Product name</option></select></label></section><div id="productResults">${productResultsMarkup(products)}</div>`;
   }
 
   function productCard(item) {
     const isSample = item.type === "sample";
-    return `<button class="product-card ${isSample ? "sample" : ""}" type="button" data-action="open-product" data-id="${item.id}">${productImage(item)}<span class="pill ${isSample ? "sample-pill" : "earning-pill"}">${isSample ? "Sample" : "Products Earning"}</span><h3 title="${escapeAttr(item.name)}">${item.name}</h3><p>${accountName(item.accountId)}</p>${isSample && item.dueDate ? `<small>Post by ${item.dueDate}</small>` : `<small>${money.format(item.earnings)} earned · ${number.format(item.units)} units</small>`}${workflow(item.workflowStep)}</button>`;
+    return `<button class="product-card ${isSample ? "sample" : ""}" type="button" data-action="open-product" data-id="${item.id}">${productImage(item)}<span class="pill ${isSample ? "sample-pill" : "earning-pill"}">${isSample ? "Sample" : "Products Earning"}</span><h3 title="${escapeAttr(item.name)}">${item.name}</h3><p>${accountName(item.accountId)}</p>${isSample && item.dueDate ? `<small>Post by ${formatBriefDate(item.dueDate)}</small>` : `<small>${money.format(item.earnings)} earned · ${number.format(item.units)} units</small>`}${workflow(item.workflowStep)}</button>`;
   }
 
   function renderProductDetail() {
@@ -940,7 +1042,7 @@
     const orderSummary = attributionSummary({ productId: item.id });
     return `
       ${backButton()}
-      <section class="product-studio">${productImage(item, "large")}<div><p class="eyebrow">Product Studio</p><h2>${item.name}</h2><p>${accountName(item.accountId)} · ${item.type === "sample" ? "Sample" : `${money.format(item.earnings)} current earnings`}${item.dueDate ? ` · Post by ${item.dueDate}` : ""}</p>${workflow(item.workflowStep)}</div></section>
+      <section class="product-studio">${productImage(item, "large")}<div><p class="eyebrow">Product Studio</p><h2>${item.name}</h2><p>${accountName(item.accountId)} · ${item.type === "sample" ? "Sample" : `${money.format(item.earnings)} current earnings`}${item.dueDate ? ` · Post by ${formatBriefDate(item.dueDate)}` : ""}</p>${workflow(item.workflowStep)}</div></section>
       <section class="split-grid"><div class="section"><div class="section-heading"><div><p class="eyebrow">Create Content</p><h3>Northstar tools</h3></div></div><div class="tool-grid">${["Generate Hooks", "Generate Script", "Generate Caption", "Generate Hashtags", "Generate Talking Points", "Generate CTA"].map((label) => `<button class="tool-button" type="button" data-action="generate" data-id="${label}" data-product="${item.id}">${label}<span>✦</span></button>`).join("")}</div><div id="generatorOutput" class="workspace-output">${state.generator.productId === item.id && state.generator.tool ? renderGeneratorOutput(item, state.generator.tool, state.generator.variant, state.generator.saved) : "Choose a tool to generate a mock creator-ready direction for this product."}</div></div><div class="section"><p class="eyebrow">Product Intelligence</p><h3>${item.bestHook}</h3><p>${item.insight}</p><dl class="mini-stats"><div><dt>Earnings</dt><dd>${money.format(item.earnings)}</dd></div><div><dt>GMV</dt><dd>${money.format(item.gmv)}</dd></div><div><dt>Units</dt><dd>${number.format(item.units)}</dd></div></dl></div></section>
       <section class="section attribution-section">${heading("Sales Attribution", "How this product earned", "Sales Attribution")}<div class="attribution-grid">${attributionSummaryCard("organic_video", orderSummary.organic_video)}${attributionSummaryCard("shop_ad", orderSummary.shop_ad)}</div></section>
       <section class="section"><div class="section-heading"><div><p class="eyebrow">Product Videos</p><h3>Posting time stays visible</h3></div><label class="mini-control">Sort<select data-action="product-video-sort"><option value="date">Date</option><option value="time">Posting time</option><option value="views">Views</option><option value="sales">Sales</option><option value="earnings">Earnings</option></select></label></div><div class="video-table">${videos.map(videoTableRow).join("") || empty("More product videos appear here after import.")}</div></section>
@@ -951,7 +1053,7 @@
     const sourceId = state.videoSourceFilter === "all" ? null : state.videoSourceFilter;
     const visibleVideos = filteredVideos({ sourceId });
     const videos = sortVideos(searchedVideos(visibleVideos));
-    return `<section class="page-intro"><div><p class="eyebrow">Videos</p><h2>Video performance with posting time preserved.</h2></div></section><section class="toolbar-card">${searchToolbar("video", videos.length, visibleVideos.length)}<label class="mini-control">Revenue Source<select data-action="video-source-filter"><option value="all" ${state.videoSourceFilter === "all" ? "selected" : ""}>All sources</option>${list("revenueSources").map((item) => `<option value="${item.id}" ${state.videoSourceFilter === item.id ? "selected" : ""}>${item.name}</option>`).join("")}</select></label><label class="mini-control">Sort videos<select data-action="video-sort"><option value="views" ${state.videoSort === "views" ? "selected" : ""}>Views</option><option value="earnings" ${state.videoSort === "earnings" ? "selected" : ""}>Earnings</option><option value="sales" ${state.videoSort === "sales" ? "selected" : ""}>Sales</option><option value="time" ${state.videoSort === "time" ? "selected" : ""}>Posting time</option><option value="newest" ${state.videoSort === "newest" || state.videoSort === "date" ? "selected" : ""}>Newest</option><option value="oldest" ${state.videoSort === "oldest" ? "selected" : ""}>Oldest</option></select></label></section>${videos.length ? `<div class="video-table">${videos.map(videoTableRow).join("")}</div>` : `<section class="section empty-state"><h3>No matching videos</h3><p>Try another title, product, account, or keyword.</p></section>`}`;
+    return `<section class="page-intro"><div><p class="eyebrow">Videos</p><h2>Video performance with posting time preserved.</h2></div></section><section class="toolbar-card">${searchToolbar("video", videos.length, visibleVideos.length)}<label class="mini-control">Revenue Source<select data-action="video-source-filter"><option value="all" ${state.videoSourceFilter === "all" ? "selected" : ""}>All sources</option>${list("revenueSources").map((item) => `<option value="${item.id}" ${state.videoSourceFilter === item.id ? "selected" : ""}>${item.name}</option>`).join("")}</select></label><label class="mini-control">Sort videos<select data-action="video-sort"><option value="views" ${state.videoSort === "views" ? "selected" : ""}>Views</option><option value="earnings" ${state.videoSort === "earnings" ? "selected" : ""}>Earnings</option><option value="sales" ${state.videoSort === "sales" ? "selected" : ""}>Sales</option><option value="time" ${state.videoSort === "time" ? "selected" : ""}>Posting time</option><option value="newest" ${state.videoSort === "newest" || state.videoSort === "date" ? "selected" : ""}>Newest</option><option value="oldest" ${state.videoSort === "oldest" ? "selected" : ""}>Oldest</option></select></label></section><div id="videoResults">${videoResultsMarkup(videos)}</div>`;
   }
 
   function renderVideoDetail() {
@@ -967,7 +1069,7 @@
       ? shopShare > 0 ? `Shop Ads generated ${shopShare}% of this video's shop commission, but organic sales paid a different average rate.` : "This video is currently earning from organic product-linked traffic in the sandbox data."
       : "No TikTok Shop orders are connected to this video in the sandbox data yet.";
     const sourceNames = itemSources(item).map((id) => source(id)?.name).filter(Boolean).join(" + ") || "No source linked";
-    return `${backButton()}<section class="product-studio">${productImage(item, "large")}<div><p class="eyebrow">Video Detail</p><h2>${item.title}</h2><p>${accountName(item.accountId)} · Posted ${item.date} at ${item.time}</p></div></section><section class="metric-grid compact">${metricCard("Views", number.format(item.views), "Public video metric", "white")}${metricCard("Earnings", money.format(item.earnings), sourceNames, "selected")}${metricCard("Units Sold", number.format(item.units), linked?.name || "Linked product", "white")}${metricCard("Shares", number.format(item.shares), "Audience signal", "white")}</section><section class="section attribution-section">${heading("Sales Attribution", "Video earnings by origin", "Sales Attribution")}<div class="attribution-grid">${orderSummary.organic_video.orders ? attributionSummaryCard("organic_video", orderSummary.organic_video) : ""}${orderSummary.shop_ad.orders ? attributionSummaryCard("shop_ad", orderSummary.shop_ad) : ""}</div>${insightCard(insight)}</section>`;
+    return `${backButton()}<section class="product-studio">${productImage(item, "large")}<div><p class="eyebrow">Video Detail</p><h2>${item.title}</h2><p>${accountName(item.accountId)} · Posted ${formatBriefDateTime(item.date, item.time)}</p></div></section><section class="metric-grid compact">${metricCard("Views", number.format(item.views), "Video performance", "white")}${metricCard("Earnings", money.format(item.earnings), sourceNames, "selected")}${metricCard("Units Sold", number.format(item.units), linked?.name || "Linked product", "white")}${metricCard("Shares", number.format(item.shares), "Audience signal", "white")}</section><section class="section attribution-section">${heading("Sales Attribution", "Video earnings by origin", "Sales Attribution")}<div class="attribution-grid">${orderSummary.organic_video.orders ? attributionSummaryCard("organic_video", orderSummary.organic_video) : ""}${orderSummary.shop_ad.orders ? attributionSummaryCard("shop_ad", orderSummary.shop_ad) : ""}</div>${insightCard(insight)}</section>`;
   }
 
   function renderDataHub() {
@@ -992,7 +1094,7 @@
 
   function videoTableRow(item) {
     const orderTypes = [...new Set(filteredOrders({ videoId: item.id }).map((entry) => entry.attributionType))];
-    return `<button class="video-row" type="button" data-action="open-video" data-id="${item.id}">${productImage(item, "small")}<strong title="${escapeAttr(item.title)}">${item.title}</strong><span>${accountName(item.accountId)}</span><span>${item.date}<b>${item.time}</b></span><span>${number.format(item.views)}</span><span>${number.format(item.units)}</span><span>${money.format(item.gmv)}</span><span>${money.format(item.earnings)}${orderTypes.length ? `<small class="badge-stack">${orderTypes.map(attributionBadge).join("")}</small>` : ""}</span></button>`;
+    return `<button class="video-row" type="button" data-action="open-video" data-id="${item.id}">${productImage(item, "small")}<strong title="${escapeAttr(item.title)}">${item.title}</strong><span>${accountName(item.accountId)}</span><span>${formatDate(item.date, { month: "short", day: "numeric" })}<b>${item.time}</b></span><span>${number.format(item.views)}</span><span>${number.format(item.units)}</span><span>${money.format(item.gmv)}</span><span>${money.format(item.earnings)}${orderTypes.length ? `<small class="badge-stack">${orderTypes.map(attributionBadge).join("")}</small>` : ""}</span></button>`;
   }
 
   function sortProducts(items) {
@@ -1022,8 +1124,13 @@
     return `<div class="workflow">${["Sample", "Content", "Videos", "Earnings"].map((label, index) => `<span class="${index + 1 <= activeStep ? "done" : ""}">${label}</span>`).join("")}</div>`;
   }
 
-  const backButton = () => `<button class="back-button" type="button" data-action="back">← Back</button>`;
-  const morningBackButton = () => `<button class="back-button morning-back" type="button" data-action="morning-back">← Morning Brief</button>`;
+  function previousPageLabel(fallback = "brief") {
+    const previous = state.history[state.history.length - 1];
+    return pageLabels[previous?.page || fallback] || "Back";
+  }
+
+  const backButton = (fallback = "brief") => `<button class="back-button" type="button" data-action="back">← ${previousPageLabel(fallback)}</button>`;
+  const morningBackButton = () => backButton("brief");
   const empty = (message) => `<p class="empty">${message}</p>`;
 
   const generatorTitles = {
@@ -1148,7 +1255,7 @@
     els.accountAvatar.className = `avatar ${state.accountId === "all" ? "avatar-all" : `avatar-${active?.id || "all"}`}`;
     els.accountAvatar.innerHTML = state.accountId === "all" ? "<i>RR</i><i>TT</i>" : `<i>${active?.initials || "NS"}</i>`;
     els.accountLabel.textContent = accountName();
-    els.dateLabel.textContent = state.dateRange === "custom" ? `${state.customStart} → ${state.customEnd}` : readableRange();
+    els.dateLabel.textContent = state.dateRange === "custom" ? `${formatBriefDate(state.customStart)} → ${formatBriefDate(state.customEnd)}` : readableRange();
     els.accountMenu.innerHTML = [`<button role="option" data-action="account" data-id="all">${identity("all")}<span>All Accounts<small>Combined view</small></span></button>`, ...list("accounts").map((item) => `<button role="option" data-action="account" data-id="${item.id}">${identity(item.id)}<span>${item.name}<small>${item.focus}</small></span></button>`)].join("");
     const dateOptions = els.dateMenu.querySelector(".date-options");
     if (dateOptions) dateOptions.innerHTML = dateRanges.map(([id, label]) => `<button class="${state.dateRange === id ? "active" : ""}" type="button" data-action="date-range" data-id="${id}">${label}</button>`).join("");
@@ -1204,8 +1311,8 @@
     if (action.dataset.action === "generator-copy") copyGenerator();
     if (action.dataset.action === "generator-regenerate") updateGenerator({ variantDelta: 1, saved: false });
     if (action.dataset.action === "generator-save") updateGenerator({ saved: true });
-    if (action.dataset.action === "clear-product-search") { state.productSearch = ""; render(); }
-    if (action.dataset.action === "clear-video-search") { state.videoSearch = ""; render(); }
+    if (action.dataset.action === "clear-product-search") clearSearch("product");
+    if (action.dataset.action === "clear-video-search") clearSearch("video");
     if (action.dataset.action === "cancel-custom") { els.customPanel.hidden = true; els.dateMenu.hidden = true; }
     if (action.dataset.action === "mock-modal") alert(`${id} is a visual prototype action.`);
   });
@@ -1222,25 +1329,14 @@
   document.addEventListener("input", (event) => {
     const action = event.target.dataset.action;
     if (!["product-search", "video-search"].includes(action)) return;
-    const value = event.target.value;
-    clearTimeout(searchDebounce);
-    searchDebounce = setTimeout(() => {
-      if (action === "product-search") state.productSearch = value;
-      if (action === "video-search") state.videoSearch = value;
-      render();
-      const selector = action === "product-search" ? "[data-action='product-search']" : "[data-action='video-search']";
-      els.content.querySelector(selector)?.focus();
-    }, 150);
+    updateSearch(action, event.target.value);
   });
 
   document.addEventListener("keydown", (event) => {
     const action = event.target.dataset.action;
     if (event.key !== "Escape" || !["product-search", "video-search"].includes(action)) return;
-    if (action === "product-search") state.productSearch = "";
-    if (action === "video-search") state.videoSearch = "";
-    render();
-    const selector = action === "product-search" ? "[data-action='product-search']" : "[data-action='video-search']";
-    els.content.querySelector(selector)?.focus();
+    event.target.value = "";
+    updateSearch(action, "");
   });
 
   els.accountButton.addEventListener("click", () => {
