@@ -1,6 +1,6 @@
 const { handleOptions, sendJson } = require("../../lib/cors");
 const { requireSession } = require("../../lib/session");
-const { listVideos } = require("../../lib/tiktok");
+const { listAllVideos } = require("../../lib/tiktok");
 const { activeConnection } = require("./me");
 
 module.exports = async function handler(req, res) {
@@ -13,7 +13,7 @@ module.exports = async function handler(req, res) {
   try {
     const connection = await activeConnection(session.id);
     if (!connection) return sendJson(req, res, 409, { error: "not_connected" });
-    const page = await listVideos(connection.accessToken, 0, 20);
+    const page = await listAllVideos(connection.accessToken);
     return sendJson(req, res, 200, {
       connected: true,
       videos: page.videos || [],

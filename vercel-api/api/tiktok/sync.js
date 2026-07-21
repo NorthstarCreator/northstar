@@ -1,6 +1,6 @@
 const { handleOptions, sendJson, validatePostOrigin } = require("../../lib/cors");
 const { requireCsrf } = require("../../lib/session");
-const { listVideos, getUserInfo } = require("../../lib/tiktok");
+const { listAllVideos, getUserInfo } = require("../../lib/tiktok");
 const { activeConnection } = require("./me");
 
 module.exports = async function handler(req, res) {
@@ -16,7 +16,7 @@ module.exports = async function handler(req, res) {
     if (!connection) return sendJson(req, res, 409, { error: "not_connected" });
     const [profile, page] = await Promise.all([
       getUserInfo(connection.accessToken),
-      listVideos(connection.accessToken, 0, 20)
+      listAllVideos(connection.accessToken)
     ]);
     return sendJson(req, res, 200, {
       syncedAt: new Date().toISOString(),

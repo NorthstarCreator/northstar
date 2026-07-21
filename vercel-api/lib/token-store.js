@@ -1,12 +1,22 @@
 const { encryptJson, decryptJson } = require("./crypto");
 
-const redisUrl =
-  process.env.UPSTASH_REDIS_REST_URL ||
-  process.env.KV_REST_API_URL;
+const isSandbox = process.env.NORTHSTAR_ENV === "tiktok_sandbox";
 
-const redisToken =
-  process.env.UPSTASH_REDIS_REST_TOKEN ||
-  process.env.KV_REST_API_TOKEN;
+const redisUrl = isSandbox
+  ? (process.env.UPSTASH_REDIS_REST_URL_SANDBOX || process.env.KV_REST_API_URL_SANDBOX)
+  : (process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL);
+
+const redisToken = isSandbox
+  ? (process.env.UPSTASH_REDIS_REST_TOKEN_SANDBOX || process.env.KV_REST_API_TOKEN_SANDBOX)
+  : (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN);
+
+const keyPrefix = isSandbox
+  ? (process.env.TOKEN_STORE_PREFIX_SANDBOX || "northstar:sandbox")
+  : (process.env.TOKEN_STORE_PREFIX || "northstar");
+
+function key(name, id) {
+  return `${keyPrefix}:${name}:${id}`;
+}
 
 function ensureRedis() {
   if (!redisUrl || !redisToken) {
@@ -60,45 +70,45 @@ async function storeEncryptedConnection(sessionId, connection) {
     connectedAt: connection.connectedAt || new Date().toISOString(),
     sessionId
   };
-  await setJson(`northstar:tiktok:${sessionId}`, safeConnection);
+  await setJson(key("tiktok", sessionId), safeConnection);
   return safeConnection;
 }
 
 async function getConnection(sessionId) {
-  const connection = await getJson(`northstar:tiktok:${sessionId}`);
+  const connection = await getJson(key("tiktok", sessionId));
   if (!connection) return null;
   const tokens = decryptJson(connection.encryptedTokens);
   return { ...connection, ...tokens };
 }
 
 async function getConnectionMetadata(sessionId) {
-  const connection = await getJson(`northstar:tiktok:${sessionId}`);
+  const connection = await getJson(key("tiktok", sessionId));
   if (!connection) return null;
   const { encryptedTokens, ...metadata } = connection;
   return metadata;
 }
 
 async function deleteConnection(sessionId) {
-  return del(`northstar:tiktok:${sessionId}`);
+  return del(key("tiktok", sessionId));
 }
 
 async function storeSession(session) {
-  await setJson(`northstar:session:${session.id}`, session, 60 * 60 * 24 * 30);
+  await setJson(key("session", session.id), session, 60 * 60 * 24 * 30);
   return session;
 }
 
 async function getSession(sessionId) {
-  return getJson(`northstar:session:${sessionId}`);
+  return getJson(key("session", sessionId));
 }
 
 async function storeOAuthState(state, payload) {
-  await setJson(`northstar:oauth-state:${state}`, payload, 60 * 10);
+  await setJson(key("oauth-state", state), payload, 60 * 10);
 }
 
 async function consumeOAuthState(state) {
-  const key = `northstar:oauth-state:${state}`;
-  const payload = await getJson(key);
-  if (payload) await del(key);
+  const stateKey = key("oauth-state", state);
+  const payload = await getJson(stateKey);
+  if (payload) await del(stateKey);
   return payload;
 }
 

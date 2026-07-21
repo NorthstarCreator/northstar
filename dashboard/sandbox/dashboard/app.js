@@ -1,5 +1,6 @@
 (function () {
-  const data = window.NORTHSTAR_SANDBOX_DATA || {};
+  const baseData = window.NORTHSTAR_SANDBOX_DATA || {};
+  let data = baseData;
   const state = {
     page: "brief",
     accountId: "all",
@@ -25,6 +26,15 @@
     activityMode: "hours",
     attributionFilter: "all",
     generator: { productId: null, tool: null, variant: 0, saved: false },
+    live: {
+      initializing: true,
+      connected: false,
+      loading: false,
+      error: "",
+      session: null,
+      snapshot: null,
+      lastSyncAt: null
+    },
     history: []
   };
 
@@ -41,7 +51,8 @@
     dateLabel: document.getElementById("dateLabel"),
     customPanel: document.getElementById("customDatePanel"),
     customStart: document.getElementById("customStart"),
-    customEnd: document.getElementById("customEnd")
+    customEnd: document.getElementById("customEnd"),
+    syncStrip: document.getElementById("syncStrip")
   };
 
   const navItems = [
@@ -126,6 +137,121 @@
   const video = (id) => list("videos").find((item) => item.id === id);
   const order = (id) => list("shopOrders").find((item) => item.id === id);
   const itemSources = (item) => Array.isArray(item?.sourceIds) ? item.sourceIds : [];
+  const isLiveAccountId = (id = state.accountId) => !!state.live.snapshot?.account && id === state.live.snapshot.account.id;
+  const isLiveConnected = () => !!state.live.connected && !!state.live.snapshot?.account;
+
+  function withUniqueById(items) {
+    const seen = new Set();
+    return items.filter((item) => {
+      if (!item?.id || seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
+  }
+
+  function rebuildDataFromLive() {
+    const snapshot = state.live.snapshot;
+    if (!snapshot?.account) {
+      data = baseData;
+      return;
+    }
+    data = {
+      ...baseData,
+      accounts: withUniqueById([snapshot.account, ...listFromBase("accounts")]),
+      revenueSources: withUniqueById([snapshot.source || window.NORTHSTAR_LIVE_ADAPTER?.createDisplaySource?.(), ...listFromBase("revenueSources")].filter(Boolean)),
+      videos: withUniqueById([...(snapshot.videos || []), ...listFromBase("videos")])
+    };
+  }
+
+  function listFromBase(key) {
+    return Array.isArray(baseData[key]) ? baseData[key] : [];
+  }
+
+  function liveStatusFromUrl() {
+    const value = new URLSearchParams(window.location.search).get("tiktok");
+    if (!value) return "";
+    if (value === "connected") return "TikTok Sandbox connected. Syncing approved Display API fields now.";
+    return `TikTok Sandbox returned ${value.replaceAll("_", " ")}. No sensitive details were exposed.`;
+  }
+
+  async function loadLiveTikTok({ preferSync = false } = {}) {
+    const client = window.NORTHSTAR_TIKTOK_CLIENT;
+    const adapter = window.NORTHSTAR_LIVE_ADAPTER;
+    if (!client || !adapter) return;
+    state.live.loading = true;
+    state.live.error = "";
+    render();
+    try {
+      const mePayload = preferSync ? await client.sync() : await client.me();
+      if (!mePayload.connected && !mePayload.profile) {
+        state.live.connected = false;
+        state.live.snapshot = null;
+        state.live.loading = false;
+        rebuildDataFromLive();
+        render();
+        return;
+      }
+      const videosPayload = mePayload.videos ? mePayload : await client.videos();
+      const snapshot = adapter.buildLiveSnapshot({
+        mePayload,
+        videosPayload,
+        syncedAt: mePayload.syncedAt || new Date().toISOString()
+      });
+      if (snapshot) {
+        state.live.connected = true;
+        state.live.snapshot = snapshot;
+        state.live.lastSyncAt = snapshot.syncedAt;
+        state.accountId = snapshot.account.id;
+      }
+    } catch (error) {
+      state.live.error = error?.message || "TikTok Sandbox data is unavailable.";
+    } finally {
+      state.live.loading = false;
+      rebuildDataFromLive();
+      render();
+    }
+  }
+
+  async function bootstrapLiveTikTok() {
+    const client = window.NORTHSTAR_TIKTOK_CLIENT;
+    if (!client) {
+      state.live.initializing = false;
+      render();
+      return;
+    }
+    state.live.error = liveStatusFromUrl();
+    try {
+      const session = await client.bootstrapSession();
+      state.live.session = session.session || null;
+      if (session.connected) await loadLiveTikTok();
+    } catch (error) {
+      state.live.error = "TikTok Sandbox API is not connected for this local preview yet.";
+    } finally {
+      state.live.initializing = false;
+      render();
+    }
+  }
+
+  async function disconnectLiveTikTok() {
+    const client = window.NORTHSTAR_TIKTOK_CLIENT;
+    if (!client) return;
+    state.live.loading = true;
+    render();
+    try {
+      await client.disconnect();
+      state.live.connected = false;
+      state.live.snapshot = null;
+      state.live.lastSyncAt = null;
+      state.live.error = "TikTok Sandbox disconnected for this session.";
+      if (isLiveAccountId()) state.accountId = "all";
+      rebuildDataFromLive();
+    } catch (error) {
+      state.live.error = error?.message || "Disconnect failed.";
+    } finally {
+      state.live.loading = false;
+      render();
+    }
+  }
 
   const sectionAccent = {
     "Revenue Compass": "#d4a72c",
@@ -253,6 +379,15 @@
   }
 
   function pulseItems() {
+    if (isLiveAccountId()) {
+      const top = topVideoByViews();
+      return [
+        ["Audience", `${number.format(currentFollowers())} followers returned by user.info.stats.`],
+        ["Views", top ? `${compactName(top.title)} leads public videos with ${number.format(top.views)} views.` : "No public videos returned yet."],
+        ["Top seller", "Shop products, sales, and commissions are not requested in this Sandbox phase."],
+        ["Revenue", "Earnings remain demo-only until a separate Shop integration is approved."]
+      ];
+    }
     return [
       ["Revenue", "Shop revenue is up 47% this month."],
       ["Top seller", "Garden Hoe leads shop earnings."],
@@ -310,7 +445,7 @@
   function filteredVideos(extra = {}) {
     return list("videos")
       .filter(accountMatches)
-      .filter((item) => inRange(item.date))
+      .filter((item) => item.date ? inRange(item.date) : isLiveAccountId(item.accountId))
       .filter((item) => !extra.productId || item.productId === extra.productId)
       .filter((item) => !extra.sourceId || itemSources(item).includes(extra.sourceId));
   }
@@ -625,7 +760,36 @@
   function identity(accountId = state.accountId) {
     if (accountId === "all") return `<span class="avatar avatar-all"><i>RR</i><i>TT</i></span>`;
     const item = account(accountId);
-    return `<span class="avatar avatar-${item?.id || "all"}"><i>${item?.initials || "NS"}</i></span>`;
+    const image = item?.avatarUrl ? `<img src="${escapeAttr(item.avatarUrl)}" alt="">` : `<i>${item?.initials || "NS"}</i>`;
+    return `<span class="avatar avatar-${item?.id || "all"}">${image}</span>`;
+  }
+
+  function liveModeBadge() {
+    if (state.live.loading || state.live.initializing) return `<span class="status-pill loading">Checking TikTok Sandbox</span>`;
+    if (isLiveConnected()) return `<span class="status-pill connected">TikTok Sandbox Connected</span>`;
+    return `<span class="status-pill demo">Demo Mode</span>`;
+  }
+
+  function renderSyncStrip() {
+    if (!els.syncStrip) return;
+    const lastSync = state.live.lastSyncAt
+      ? new Date(state.live.lastSyncAt).toLocaleString()
+      : "Not synced";
+    const message = state.live.error || (isLiveConnected()
+      ? "Live profile, stats, and public videos come from approved TikTok Display API Sandbox scopes."
+      : "Demo records are visible until a TikTok Sandbox account is authorized.");
+    els.syncStrip.innerHTML = `
+      <span>Data Mode</span>
+      <strong>${isLiveConnected() ? "TikTok Sandbox" : "Demo Prototype"}</strong>
+      <span class="dot ${isLiveConnected() ? "live" : ""}"></span>
+      <span>${escapeHtml(message)}</span>
+      <span class="sync-time">Last Sync: ${escapeHtml(lastSync)}</span>
+      <span class="sync-actions">
+        <button class="secondary-button tiny-button" type="button" data-action="connect-tiktok">${isLiveConnected() ? "Reconnect TikTok" : "Connect TikTok"}</button>
+        <button class="secondary-button tiny-button" type="button" data-action="sync-tiktok" ${isLiveConnected() ? "" : "disabled"}>Sync Now</button>
+        <button class="secondary-button tiny-button" type="button" data-action="disconnect-tiktok" ${isLiveConnected() ? "" : "disabled"}>Disconnect</button>
+      </span>
+    `;
   }
 
   function setPage(page, id = null, push = true) {
@@ -712,11 +876,20 @@
     const largestAge = largestEntry(audience.age);
     const bestDay = largestEntry(audience.weekdays);
     const bestHour = bestHourLabel(audience.hourly);
+    const audiencePanel = isLiveAccountId()
+      ? `<section class="audience-glance section brief-full live-limited"><span class="glance-header">${icon("Audience")}<span><strong>Audience at a Glance</strong><b>Limited by approved Sandbox scopes</b></span></span><span><small>Followers</small><b>${number.format(total.followers)}</b></span><span><small>Following</small><b>${number.format(active?.following || 0)}</b></span><span><small>Total likes</small><b>${number.format(active?.likes || 0)}</b></span><p class="source-note">Age, gender, active hours, saves, and sales are not returned by the initial Display API scopes.</p></section>`
+      : `<button class="audience-glance section brief-full" type="button" data-page="audience" data-audience-mode="viewers">
+          <span class="glance-header">${icon("Audience")}<span><strong>Audience at a Glance</strong><b>${gender.Female}% Women · ${gender.Male}% Men</b></span></span>
+          <span><small>Largest group</small><b>${largestAge[0]}</b></span>
+          <span><small>Best day</small><b>${bestDay[0]}</b></span>
+          <span><small>Best time</small><b>${bestHour}</b></span>
+        </button>`;
     return `
       <section class="brief-hero alive">
         <div>
           <p class="eyebrow">Morning Brief</p>
           <h2>Good afternoon, Jennifer.</h2>
+          ${liveModeBadge()}
           <div class="brief-account">${identity()}<span><strong>${accountName()}</strong><small>${active?.focus || "Combined creator view"}</small></span></div>
           <p>${lead}</p>
         </div>
@@ -736,14 +909,10 @@
       <section class="brief-lower-layout">
         <section class="section revenue-compact brief-full">
           ${heading("Revenue Compass", "See what is guiding your earnings.")}
+          ${isLiveAccountId() ? `<p class="source-note">TikTok Shop, sales, samples, orders, commissions, Creator Rewards, and TikTok GO are not part of this initial Sandbox Display API integration. These cards remain demo-only until later approved integrations.</p>` : ""}
           <div class="source-grid">${list("revenueSources").map(sourceCard).join("") || empty("No revenue sources are available yet.")}</div>
         </section>
-        <button class="audience-glance section brief-full" type="button" data-page="audience" data-audience-mode="viewers">
-          <span class="glance-header">${icon("Audience")}<span><strong>Audience at a Glance</strong><b>${gender.Female}% Women · ${gender.Male}% Men</b></span></span>
-          <span><small>Largest group</small><b>${largestAge[0]}</b></span>
-          <span><small>Best day</small><b>${bestDay[0]}</b></span>
-          <span><small>Best time</small><b>${bestHour}</b></span>
-        </button>
+        ${audiencePanel}
         <div class="brief-split-row">
           <section class="section product-compass-card">${heading("Product Compass", "Products carrying momentum")}<div class="stack">${topProducts.map(productRow).join("")}</div></section>
           <section class="section view-compact-card">${heading("View Performance", "Videos with useful signals")}<div class="stack">${topVideos.map(videoRow).join("")}</div></section>
@@ -763,6 +932,10 @@
   }
 
   function renderAudience() {
+    if (isLiveAccountId()) {
+      const active = account();
+      return `<section class="page-intro"><div class="intro-heading" style="--section-accent:${sectionAccent.Audience}">${icon("Audience")}<div><p class="eyebrow">Audience</p><h2>TikTok Sandbox identity and stats.</h2><p>These values come from user.info.basic and user.info.stats. Demographics and active times are not requested in this initial Display API integration.</p></div></div></section><section class="metric-grid compact">${metricCard("Followers", number.format(active?.followers || 0), "user.info.stats", "white")}${metricCard("Following", number.format(active?.following || 0), "user.info.stats", "white")}${metricCard("Total Likes", number.format(active?.likes || 0), "user.info.stats", "white")}${metricCard("Public Videos", number.format(active?.videoCount || filteredVideos().length), "user.info.stats + video.list", "white")}</section>${insightCard("Audience demographics, age, gender, and active-hour data remain unavailable in this Sandbox phase unless TikTok approves additional endpoints later.")}`;
+    }
     const item = activeAudience();
     const isViewers = state.audienceMode === "viewers";
     const largestGender = largestEntry(item.gender);
@@ -1073,11 +1246,12 @@
   }
 
   function renderDataHub() {
-    return `<section class="page-intro"><div class="intro-heading" style="--section-accent:${sectionAccent["Data Hub"]}">${icon("Data Hub")}<div><p class="eyebrow">Data Hub</p><h2>Sandbox source readiness by data category.</h2><p>No live TikTok service is connected in this prototype.</p></div></div></section><section class="section data-source-grid">${list("dataHubSources").map((item) => `<article><span class="status-dot ${(item.status || "unknown").toLowerCase().replaceAll(" ", "-")}"></span><strong>${item.name}</strong><small>${item.status}</small><dl><div><dt>Last updated</dt><dd>${item.lastUpdated || "Not available"}</dd></div><div><dt>Records</dt><dd>${number.format(item.records || 0)}</dd></div><div><dt>Source</dt><dd>${(item.dataSource || "sandbox").replaceAll("_", " ")}</dd></div></dl></article>`).join("") || empty("No source readiness records are available.")}</section>`;
+    const live = state.live.snapshot;
+    return `<section class="page-intro"><div class="intro-heading" style="--section-accent:${sectionAccent["Data Hub"]}">${icon("Data Hub")}<div><p class="eyebrow">Data Hub</p><h2>Sandbox source readiness by data category.</h2><p>TikTok Login Kit and Display API can be tested here without touching production.</p></div></div></section><section class="section connection-card">${heading("TikTok Sandbox", isLiveConnected() ? "Connected Display API session" : "Connect a Sandbox target user", "Data Hub")}<div class="connection-grid"><div><strong>Status</strong><p>${isLiveConnected() ? "Connected" : "Not connected"}</p></div><div><strong>Allowed scopes</strong><p>user.info.basic · user.info.stats · video.list</p></div><div><strong>Last sync</strong><p>${state.live.lastSyncAt ? new Date(state.live.lastSyncAt).toLocaleString() : "Not synced"}</p></div><div><strong>Live records</strong><p>${number.format(live?.videos?.length || 0)} public videos</p></div></div><p class="source-note">Unsupported in this Sandbox phase: TikTok Shop, sales, samples, orders, commissions, Creator Rewards, TikTok GO, posting, uploading, Share Kit, and webhooks.</p><div class="button-row"><button class="primary-button" type="button" data-action="connect-tiktok">Connect TikTok</button><button class="secondary-button" type="button" data-action="sync-tiktok" ${isLiveConnected() ? "" : "disabled"}>Sync Now</button><button class="secondary-button" type="button" data-action="disconnect-tiktok" ${isLiveConnected() ? "" : "disabled"}>Disconnect TikTok</button></div></section><section class="section data-source-grid">${list("dataHubSources").map((item) => `<article><span class="status-dot ${(item.status || "unknown").toLowerCase().replaceAll(" ", "-")}"></span><strong>${item.name}</strong><small>${item.status}</small><dl><div><dt>Last updated</dt><dd>${item.lastUpdated || "Not available"}</dd></div><div><dt>Records</dt><dd>${number.format(item.records || 0)}</dd></div><div><dt>Source</dt><dd>${(item.dataSource || "sandbox").replaceAll("_", " ")}</dd></div></dl></article>`).join("") || empty("No source readiness records are available.")}</section>`;
   }
 
   function renderSettings() {
-    return `<section class="page-intro"><div class="intro-heading" style="--section-accent:${sectionAccent.Settings}">${icon("Settings")}<div><p class="eyebrow">Settings</p><h2>Useful preferences only.</h2></div></div></section><div class="settings-grid"><section class="section"><h3>Accounts</h3>${list("accounts").map((item) => `<p>${identity(item.id)} ${item.name} <span class="muted">${item.handle}</span></p>`).join("") || empty("No account settings are available.")}</section><section class="section revenue-settings"><h3>Revenue Sources</h3>${list("revenueSources").map((item) => `<p><span class="source-dot ${item.accent}"></span><strong>${item.name}</strong><small>${item.shortName}</small></p>`).join("") || empty("No revenue sources are available.")}<button class="secondary-button" type="button" data-action="mock-modal" data-id="Add Revenue Source">Add Revenue Source</button></section><section class="section"><h3>Appearance</h3><label class="mini-control">Dashboard View<select><option>Comfortable</option><option>Compact</option></select></label><label class="mini-control">Theme<select><option>System</option><option>Light</option><option>Dark</option></select></label></section></div>`;
+    return `<section class="page-intro"><div class="intro-heading" style="--section-accent:${sectionAccent.Settings}">${icon("Settings")}<div><p class="eyebrow">Settings</p><h2>Useful preferences only.</h2></div></div></section><div class="settings-grid"><section class="section"><h3>Accounts</h3>${list("accounts").map((item) => `<p>${identity(item.id)} ${item.name} <span class="muted">${item.handle}</span></p>`).join("") || empty("No account settings are available.")}</section><section class="section revenue-settings"><h3>Data Sources</h3>${list("revenueSources").map((item) => `<p><span class="source-dot ${item.accent || ""}"></span><strong>${item.name}</strong><small>${item.shortName || item.type || "Source"}</small></p>`).join("") || empty("No revenue sources are available.")}<p class="source-note">Live TikTok Sandbox data is session-scoped and separate from Jennifer's private local app data.</p></section><section class="section"><h3>Appearance</h3><label class="mini-control">Dashboard View<select><option>Comfortable</option><option>Compact</option></select></label><label class="mini-control">Theme<select><option>System</option><option>Light</option><option>Dark</option></select></label></section></div>`;
   }
 
   function productRow(item) {
@@ -1253,12 +1427,15 @@
     els.nav.innerHTML = navItems.map(([id, label]) => `<button class="${activeNav === id ? "active" : ""}" type="button" data-page="${id}"><span class="nav-icon nav-${id}" aria-hidden="true">${navIcons[id]}</span><span>${label}</span></button>`).join("");
     const active = account();
     els.accountAvatar.className = `avatar ${state.accountId === "all" ? "avatar-all" : `avatar-${active?.id || "all"}`}`;
-    els.accountAvatar.innerHTML = state.accountId === "all" ? "<i>RR</i><i>TT</i>" : `<i>${active?.initials || "NS"}</i>`;
+    els.accountAvatar.innerHTML = state.accountId === "all"
+      ? "<i>RR</i><i>TT</i>"
+      : active?.avatarUrl ? `<img src="${escapeAttr(active.avatarUrl)}" alt="">` : `<i>${active?.initials || "NS"}</i>`;
     els.accountLabel.textContent = accountName();
     els.dateLabel.textContent = state.dateRange === "custom" ? `${formatBriefDate(state.customStart)} → ${formatBriefDate(state.customEnd)}` : readableRange();
     els.accountMenu.innerHTML = [`<button role="option" data-action="account" data-id="all">${identity("all")}<span>All Accounts<small>Combined view</small></span></button>`, ...list("accounts").map((item) => `<button role="option" data-action="account" data-id="${item.id}">${identity(item.id)}<span>${item.name}<small>${item.focus}</small></span></button>`)].join("");
     const dateOptions = els.dateMenu.querySelector(".date-options");
     if (dateOptions) dateOptions.innerHTML = dateRanges.map(([id, label]) => `<button class="${state.dateRange === id ? "active" : ""}" type="button" data-action="date-range" data-id="${id}">${label}</button>`).join("");
+    renderSyncStrip();
   }
 
   function render() {
@@ -1288,6 +1465,9 @@
       return;
     }
     const id = action.dataset.id;
+    if (action.dataset.action === "connect-tiktok") return window.NORTHSTAR_TIKTOK_CLIENT?.startConnect();
+    if (action.dataset.action === "sync-tiktok") return loadLiveTikTok({ preferSync: true });
+    if (action.dataset.action === "disconnect-tiktok") return disconnectLiveTikTok();
     if (action.dataset.action === "account") { state.accountId = id; els.accountMenu.hidden = true; render(); }
     if (action.dataset.action === "date-range") {
       if (id === "custom") { els.customPanel.hidden = false; return; }
@@ -1362,4 +1542,5 @@
   });
 
   render();
+  bootstrapLiveTikTok();
 })();

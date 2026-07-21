@@ -1,4 +1,7 @@
-const APP_ORIGIN = process.env.APP_ORIGIN || "https://app.northstar-creator.com";
+const IS_SANDBOX = process.env.NORTHSTAR_ENV === "tiktok_sandbox";
+const APP_ORIGIN = IS_SANDBOX
+  ? (process.env.TIKTOK_SANDBOX_FRONTEND_URL || "https://sandbox-app.northstar-creator.com")
+  : (process.env.APP_ORIGIN || "https://app.northstar-creator.com");
 
 function applyCors(req, res) {
   const origin = req.headers.origin;

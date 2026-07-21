@@ -53,8 +53,8 @@
         </button>
         <div class="sidebar-note">
           <span>Sandbox prototype</span>
-          <strong>Mock data only</strong>
-          <small>No TikTok credentials or live APIs are used.</small>
+          <strong>Demo + TikTok Sandbox</strong>
+          <small>Live TikTok data appears only after Sandbox OAuth approval.</small>
         </div>
       </aside>
 
@@ -106,7 +106,7 @@
           </div>
         </header>
 
-        <section class="sync-strip" aria-label="Sandbox status">
+        <section id="syncStrip" class="sync-strip" aria-label="Sandbox status">
           <span>Last Sync</span>
           <strong>Today at 8:04 AM</strong>
           <span class="dot"></span>
@@ -119,7 +119,11 @@
 
     <div id="modalRoot" class="modal-root" hidden></div>
 
+    <script src="config.js"></script>
     <script src="mock-data.js"></script>
+    <script src="data-mode.js"></script>
+    <script src="live-data-adapter.js"></script>
+    <script src="tiktok-sandbox-client.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

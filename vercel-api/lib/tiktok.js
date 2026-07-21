@@ -10,7 +10,10 @@ const requestedScopes = (process.env.TIKTOK_SCOPES || "user.info.basic,user.info
   .filter(Boolean);
 
 function requiredEnv(name) {
-  const value = process.env[name];
+  const sandboxName = `${name}_SANDBOX`;
+  const value = process.env.NORTHSTAR_ENV === "tiktok_sandbox"
+    ? (process.env[sandboxName] || process.env[name])
+    : process.env[name];
   if (!value) throw new Error(`${name} is not configured.`);
   return value;
 }
@@ -37,8 +40,8 @@ async function tokenRequest(params) {
     body
   });
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok || payload.error) {
-    throw new Error(payload.error_description || payload.error || "TikTok token request failed.");
+  if (!response.ok || (payload.error?.code && payload.error.code !== "ok") || (typeof payload.error === "string" && payload.error !== "ok")) {
+    throw new Error(payload.error_description || payload.error?.message || payload.error?.code || payload.error || "TikTok token request failed.");
   }
   return payload;
 }
@@ -120,6 +123,7 @@ async function listVideos(accessToken, cursor = 0, maxCount = 20) {
     "cover_image_url",
     "share_url",
     "embed_link",
+    "create_time",
     "view_count",
     "like_count",
     "comment_count",
@@ -132,6 +136,24 @@ async function listVideos(accessToken, cursor = 0, maxCount = 20) {
     body: JSON.stringify({ cursor, max_count: maxCount })
   });
   return payload.data || { videos: [], cursor: 0, has_more: false };
+}
+
+async function listAllVideos(accessToken, maxPages = 5) {
+  let cursor = 0;
+  let hasMore = true;
+  const videos = [];
+  const seen = new Set();
+  for (let page = 0; page < maxPages && hasMore; page += 1) {
+    const payload = await listVideos(accessToken, cursor, 20);
+    (payload.videos || []).forEach((video) => {
+      if (!video?.id || seen.has(video.id)) return;
+      seen.add(video.id);
+      videos.push(video);
+    });
+    cursor = payload.cursor || 0;
+    hasMore = !!payload.has_more;
+  }
+  return { videos, cursor, has_more: hasMore };
 }
 
 function tokenExpiry(payload) {
@@ -147,5 +169,6 @@ module.exports = {
   revokeToken,
   getUserInfo,
   listVideos,
+  listAllVideos,
   tokenExpiry
 };
