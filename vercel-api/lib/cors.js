@@ -1,6 +1,12 @@
 const IS_SANDBOX = process.env.NORTHSTAR_ENV === "tiktok_sandbox";
+function requiredSandboxOrigin() {
+  const value = process.env.TIKTOK_SANDBOX_FRONTEND_URL;
+  if (!value) throw new Error("TIKTOK_SANDBOX_FRONTEND_URL is not configured.");
+  return value;
+}
+
 const APP_ORIGIN = IS_SANDBOX
-  ? (process.env.TIKTOK_SANDBOX_FRONTEND_URL || "https://sandbox-app.northstar-creator.com")
+  ? requiredSandboxOrigin()
   : (process.env.APP_ORIGIN || "https://app.northstar-creator.com");
 
 function applyCors(req, res) {
@@ -36,8 +42,7 @@ function sendJson(req, res, status, payload) {
 }
 
 function redirectToApp(res, params = {}) {
-  const appOrigin = process.env.APP_ORIGIN || APP_ORIGIN;
-  const url = new URL(appOrigin);
+  const url = new URL(APP_ORIGIN);
   Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
   res.statusCode = 302;
   res.setHeader("Location", url.toString());

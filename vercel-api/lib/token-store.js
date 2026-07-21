@@ -3,11 +3,11 @@ const { encryptJson, decryptJson } = require("./crypto");
 const isSandbox = process.env.NORTHSTAR_ENV === "tiktok_sandbox";
 
 const redisUrl = isSandbox
-  ? (process.env.UPSTASH_REDIS_REST_URL_SANDBOX || process.env.KV_REST_API_URL_SANDBOX)
+  ? process.env.UPSTASH_REDIS_REST_URL_SANDBOX
   : (process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL);
 
 const redisToken = isSandbox
-  ? (process.env.UPSTASH_REDIS_REST_TOKEN_SANDBOX || process.env.KV_REST_API_TOKEN_SANDBOX)
+  ? process.env.UPSTASH_REDIS_REST_TOKEN_SANDBOX
   : (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN);
 
 const keyPrefix = isSandbox
@@ -20,7 +20,9 @@ function key(name, id) {
 
 function ensureRedis() {
   if (!redisUrl || !redisToken) {
-    throw new Error("Upstash Redis environment variables are not configured.");
+    throw new Error(isSandbox
+      ? "Sandbox Upstash Redis environment variables are not configured."
+      : "Upstash Redis environment variables are not configured.");
   }
 }
 

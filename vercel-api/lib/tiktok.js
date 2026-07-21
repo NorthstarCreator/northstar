@@ -10,11 +10,9 @@ const requestedScopes = (process.env.TIKTOK_SCOPES || "user.info.basic,user.info
   .filter(Boolean);
 
 function requiredEnv(name) {
-  const sandboxName = `${name}_SANDBOX`;
-  const value = process.env.NORTHSTAR_ENV === "tiktok_sandbox"
-    ? (process.env[sandboxName] || process.env[name])
-    : process.env[name];
-  if (!value) throw new Error(`${name} is not configured.`);
+  const envName = process.env.NORTHSTAR_ENV === "tiktok_sandbox" ? `${name}_SANDBOX` : name;
+  const value = process.env[envName];
+  if (!value) throw new Error(`${envName} is not configured.`);
   return value;
 }
 

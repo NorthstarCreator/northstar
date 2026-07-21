@@ -6,10 +6,12 @@ function randomToken(bytes = 32) {
 
 function encryptionKey() {
   const secret = process.env.NORTHSTAR_ENV === "tiktok_sandbox"
-    ? (process.env.TOKEN_STORE_SECRET_SANDBOX || process.env.TOKEN_STORE_SECRET)
+    ? process.env.TOKEN_STORE_SECRET_SANDBOX
     : process.env.TOKEN_STORE_SECRET;
   if (!secret || secret.length < 32) {
-    throw new Error("Token store secret must be set to at least 32 characters.");
+    throw new Error(process.env.NORTHSTAR_ENV === "tiktok_sandbox"
+      ? "Sandbox token store secret must be set to at least 32 characters."
+      : "Token store secret must be set to at least 32 characters.");
   }
   return crypto.createHash("sha256").update(secret).digest();
 }
