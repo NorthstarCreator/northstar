@@ -139,6 +139,15 @@
   const itemSources = (item) => Array.isArray(item?.sourceIds) ? item.sourceIds : [];
   const isLiveAccountId = (id = state.accountId) => !!state.live.snapshot?.account && id === state.live.snapshot.account.id;
   const isLiveConnected = () => !!state.live.connected && !!state.live.snapshot?.account;
+  const realRevenueSourceNames = new Set(["tiktok_shop_affiliate_api", "official_tiktok_shop_report", "creator_rewards_source", "tiktok_go_source"]);
+
+  function revenueRecordSource(item = {}) {
+    return item.source || item.dataSource || item.revenueSource || "demo";
+  }
+
+  function isRealRevenueRecord(item = {}) {
+    return realRevenueSourceNames.has(revenueRecordSource(item));
+  }
 
   function withUniqueById(items) {
     const seen = new Set();
@@ -158,7 +167,7 @@
     data = {
       ...baseData,
       accounts: withUniqueById([snapshot.account, ...listFromBase("accounts")]),
-      revenueSources: withUniqueById([snapshot.source || window.NORTHSTAR_LIVE_ADAPTER?.createDisplaySource?.(), ...listFromBase("revenueSources")].filter(Boolean)),
+      revenueSources: listFromBase("revenueSources"),
       videos: withUniqueById([...(snapshot.videos || []), ...listFromBase("videos")])
     };
   }
@@ -618,6 +627,48 @@
     return Number(item.price || 0) * Number(item.quantity || 0);
   }
 
+  function sourceFieldName(sourceId) {
+    return sourceId === "shop" ? "tiktok_shop_affiliate_api" : sourceId === "rewards" ? "creator_rewards_source" : sourceId === "go" ? "tiktok_go_source" : "";
+  }
+
+  function hasRealRevenueSource(sourceId = null) {
+    if (sourceId === "shop") return filteredOrders().some(isRealRevenueRecord);
+    if (sourceId === "rewards" || sourceId === "go") {
+      const expected = sourceFieldName(sourceId);
+      return list("days").filter((day) => inRange(day.date)).some((day) => accountIds().some((id) => accountPart(day, id)?.[`${sourceId}Source`] === expected));
+    }
+    return ["shop", "rewards", "go"].some((id) => hasRealRevenueSource(id));
+  }
+
+  function realTotalEarnings() {
+    const shop = filteredOrders().filter(isRealRevenueRecord).reduce((sum, item) => sum + commissionValue(item), 0);
+    const nonShop = ["rewards", "go"].reduce((outer, sourceId) => {
+      const expected = sourceFieldName(sourceId);
+      return outer + list("days").filter((day) => inRange(day.date)).reduce((sum, day) => (
+        sum + accountIds().reduce((inner, id) => {
+          const part = accountPart(day, id);
+          return inner + (part?.[`${sourceId}Source`] === expected ? Number(part[sourceId] || 0) : 0);
+        }, 0)
+      ), 0);
+    }, 0);
+    return shop + nonShop;
+  }
+
+  function demoTotalEarnings() {
+    const shop = filteredOrders().reduce((sum, item) => sum + commissionValue(item), 0);
+    return list("days").filter((day) => inRange(day.date)).reduce((sum, day) => (
+      sum + accountIds().reduce((inner, id) => {
+        const part = accountPart(day, id);
+        return inner + (part.rewards || 0) + (part.go || 0);
+      }, 0)
+    ), shop);
+  }
+
+  function earningsModeLabel() {
+    if (!isLiveConnected()) return "Demo earnings: Shop + Rewards + GO";
+    return hasRealRevenueSource() ? "Estimated earnings from connected revenue sources" : "No real revenue source connected yet";
+  }
+
   function attributionSummary(extra = {}) {
     const orders = filteredOrders(extra);
     const base = { orders: 0, units: 0, gmv: 0, commission: 0, rateBase: 0, weightedRate: 0 };
@@ -716,13 +767,7 @@
   }
 
   function totalEarnings() {
-    const shop = filteredOrders().reduce((sum, item) => sum + commissionValue(item), 0);
-    return list("days").filter((day) => inRange(day.date)).reduce((sum, day) => (
-      sum + accountIds().reduce((inner, id) => {
-        const part = accountPart(day, id);
-        return inner + (part.rewards || 0) + (part.go || 0);
-      }, 0)
-    ), shop);
+    return isLiveConnected() ? realTotalEarnings() : demoTotalEarnings();
   }
 
   function totals(sourceId = null) {
@@ -904,7 +949,7 @@
         ${metricCard("Followers", number.format(total.followers), `+${number.format(periodFollowerGain())} this month`, "white", 'data-page="audience"', "followers")}
         ${metricCard("Views", number.format(total.views), `${number.format(Math.round(total.views / Math.max(1, total.videos)))} avg/video`, "white", 'data-page="view-performance"', "views")}
         ${metricCard("Videos Posted", total.videos, `Posted this month<br>Goal: 32 videos/month`, "white", 'data-page="videos"', "videos")}
-        ${metricCard("Total Earnings", money.format(total.earnings), "Shop + Rewards + GO", "white", 'data-page="earnings"', "earnings")}
+        ${metricCard("Total Earnings", money.format(total.earnings), earningsModeLabel(), "white", 'data-page="earnings"', "earnings")}
       </section>
       <section class="brief-lower-layout">
         <section class="section revenue-compact brief-full">
@@ -923,12 +968,14 @@
   }
 
   function sourceCard(item) {
+    const waitingForReal = isLiveConnected() && !hasRealRevenueSource(item.id);
     const total = totals(item.id);
-    const primary = total.earnings;
-    const detail = item.id === "shop" ? `${total.productsEarning} products earning` : item.id === "rewards" ? `${total.eligibleVideos} eligible videos` : `${total.placesEarning} ${total.placesEarning === 1 ? "place" : "places"} earning`;
+    const primary = waitingForReal ? 0 : total.earnings;
+    const detail = waitingForReal ? "Awaiting connected revenue data" : item.id === "shop" ? `${total.productsEarning} products earning` : item.id === "rewards" ? `${total.eligibleVideos} eligible videos` : `${total.placesEarning} ${total.placesEarning === 1 ? "place" : "places"} earning`;
     const attribution = attributionSummary();
-    const attributionLine = item.id === "shop" ? `<p class="attribution-line">${money.format(attribution.organic_video.commission)} Organic · ${money.format(attribution.shop_ad.commission)} Shop Ads</p>` : "";
-    return `<button class="source-card ${item.accent}" type="button" data-action="open-source" data-id="${item.id}"><span class="source-dot"></span><small>${item.name.toUpperCase()}</small><strong>${money.format(primary)}</strong><p>${detail}</p><div class="source-card-spacer">${attributionLine}</div></button>`;
+    const attributionLine = item.id === "shop" && !waitingForReal ? `<p class="attribution-line">${money.format(attribution.organic_video.commission)} Organic · ${money.format(attribution.shop_ad.commission)} Shop Ads</p>` : "";
+    const provenance = waitingForReal ? "Awaiting real source" : isLiveConnected() ? "Real source" : "Demo Data";
+    return `<button class="source-card ${item.accent} ${waitingForReal ? "awaiting-real" : "demo-source"}" type="button" data-action="open-source" data-id="${item.id}"><span class="source-dot"></span><small>${item.name.toUpperCase()}</small><strong>${money.format(primary)}</strong><p>${detail}</p><span class="source-provenance">${provenance}</span><div class="source-card-spacer">${attributionLine}</div></button>`;
   }
 
   function renderAudience() {
@@ -1245,9 +1292,56 @@
     return `${backButton()}<section class="product-studio">${productImage(item, "large")}<div><p class="eyebrow">Video Detail</p><h2>${item.title}</h2><p>${accountName(item.accountId)} · Posted ${formatBriefDateTime(item.date, item.time)}</p></div></section><section class="metric-grid compact">${metricCard("Views", number.format(item.views), "Video performance", "white")}${metricCard("Earnings", money.format(item.earnings), sourceNames, "selected")}${metricCard("Units Sold", number.format(item.units), linked?.name || "Linked product", "white")}${metricCard("Shares", number.format(item.shares), "Audience signal", "white")}</section><section class="section attribution-section">${heading("Sales Attribution", "Video earnings by origin", "Sales Attribution")}<div class="attribution-grid">${orderSummary.organic_video.orders ? attributionSummaryCard("organic_video", orderSummary.organic_video) : ""}${orderSummary.shop_ad.orders ? attributionSummaryCard("shop_ad", orderSummary.shop_ad) : ""}</div>${insightCard(insight)}</section>`;
   }
 
+  function statusText() {
+    if (state.live.loading) return "Syncing";
+    if (isLiveConnected()) return "Connected";
+    if (state.live.error) return "Connection error";
+    return "Not connected";
+  }
+
+  function connectionField(label, value) {
+    return `<div><strong>${label}</strong><p>${value || "Not available"}</p></div>`;
+  }
+
+  function connectionIdentity() {
+    const active = state.live.snapshot?.account;
+    if (!active) return "";
+    return `<div class="connection-identity">${identity(active.id)}<span><strong>${escapeHtml(active.name)}</strong><small>${escapeHtml(active.handle || "TikTok creator")}</small></span></div>`;
+  }
+
   function renderDataHub() {
     const live = state.live.snapshot;
-    return `<section class="page-intro"><div class="intro-heading" style="--section-accent:${sectionAccent["Data Hub"]}">${icon("Data Hub")}<div><p class="eyebrow">Data Hub</p><h2>Sandbox source readiness by data category.</h2><p>TikTok Login Kit and Display API can be tested here without touching production.</p></div></div></section><section class="section connection-card">${heading("TikTok Sandbox", isLiveConnected() ? "Connected Display API session" : "Connect a Sandbox target user", "Data Hub")}<div class="connection-grid"><div><strong>Status</strong><p>${isLiveConnected() ? "Connected" : "Not connected"}</p></div><div><strong>Allowed scopes</strong><p>user.info.basic · user.info.stats · video.list</p></div><div><strong>Last sync</strong><p>${state.live.lastSyncAt ? new Date(state.live.lastSyncAt).toLocaleString() : "Not synced"}</p></div><div><strong>Live records</strong><p>${number.format(live?.videos?.length || 0)} public videos</p></div></div><p class="source-note">Unsupported in this Sandbox phase: TikTok Shop, sales, samples, orders, commissions, Creator Rewards, TikTok GO, posting, uploading, Share Kit, and webhooks.</p><div class="button-row"><button class="primary-button" type="button" data-action="connect-tiktok">Connect TikTok</button><button class="secondary-button" type="button" data-action="sync-tiktok" ${isLiveConnected() ? "" : "disabled"}>Sync Now</button><button class="secondary-button" type="button" data-action="disconnect-tiktok" ${isLiveConnected() ? "" : "disabled"}>Disconnect TikTok</button></div></section><section class="section data-source-grid">${list("dataHubSources").map((item) => `<article><span class="status-dot ${(item.status || "unknown").toLowerCase().replaceAll(" ", "-")}"></span><strong>${item.name}</strong><small>${item.status}</small><dl><div><dt>Last updated</dt><dd>${item.lastUpdated || "Not available"}</dd></div><div><dt>Records</dt><dd>${number.format(item.records || 0)}</dd></div><div><dt>Source</dt><dd>${(item.dataSource || "sandbox").replaceAll("_", " ")}</dd></div></dl></article>`).join("") || empty("No source readiness records are available.")}</section>`;
+    const contentStatus = statusText();
+    const shopStatus = "Awaiting API approval";
+    const lastSync = state.live.lastSyncAt ? new Date(state.live.lastSyncAt).toLocaleString() : "Not synced";
+    return `<section class="page-intro"><div class="intro-heading" style="--section-accent:${sectionAccent["Data Hub"]}">${icon("Data Hub")}<div><p class="eyebrow">Data Hub</p><h2>Unified Northstar sources, separate technical connections.</h2><p>Content and Shop connect independently, then flow into the same Morning Brief, Earnings, Products, and Videos pages.</p></div></div></section>
+      <section class="integration-grid">
+        <article class="section integration-card ${isLiveConnected() ? "connected" : "not-connected"}">
+          ${heading("TikTok Content", "Identity, public videos, and engagement", "Data Hub")}
+          ${connectionIdentity()}
+          <div class="connection-grid compact">
+            ${connectionField("Status", contentStatus)}
+            ${connectionField("Scopes", "user.info.basic · user.info.stats · video.list")}
+            ${connectionField("Last sync", lastSync)}
+            ${connectionField("Videos retrieved", `${number.format(live?.videos?.length || 0)} public videos`)}
+          </div>
+          <p class="source-note">Supplies profile, followers, account statistics, public videos, views, likes, comments, and shares. It does not supply Shop products, orders, GMV, commissions, samples, Creator Rewards, or TikTok GO.</p>
+          <div class="button-row"><button class="primary-button" type="button" data-action="connect-tiktok">${isLiveConnected() ? "Reconnect Content" : "Connect Content"}</button><button class="secondary-button" type="button" data-action="sync-tiktok" ${isLiveConnected() ? "" : "disabled"}>Sync Now</button><button class="secondary-button" type="button" data-action="disconnect-tiktok" ${isLiveConnected() ? "" : "disabled"}>Disconnect</button></div>
+        </article>
+        <article class="section integration-card pending">
+          ${heading("TikTok Shop", "Commerce, products, orders, and commissions", "Data Hub")}
+          <div class="connection-grid compact">
+            ${connectionField("Status", shopStatus)}
+            ${connectionField("Authorization", "Not connected")}
+            ${connectionField("Last sync", "No Shop API sync yet")}
+            ${connectionField("Real records", "0 products · 0 orders")}
+          </div>
+          <p class="source-note">Prepared for authorized TikTok Shop Affiliate API access or official report import. Connecting TikTok Content does not mark TikTok Shop as connected.</p>
+          <div class="button-row"><button class="secondary-button" type="button" disabled>Connect Shop</button><button class="secondary-button" type="button" disabled>Sync Shop</button><button class="secondary-button" type="button" data-action="mock-modal" data-id="Official TikTok Shop report import">Import official report</button></div>
+        </article>
+      </section>
+      <section class="section provenance-panel">${heading("Unified Source Policy", "Real totals stay separate from demo records", "Data Hub")}<p>Total Earnings uses connected real revenue sources only. Demo Shop, Creator Rewards, and TikTok GO values remain available for sandbox design testing, but are labeled and excluded from real totals once live Content is connected.</p><div class="provenance-list"><span>tiktok_display_api</span><span>tiktok_shop_affiliate_api</span><span>official_tiktok_shop_report</span><span>creator_rewards_source</span><span>tiktok_go_source</span><span>demo</span></div></section>
+      <section class="section data-source-grid">${list("dataHubSources").map((item) => `<article><span class="status-dot ${(item.status || "unknown").toLowerCase().replaceAll(" ", "-")}"></span><strong>${item.name}</strong><small>${item.status}</small><dl><div><dt>Last updated</dt><dd>${item.lastUpdated || "Not available"}</dd></div><div><dt>Records</dt><dd>${number.format(item.records || 0)}</dd></div><div><dt>Source</dt><dd>${(item.dataSource || "sandbox").replaceAll("_", " ")}</dd></div></dl></article>`).join("") || empty("No source readiness records are available.")}</section>`;
   }
 
   function renderSettings() {

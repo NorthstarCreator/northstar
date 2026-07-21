@@ -72,7 +72,28 @@ When a Sandbox account is authorized, live Display API data can populate:
 - Video detail
 - Last Sync status
 
-Unsupported sections remain visibly demo-labeled.
+TikTok Content and TikTok Shop are intentionally separate connection cards in Data Hub:
+
+- TikTok Content uses Login Kit and Display API scopes for profile, stats, and public videos.
+- TikTok Shop is awaiting approved Affiliate API access or official report import.
+- Connecting TikTok Content does not mark TikTok Shop connected.
+- Total Earnings uses connected real revenue sources only once a live account is connected.
+- Demo Shop, Creator Rewards, and TikTok GO values stay labeled as demo and are excluded from live earnings totals.
+
+Unsupported sections remain visibly demo-labeled or show an awaiting-real-source state.
+
+## Source Policy
+
+Northstar keeps data provenance on every real or demo source:
+
+- `tiktok_display_api`
+- `tiktok_shop_affiliate_api`
+- `official_tiktok_shop_report`
+- `creator_rewards_source`
+- `tiktok_go_source`
+- `demo`
+
+Upstash Redis is used only for OAuth/session/token state. Permanent commerce data should move to a relational database once TikTok Shop or official report imports are enabled.
 
 ## Demonstrated Interactions
 
@@ -94,3 +115,5 @@ Unsupported sections remain visibly demo-labeled.
 ## Notes
 
 This prototype is intentionally calm, compact, and non-technical. It is designed for isolated TikTok Sandbox review before any production integration work.
+
+For TikTok Shop readiness, see `tiktok-shop-integration-readiness.md`.
