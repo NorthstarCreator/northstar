@@ -2,6 +2,7 @@ const { randomToken, timingSafeEqual } = require("./crypto");
 const { getSession, storeSession } = require("./token-store");
 
 const COOKIE_NAME = process.env.SESSION_COOKIE_NAME || "northstar_session";
+const SAME_SITE = process.env.NORTHSTAR_ENV === "tiktok_sandbox" ? "SameSite=None" : "SameSite=Lax";
 
 function parseCookies(req) {
   const header = req.headers.cookie || "";
@@ -17,7 +18,7 @@ function setSessionCookie(res, sessionId) {
     "Path=/",
     "HttpOnly",
     "Secure",
-    "SameSite=Lax",
+    SAME_SITE,
     "Max-Age=2592000"
   ].join("; ");
   res.setHeader("Set-Cookie", cookie);
@@ -60,6 +61,7 @@ async function requireCsrf(req) {
 
 module.exports = {
   COOKIE_NAME,
+  SAME_SITE,
   parseCookies,
   setSessionCookie,
   getOrCreateSession,

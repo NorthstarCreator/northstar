@@ -1,18 +1,41 @@
 const IS_SANDBOX = process.env.NORTHSTAR_ENV === "tiktok_sandbox";
-function requiredSandboxOrigin() {
-  const value = process.env.TIKTOK_SANDBOX_FRONTEND_URL;
-  if (!value) throw new Error("TIKTOK_SANDBOX_FRONTEND_URL is not configured.");
-  return value;
+
+const DEPLOYED_SANDBOX_DASHBOARD_ORIGIN = "https://northstar-dashboard-sandbox.vercel.app";
+
+function splitOrigins(value) {
+  return String(value || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+}
+
+function uniqueOrigins(origins) {
+  return [...new Set(origins.filter(Boolean))];
+}
+
+function sandboxOrigins() {
+  return uniqueOrigins([
+    process.env.TIKTOK_SANDBOX_REDIRECT_ORIGIN || DEPLOYED_SANDBOX_DASHBOARD_ORIGIN,
+    ...splitOrigins(process.env.TIKTOK_SANDBOX_FRONTEND_URLS),
+    process.env.TIKTOK_SANDBOX_FRONTEND_URL,
+    DEPLOYED_SANDBOX_DASHBOARD_ORIGIN
+  ]);
 }
 
 const APP_ORIGIN = IS_SANDBOX
-  ? requiredSandboxOrigin()
+  ? sandboxOrigins()[0]
   : (process.env.APP_ORIGIN || "https://app.northstar-creator.com");
+
+const ALLOWED_ORIGINS = IS_SANDBOX ? sandboxOrigins() : [APP_ORIGIN];
+
+function allowedOrigin(origin) {
+  return ALLOWED_ORIGINS.includes(origin);
+}
 
 function applyCors(req, res) {
   const origin = req.headers.origin;
-  if (origin === APP_ORIGIN) {
-    res.setHeader("Access-Control-Allow-Origin", APP_ORIGIN);
+  if (allowedOrigin(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader("Vary", "Origin");
   }
@@ -31,7 +54,7 @@ function handleOptions(req, res) {
 }
 
 function validatePostOrigin(req) {
-  return req.headers.origin === APP_ORIGIN;
+  return allowedOrigin(req.headers.origin);
 }
 
 function sendJson(req, res, status, payload) {
@@ -51,7 +74,9 @@ function redirectToApp(res, params = {}) {
 
 module.exports = {
   APP_ORIGIN,
+  ALLOWED_ORIGINS,
   applyCors,
+  allowedOrigin,
   handleOptions,
   validatePostOrigin,
   sendJson,
