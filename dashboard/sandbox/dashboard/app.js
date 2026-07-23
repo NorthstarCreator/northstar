@@ -138,7 +138,7 @@
   const order = (id) => list("shopOrders").find((item) => item.id === id);
   const itemSources = (item) => Array.isArray(item?.sourceIds) ? item.sourceIds : [];
   const isLiveAccountId = (id = state.accountId) => !!state.live.snapshot?.account && id === state.live.snapshot.account.id;
-  const isLiveConnected = () => !!state.live.connected && !!state.live.snapshot?.account;
+  const isLiveConnected = () => !!state.live.connected;
   const realRevenueSourceNames = new Set(["tiktok_shop_affiliate_api", "official_tiktok_shop_report", "creator_rewards_source", "tiktok_go_source"]);
 
   function revenueRecordSource(item = {}) {
@@ -193,8 +193,11 @@
     try {
       const mePayload = preferSync ? await client.sync() : await client.me();
       if (!mePayload.connected && !mePayload.profile) {
-        state.live.connected = false;
+        state.live.connected = !!state.live.connected;
         state.live.snapshot = null;
+        if (state.live.connected) {
+          state.live.error = "Connected. Profile or video details could not load yet.";
+        }
         state.live.loading = false;
         rebuildDataFromLive();
         render();
@@ -211,9 +214,14 @@
         state.live.snapshot = snapshot;
         state.live.lastSyncAt = snapshot.syncedAt;
         state.accountId = snapshot.account.id;
+        state.live.error = "";
+      } else if (state.live.connected) {
+        state.live.error = "Connected. Profile or video details could not load yet.";
       }
     } catch (error) {
-      state.live.error = error?.message || "TikTok Sandbox data is unavailable.";
+      state.live.error = state.live.connected
+        ? "Connected. Profile or video details could not load yet."
+        : (error?.message || "TikTok Sandbox data is unavailable.");
     } finally {
       state.live.loading = false;
       rebuildDataFromLive();
@@ -232,6 +240,7 @@
     try {
       const session = await client.bootstrapSession();
       state.live.session = session.session || null;
+      state.live.connected = !!session.connected;
       if (session.connected) await loadLiveTikTok();
     } catch (error) {
       state.live.error = "TikTok Sandbox API is not connected for this local preview yet.";
