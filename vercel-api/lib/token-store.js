@@ -36,9 +36,31 @@ async function redis(command, ...args) {
     },
     body: JSON.stringify([[command, ...args]])
   });
-  if (!response.ok) throw new Error("Token store request failed.");
-  const [result] = await response.json();
-  if (result.error) throw new Error("Token store command failed.");
+  if (!response.ok) {
+    console.error("[northstar-token-store]", {
+      command,
+      status: response.status,
+      statusText: response.statusText || null
+    });
+    throw new Error("Token store request failed.");
+  }
+  const payload = await response.json().catch((error) => {
+    console.error("[northstar-token-store]", {
+      command,
+      stage: "parse_response",
+      message: error?.message || "Unable to parse token store response"
+    });
+    throw new Error("Token store response could not be parsed.");
+  });
+  const [result] = Array.isArray(payload) ? payload : [];
+  if (!result || result.error) {
+    console.error("[northstar-token-store]", {
+      command,
+      stage: "command_result",
+      error: result?.error || "Unexpected token store response shape"
+    });
+    throw new Error("Token store command failed.");
+  }
   return result.result;
 }
 

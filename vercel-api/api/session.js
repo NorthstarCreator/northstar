@@ -6,9 +6,13 @@ module.exports = async function handler(req, res) {
   if (handleOptions(req, res)) return;
   if (req.method !== "GET") return sendJson(req, res, 405, { error: "method_not_allowed" });
 
+  let stage = "session_start";
   try {
+    stage = "get_or_create_session";
     const session = await getOrCreateSession(req, res);
+    stage = "get_connection_metadata";
     const connection = await getConnectionMetadata(session.id);
+    stage = "send_session_response";
     return sendJson(req, res, 200, {
       session: {
         id: session.id.slice(0, 8),
@@ -24,6 +28,11 @@ module.exports = async function handler(req, res) {
       } : null
     });
   } catch (error) {
+    console.error("[northstar-session]", {
+      stage,
+      message: error?.message || "Unknown session error",
+      code: error?.code || null
+    });
     return sendJson(req, res, 500, { error: "session_unavailable" });
   }
 };
