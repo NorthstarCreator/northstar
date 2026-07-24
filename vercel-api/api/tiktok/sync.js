@@ -1,6 +1,10 @@
 const { handleOptions, sendJson, validatePostOrigin } = require("../../lib/cors");
 const { requireCsrf } = require("../../lib/session");
 const { listAllVideos, getUserInfo } = require("../../lib/tiktok");
+const {
+  persistenceEnabled,
+  runPersistentTikTokSync
+} = require("../../lib/tiktok-sync-persistence");
 const { activeConnection } = require("./me");
 
 module.exports = async function handler(req, res) {
@@ -14,10 +18,21 @@ module.exports = async function handler(req, res) {
   try {
     const connection = await activeConnection(session.id);
     if (!connection) return sendJson(req, res, 409, { error: "not_connected" });
-    const [profile, page] = await Promise.all([
-      getUserInfo(connection.accessToken),
-      listAllVideos(connection.accessToken)
-    ]);
+    let profile;
+    let page;
+    if (persistenceEnabled()) {
+      const result = await runPersistentTikTokSync({
+        accessToken: connection.accessToken,
+        scopes: connection.scopes
+      });
+      profile = result.profile;
+      page = result.page;
+    } else {
+      [profile, page] = await Promise.all([
+        getUserInfo(connection.accessToken),
+        listAllVideos(connection.accessToken)
+      ]);
+    }
     return sendJson(req, res, 200, {
       syncedAt: new Date().toISOString(),
       profile,

@@ -158,6 +158,50 @@ async function listAllVideos(accessToken, maxPages = 5) {
   return { videos, cursor, has_more: hasMore };
 }
 
+async function listVideosSinceCutoff(accessToken, options = {}) {
+  const requestedMaxPages = Number(options.maxPages || process.env.TIKTOK_VIDEO_SYNC_MAX_PAGES || 50);
+  const maxPages = Math.min(Math.max(Number.isInteger(requestedMaxPages) ? requestedMaxPages : 50, 1), 100);
+  const pageSize = 20;
+  let cursor = 0;
+  let hasMore = true;
+  let reachedCutoff = false;
+  let pagesFetched = 0;
+  let skippedBeforeCutoff = 0;
+  const videos = [];
+  const seen = new Set();
+  const listPage = options.listPage || listVideos;
+
+  while (pagesFetched < maxPages && hasMore && !reachedCutoff) {
+    const payload = await listPage(accessToken, cursor, pageSize);
+    pagesFetched += 1;
+    const pageVideos = Array.isArray(payload.videos) ? payload.videos : [];
+
+    for (const video of pageVideos) {
+      if (!isOnOrAfterLiveImportCutoff(video)) {
+        skippedBeforeCutoff += 1;
+        reachedCutoff = true;
+        continue;
+      }
+      if (!video?.id || seen.has(String(video.id))) continue;
+      seen.add(String(video.id));
+      videos.push(video);
+    }
+
+    cursor = payload.cursor || 0;
+    hasMore = !!payload.has_more;
+  }
+
+  return {
+    videos,
+    cursor,
+    has_more: hasMore && !reachedCutoff,
+    pagesFetched,
+    skippedBeforeCutoff,
+    reachedCutoff,
+    truncated: hasMore && !reachedCutoff && pagesFetched >= maxPages
+  };
+}
+
 function tokenExpiry(payload) {
   const seconds = Number(payload.expires_in || 0);
   return Date.now() + Math.max(seconds - 120, 60) * 1000;
@@ -172,6 +216,7 @@ module.exports = {
   getUserInfo,
   listVideos,
   listAllVideos,
+  listVideosSinceCutoff,
   isOnOrAfterLiveImportCutoff,
   NORTHSTAR_LIVE_IMPORT_CUTOFF,
   tokenExpiry

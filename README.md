@@ -178,6 +178,24 @@ Rollback:
 - `rollback_first_import(sync_run_id)` removes snapshots from the run and
   safely removes entities created only by that run.
 
+Durable Display API synchronization:
+
+- Disabled by default behind `NORTHSTAR_PERSIST_SYNC_ENABLED`.
+- Permitted only when `NORTHSTAR_ENV=tiktok_sandbox`,
+  `NORTHSTAR_DATABASE_ENV=sandbox`, and the database marker is `sandbox`.
+- Creates an auditable `sync_runs` row, upserts the exact TikTok account and
+  video identifiers, and records account/video metric snapshots per run.
+- Paginates public videos back to the live cutoff (`2025-10-01`) with a bounded
+  page limit. Records before the cutoff are rejected at service and database
+  boundaries.
+- Repeated syncs update entities without duplicating them while preserving a
+  new metric history for each run. Same-run snapshot duplicates are blocked by
+  database constraints.
+- Sync errors store only safe codes and stages. TikTok tokens remain encrypted
+  in Upstash and are never written to Postgres.
+- This phase imports no products, orders, sales, commissions, refunds, samples,
+  Creator Rewards, TikTok GO, mock data, or browser-local records.
+
 Token/session storage:
 
 - Use Upstash Redis through the Vercel Marketplace for the API project.
