@@ -3,6 +3,10 @@ const TIKTOK_TOKEN_URL = "https://open.tiktokapis.com/v2/oauth/token/";
 const TIKTOK_REVOKE_URL = "https://open.tiktokapis.com/v2/oauth/revoke/";
 const TIKTOK_USER_INFO_URL = "https://open.tiktokapis.com/v2/user/info/";
 const TIKTOK_VIDEO_LIST_URL = "https://open.tiktokapis.com/v2/video/list/";
+const {
+  LIVE_IMPORT_CUTOFF: NORTHSTAR_LIVE_IMPORT_CUTOFF,
+  isOnOrAfterLiveImportCutoff
+} = require("./live-import-policy");
 
 const requestedScopes = (process.env.TIKTOK_SCOPES || "user.info.basic,user.info.stats,video.list")
   .split(",")
@@ -143,7 +147,7 @@ async function listAllVideos(accessToken, maxPages = 5) {
   const seen = new Set();
   for (let page = 0; page < maxPages && hasMore; page += 1) {
     const payload = await listVideos(accessToken, cursor, 20);
-    (payload.videos || []).forEach((video) => {
+    (payload.videos || []).filter(isOnOrAfterLiveImportCutoff).forEach((video) => {
       if (!video?.id || seen.has(video.id)) return;
       seen.add(video.id);
       videos.push(video);
@@ -168,5 +172,7 @@ module.exports = {
   getUserInfo,
   listVideos,
   listAllVideos,
+  isOnOrAfterLiveImportCutoff,
+  NORTHSTAR_LIVE_IMPORT_CUTOFF,
   tokenExpiry
 };

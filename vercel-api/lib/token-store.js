@@ -2,17 +2,55 @@ const { encryptJson, decryptJson } = require("./crypto");
 
 const isSandbox = process.env.NORTHSTAR_ENV === "tiktok_sandbox";
 
+function envValue(name) {
+  const raw = process.env[name];
+  return typeof raw === "string" ? raw.trim() : raw;
+}
+
+function envHealth(name, value) {
+  const raw = process.env[name];
+  const text = typeof raw === "string" ? raw : "";
+  let firstNonAsciiIndex = null;
+  for (let index = 0; index < text.length; index += 1) {
+    if (text.charCodeAt(index) > 127) {
+      firstNonAsciiIndex = index;
+      break;
+    }
+  }
+  return {
+    name,
+    configured: !!raw,
+    length: text.length,
+    trimmedLength: text.trim().length,
+    hasLeadingOrTrailingWhitespace: text !== text.trim(),
+    hasNewline: /[\r\n]/.test(text),
+    firstNonAsciiIndex,
+    sanitizedLength: typeof value === "string" ? value.length : 0
+  };
+}
+
+const redisUrlName = isSandbox ? "UPSTASH_REDIS_REST_URL_SANDBOX" : null;
+const redisTokenName = isSandbox ? "UPSTASH_REDIS_REST_TOKEN_SANDBOX" : null;
+
 const redisUrl = isSandbox
-  ? process.env.UPSTASH_REDIS_REST_URL_SANDBOX
-  : (process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL);
+  ? envValue(redisUrlName)
+  : (envValue("UPSTASH_REDIS_REST_URL") || envValue("KV_REST_API_URL"));
 
 const redisToken = isSandbox
-  ? process.env.UPSTASH_REDIS_REST_TOKEN_SANDBOX
-  : (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN);
+  ? envValue(redisTokenName)
+  : (envValue("UPSTASH_REDIS_REST_TOKEN") || envValue("KV_REST_API_TOKEN"));
+
+const redisUrlSource = isSandbox
+  ? redisUrlName
+  : (envValue("UPSTASH_REDIS_REST_URL") ? "UPSTASH_REDIS_REST_URL" : "KV_REST_API_URL");
+
+const redisTokenSource = isSandbox
+  ? redisTokenName
+  : (envValue("UPSTASH_REDIS_REST_TOKEN") ? "UPSTASH_REDIS_REST_TOKEN" : "KV_REST_API_TOKEN");
 
 const keyPrefix = isSandbox
-  ? (process.env.TOKEN_STORE_PREFIX_SANDBOX || "northstar:sandbox")
-  : (process.env.TOKEN_STORE_PREFIX || "northstar");
+  ? (envValue("TOKEN_STORE_PREFIX_SANDBOX") || "northstar:sandbox")
+  : (envValue("TOKEN_STORE_PREFIX") || "northstar");
 
 function key(name, id) {
   return `${keyPrefix}:${name}:${id}`;
@@ -28,6 +66,12 @@ function ensureRedis() {
 
 async function redis(command, ...args) {
   ensureRedis();
+  console.error("[northstar-token-store-env]", {
+    command,
+    headerNames: ["Authorization", "Content-Type"],
+    redisUrl: envHealth(redisUrlSource, redisUrl),
+    redisToken: envHealth(redisTokenSource, redisToken)
+  });
   const response = await fetch(`${redisUrl}/pipeline`, {
     method: "POST",
     headers: {

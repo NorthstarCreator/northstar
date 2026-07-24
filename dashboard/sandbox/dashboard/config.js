@@ -1,5 +1,5 @@
 window.NORTHSTAR_CONFIG = {
   apiOrigin: "https://sandbox-api.northstar-creator.com",
-  appOrigin: "https://northstar-dashboard-sandbox.vercel.app",
+  appOrigin: "https://sandbox-dashboard.northstar-creator.com",
   environment: "tiktok_sandbox"
 };

@@ -129,6 +129,55 @@ Do not request TikTok Shop data, sales, samples, commissions, orders, Content Po
 
 Required API environment variables are listed in `.env.example`. Add real values directly in the Vercel API project settings. Never paste secrets into frontend files, GitHub Pages, screenshots, committed files, or Codex chat.
 
+## Production Data Foundation
+
+NorthStar's permanent creator data foundation is designed for Neon Postgres.
+Upstash Redis remains limited to temporary session state, OAuth state, CSRF
+metadata, and encrypted TikTok token storage. TikTok access tokens and refresh
+tokens must never be stored in Postgres.
+
+Database schema files live in:
+
+- `vercel-api/db/migrations/001_foundation.sql`
+- `vercel-api/db/schema-plan.md`
+
+The foundation creates tables for:
+
+- `application_environment`
+- `creator_accounts`
+- `connected_tiktok_accounts`
+- `sync_runs`
+- `sync_run_errors`
+- `videos`
+- `account_metric_snapshots`
+- `video_metric_snapshots`
+- `revenue_sources`
+
+No creator records, account records, mock data, sandbox data, demo data, local
+browser data, products, videos, sales, or samples are inserted by migrations.
+All Accounts is calculated from account-level rows and must never be inserted
+as a stored creator account.
+
+The live import cutoff is `2025-10-01T00:00:00.000Z`. The code enforces this
+in the service layer and the database migration enforces it for sync runs and
+videos where practical.
+
+Environment protection:
+
+- Set `NORTHSTAR_ENV` for the running app.
+- Set `NORTHSTAR_DATABASE_ENV` only to `production`, `sandbox`, or `development`.
+- Initialize the database's `application_environment` row manually for the
+  matching environment after creating a database.
+- The server-side database layer fails closed when the configured app
+  environment and database environment do not match.
+
+Rollback:
+
+- Every metric snapshot references `sync_run_id`.
+- Imported entities carry `first_seen_sync_run_id` and `last_seen_sync_run_id`.
+- `rollback_first_import(sync_run_id)` removes snapshots from the run and
+  safely removes entities created only by that run.
+
 Token/session storage:
 
 - Use Upstash Redis through the Vercel Marketplace for the API project.

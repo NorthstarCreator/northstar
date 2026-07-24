@@ -44,10 +44,10 @@ When opened locally, the dashboard shows demo data unless the sandbox API is ava
 
 Recommended isolated test surfaces:
 
-- Dashboard: `https://sandbox-app.northstar-creator.com`
+- Dashboard: `https://sandbox-dashboard.northstar-creator.com`
 - API: `https://sandbox-api.northstar-creator.com`
 - OAuth callback: `https://sandbox-api.northstar-creator.com/auth/tiktok/callback`
-- Allowed frontend origin: `https://sandbox-app.northstar-creator.com`
+- Allowed frontend origin: `https://sandbox-dashboard.northstar-creator.com`
 
 The dashboard reads only public configuration from `config.js`.
 

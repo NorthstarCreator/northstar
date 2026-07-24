@@ -1,6 +1,7 @@
 const assert = require("node:assert/strict");
 
-const SANDBOX_DASHBOARD_ORIGIN = "https://northstar-dashboard-sandbox.vercel.app";
+const SANDBOX_DASHBOARD_ORIGIN = "https://sandbox-dashboard.northstar-creator.com";
+const SANDBOX_VERCEL_ORIGIN = "https://northstar-dashboard-sandbox.vercel.app";
 const UNKNOWN_ORIGIN = "https://example.invalid";
 const PRODUCTION_ORIGIN = "https://app.northstar-creator.com";
 
@@ -51,6 +52,15 @@ function testAllowedSandboxOrigin() {
   assert.equal(cors.validatePostOrigin(requestDouble(SANDBOX_DASHBOARD_ORIGIN)), true);
 }
 
+function testAllowedFallbackVercelSandboxOrigin() {
+  const cors = loadCors({ NORTHSTAR_ENV: "tiktok_sandbox" });
+  const res = responseDouble();
+  cors.applyCors(requestDouble(SANDBOX_VERCEL_ORIGIN), res);
+  assert.equal(res.headers["Access-Control-Allow-Origin"], SANDBOX_VERCEL_ORIGIN);
+  assert.equal(res.headers["Access-Control-Allow-Credentials"], "true");
+  assert.equal(cors.validatePostOrigin(requestDouble(SANDBOX_VERCEL_ORIGIN)), true);
+}
+
 function testRejectedUnknownOrigin() {
   const cors = loadCors({ NORTHSTAR_ENV: "tiktok_sandbox" });
   const res = responseDouble();
@@ -96,10 +106,12 @@ function testProductionOriginUnchanged() {
   assert.equal(res.headers["Access-Control-Allow-Origin"], PRODUCTION_ORIGIN);
   assert.equal(cors.validatePostOrigin(requestDouble(PRODUCTION_ORIGIN)), true);
   assert.equal(cors.validatePostOrigin(requestDouble(SANDBOX_DASHBOARD_ORIGIN)), false);
+  assert.equal(cors.validatePostOrigin(requestDouble(SANDBOX_VERCEL_ORIGIN)), false);
 }
 
 [
   testAllowedSandboxOrigin,
+  testAllowedFallbackVercelSandboxOrigin,
   testRejectedUnknownOrigin,
   testSandboxCookieSameSiteNone,
   testProductionCookieUnchanged,

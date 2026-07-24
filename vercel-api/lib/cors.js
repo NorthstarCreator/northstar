@@ -1,5 +1,6 @@
 const IS_SANDBOX = process.env.NORTHSTAR_ENV === "tiktok_sandbox";
 
+const SANDBOX_DASHBOARD_ORIGIN = "https://sandbox-dashboard.northstar-creator.com";
 const DEPLOYED_SANDBOX_DASHBOARD_ORIGIN = "https://northstar-dashboard-sandbox.vercel.app";
 
 function splitOrigins(value) {
@@ -15,9 +16,10 @@ function uniqueOrigins(origins) {
 
 function sandboxOrigins() {
   return uniqueOrigins([
-    process.env.TIKTOK_SANDBOX_REDIRECT_ORIGIN || DEPLOYED_SANDBOX_DASHBOARD_ORIGIN,
+    process.env.TIKTOK_SANDBOX_REDIRECT_ORIGIN || SANDBOX_DASHBOARD_ORIGIN,
     ...splitOrigins(process.env.TIKTOK_SANDBOX_FRONTEND_URLS),
     process.env.TIKTOK_SANDBOX_FRONTEND_URL,
+    SANDBOX_DASHBOARD_ORIGIN,
     DEPLOYED_SANDBOX_DASHBOARD_ORIGIN
   ]);
 }
