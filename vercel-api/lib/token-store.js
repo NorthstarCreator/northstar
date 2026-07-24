@@ -181,6 +181,8 @@ async function consumeOAuthState(state) {
 }
 
 module.exports = {
+  redisCommand: redis,
+  namespacedKey: key,
   setJson,
   getJson,
   del,

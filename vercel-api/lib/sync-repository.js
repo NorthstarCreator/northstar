@@ -46,6 +46,63 @@ async function rollbackFirstImport(sql, syncRunId) {
   return rows[0] || null;
 }
 
+async function approveFirstImport(sql, syncRunId) {
+  const rows = await sql`SELECT approve_first_import(${syncRunId}::uuid) AS status`;
+  return rows[0] || null;
+}
+
+async function creatorDataCounts(sql) {
+  const rows = await sql`
+    SELECT
+      (SELECT COUNT(*)::integer FROM creator_accounts) AS creator_accounts,
+      (SELECT COUNT(*)::integer FROM connected_tiktok_accounts) AS connected_tiktok_accounts,
+      (SELECT COUNT(*)::integer FROM sync_runs) AS sync_runs,
+      (SELECT COUNT(*)::integer FROM sync_run_errors) AS sync_run_errors,
+      (SELECT COUNT(*)::integer FROM videos) AS videos,
+      (SELECT COUNT(*)::integer FROM account_metric_snapshots) AS account_metric_snapshots,
+      (SELECT COUNT(*)::integer FROM video_metric_snapshots) AS video_metric_snapshots,
+      (SELECT COUNT(*)::integer FROM revenue_sources) AS revenue_sources
+  `;
+  return rows[0] || null;
+}
+
+async function assertCreatorDataEmpty(sql) {
+  const counts = await creatorDataCounts(sql);
+  if (!counts || Object.values(counts).some((value) => Number(value) !== 0)) {
+    const error = new Error("Creator database is not empty.");
+    error.code = "first_import_database_not_empty";
+    throw error;
+  }
+  return counts;
+}
+
+async function getFirstImportControl(sql, openId) {
+  const rows = await sql`
+    SELECT sync_run_id, account_id, status
+    FROM first_import_controls
+    WHERE tiktok_open_id = ${openId}
+    LIMIT 1
+  `;
+  return rows[0] || null;
+}
+
+async function createFirstImportControl(sql, openId, syncRunId) {
+  const rows = await sql`
+    INSERT INTO first_import_controls (tiktok_open_id, sync_run_id, status)
+    VALUES (${openId}, ${syncRunId}::uuid, 'pending_review')
+    RETURNING sync_run_id, status
+  `;
+  return rows[0];
+}
+
+async function attachAccountToFirstImportControl(sql, syncRunId, accountId) {
+  await sql`
+    UPDATE first_import_controls
+    SET account_id = ${accountId}::uuid, updated_at = CURRENT_TIMESTAMP
+    WHERE sync_run_id = ${syncRunId}::uuid
+  `;
+}
+
 async function createSyncRun(sql) {
   const rows = await sql`
     INSERT INTO sync_runs (platform, sync_type, status, cutoff_start_at)
@@ -235,6 +292,12 @@ module.exports = {
   normalizeTikTokVideoForDatabase,
   nullableNumber,
   rollbackFirstImport,
+  approveFirstImport,
+  creatorDataCounts,
+  assertCreatorDataEmpty,
+  getFirstImportControl,
+  createFirstImportControl,
+  attachAccountToFirstImportControl,
   createSyncRun,
   findConnectedAccount,
   upsertTikTokAccount,

@@ -4,11 +4,15 @@ const path = require("node:path");
 
 const tiktok = require("../lib/tiktok");
 const persistence = require("../lib/tiktok-sync-persistence");
+const syncLock = require("../lib/sync-lock");
 
 const SANDBOX_ENV = Object.freeze({
   NORTHSTAR_ENV: "tiktok_sandbox",
   NORTHSTAR_DATABASE_ENV: "sandbox",
-  NORTHSTAR_PERSIST_SYNC_ENABLED: "true"
+  NORTHSTAR_PERSIST_SYNC_ENABLED: "true",
+  NORTHSTAR_FIRST_IMPORT_ARMED: "true",
+  NORTHSTAR_FIRST_IMPORT_OPEN_ID: "open-id-fixture",
+  TIKTOK_VIDEO_SYNC_MAX_PAGES: "10"
 });
 
 function video(id, createTime, views = 10) {
@@ -42,11 +46,33 @@ function createRepositoryDouble(options = {}) {
     videos: new Map(),
     accountSnapshots: new Set(),
     videoSnapshots: new Set(),
-    errors: []
+    errors: [],
+    controls: new Map(),
+    forcedNonempty: false
   };
   let runSequence = 0;
 
   const repository = {
+    async assertCreatorDataEmpty() {
+      if (state.forcedNonempty) {
+        const error = new Error("Creator database is not empty.");
+        error.code = "first_import_database_not_empty";
+        throw error;
+      }
+      return {};
+    },
+    async getFirstImportControl(_sql, openId) {
+      return state.controls.get(openId) || null;
+    },
+    async createFirstImportControl(_sql, openId, syncRunId) {
+      const control = { sync_run_id: syncRunId, status: "pending_review", account_id: null };
+      state.controls.set(openId, control);
+      return control;
+    },
+    async attachAccountToFirstImportControl(_sql, syncRunId, accountId) {
+      const control = [...state.controls.values()].find((item) => item.sync_run_id === syncRunId);
+      if (control) control.account_id = accountId;
+    },
     async createSyncRun() {
       const run = { id: `run-${++runSequence}`, status: "running" };
       state.runs.push(run);
@@ -121,6 +147,16 @@ function databaseDouble(counter) {
   };
 }
 
+function lockDependencies(options = {}) {
+  return {
+    acquireSyncLock: async () => options.reject ? null : ({ key: "fixture-lock", ownerToken: "fixture-owner" }),
+    releaseSyncLock: async (lock) => {
+      if (options.releases) options.releases.push(lock);
+      return true;
+    }
+  };
+}
+
 async function testPaginationStopsAtCutoffAndDeduplicates() {
   const pages = [
     {
@@ -170,13 +206,73 @@ function testPersistenceDisabledByDefault() {
   const routeSource = fs.readFileSync(path.join(__dirname, "../api/tiktok/sync.js"), "utf8");
   assert.match(routeSource, /if \(persistenceEnabled\(\)\)/);
   assert.match(routeSource, /else \{[\s\S]*getUserInfo[\s\S]*listAllVideos/);
+  assert.throws(
+    () => persistence.assertSandboxPersistenceEnvironment({
+      NORTHSTAR_ENV: "tiktok_sandbox",
+      NORTHSTAR_DATABASE_ENV: "sandbox"
+    }),
+    (error) => error.code === "persistence_disabled"
+  );
+}
+
+function testPageLimitFailsClosed() {
+  [undefined, "", "0", "101", "1.5", "many"].forEach((value) => {
+    assert.throws(
+      () => persistence.requiredVideoPageLimit({ TIKTOK_VIDEO_SYNC_MAX_PAGES: value }),
+      (error) => error.code === "invalid_video_sync_page_limit"
+    );
+  });
+  assert.equal(persistence.requiredVideoPageLimit({ TIKTOK_VIDEO_SYNC_MAX_PAGES: "1" }), 1);
+  assert.equal(persistence.requiredVideoPageLimit({ TIKTOK_VIDEO_SYNC_MAX_PAGES: "100" }), 100);
+}
+
+async function testFirstImportAuthorizationAndEmptyDatabase() {
+  const baseDeps = (repository, counter) => ({
+    withDatabase: databaseDouble(counter),
+    repository,
+    getUserInfo: async () => profile(),
+    listVideosSinceCutoff: async () => ({ videos: [], truncated: false }),
+    ...lockDependencies()
+  });
+
+  for (const env of [
+    { ...SANDBOX_ENV, NORTHSTAR_FIRST_IMPORT_ARMED: undefined },
+    { ...SANDBOX_ENV, NORTHSTAR_FIRST_IMPORT_ARMED: "false" },
+    { ...SANDBOX_ENV, NORTHSTAR_FIRST_IMPORT_OPEN_ID: undefined },
+    { ...SANDBOX_ENV, NORTHSTAR_FIRST_IMPORT_OPEN_ID: "different-account" }
+  ]) {
+    const counter = { calls: 0 };
+    const { repository, state } = createRepositoryDouble();
+    await assert.rejects(
+      () => persistence.runPersistentTikTokSync({ env, accessToken: "fixture", deps: baseDeps(repository, counter) }),
+      (error) => ["first_import_not_armed", "first_import_account_rejected"].includes(error.code)
+    );
+    assert.equal(state.runs.length, 0);
+  }
+
+  const counter = { calls: 0 };
+  const { repository, state } = createRepositoryDouble();
+  state.forcedNonempty = true;
+  await assert.rejects(
+    () => persistence.runPersistentTikTokSync({
+      env: SANDBOX_ENV,
+      accessToken: "fixture",
+      deps: baseDeps(repository, counter)
+    }),
+    (error) => error.code === "first_import_database_not_empty"
+  );
+  assert.equal(state.runs.length, 0);
 }
 
 async function testEnvironmentMismatchFailsBeforeDatabaseAccess() {
   const counter = { calls: 0 };
   await assert.rejects(
     () => persistence.runPersistentTikTokSync({
-      env: { NORTHSTAR_ENV: "production", NORTHSTAR_DATABASE_ENV: "production" },
+      env: {
+        NORTHSTAR_ENV: "production",
+        NORTHSTAR_DATABASE_ENV: "production",
+        NORTHSTAR_PERSIST_SYNC_ENABLED: "true"
+      },
       accessToken: "not-a-real-token",
       deps: { withDatabase: databaseDouble(counter) }
     }),
@@ -186,7 +282,11 @@ async function testEnvironmentMismatchFailsBeforeDatabaseAccess() {
 
   await assert.rejects(
     () => persistence.runPersistentTikTokSync({
-      env: { NORTHSTAR_ENV: "tiktok_sandbox", NORTHSTAR_DATABASE_ENV: "production" },
+      env: {
+        NORTHSTAR_ENV: "tiktok_sandbox",
+        NORTHSTAR_DATABASE_ENV: "production",
+        NORTHSTAR_PERSIST_SYNC_ENABLED: "true"
+      },
       accessToken: "not-a-real-token",
       deps: { withDatabase: databaseDouble(counter) }
     }),
@@ -206,7 +306,8 @@ async function testIdempotentEntitiesAndHistoricalSnapshots() {
       videos: [video("video-1", "1761955200")],
       skippedBeforeCutoff: 2,
       truncated: false
-    })
+    }),
+    ...lockDependencies()
   };
 
   const first = await persistence.runPersistentTikTokSync({
@@ -215,6 +316,7 @@ async function testIdempotentEntitiesAndHistoricalSnapshots() {
     scopes: ["user.info.basic", "user.info.stats", "video.list"],
     deps
   });
+  state.controls.get("open-id-fixture").status = "approved";
   const second = await persistence.runPersistentTikTokSync({
     env: SANDBOX_ENV,
     accessToken: "not-a-real-token",
@@ -231,6 +333,8 @@ async function testIdempotentEntitiesAndHistoricalSnapshots() {
   assert.equal(second.counts.videosInserted, 0);
   assert.equal(second.counts.videosUpdated, 1);
   assert.equal(first.counts.videosSkippedBeforeCutoff, 2);
+  assert.equal(first.syncRunId, "run-1");
+  assert.equal(first.firstImportStatus, "pending_review");
   assert.equal(state.runs[0].isInitial, true);
   assert.equal(state.runs[1].isInitial, false);
   const account = state.accounts.get("open-id-fixture");
@@ -255,7 +359,8 @@ async function testPartialFailureIsRecorded() {
         videos: [video("good-video", "1761955200"), video("bad-video", "1761955200")],
         skippedBeforeCutoff: 0,
         truncated: true
-      })
+      }),
+      ...lockDependencies()
     }
   });
   assert.equal(result.counts.videosInserted, 1);
@@ -275,32 +380,117 @@ async function testCatastrophicFailureMarksRunFailedWithoutSensitiveData() {
       deps: {
         withDatabase: databaseDouble(counter),
         repository,
-        getUserInfo: async () => {
+        getUserInfo: async () => profile(),
+        listVideosSinceCutoff: async () => {
           const error = new Error("sensitive-token-must-not-appear");
-          error.code = "profile_fetch_failed";
+          error.code = "video_fetch_failed";
           throw error;
-        }
+        },
+        ...lockDependencies()
       }
     }),
     (error) => {
-      assert.equal(error.code, "profile_fetch_failed");
+      assert.equal(error.code, "video_fetch_failed");
       assert.doesNotMatch(error.message, /sensitive-token/);
       return true;
     }
   );
   assert.equal(state.runs[0].status, "failed");
-  assert.equal(state.errors[0].code, "profile_fetch_failed");
+  assert.equal(state.errors[0].code, "video_fetch_failed");
   assert.doesNotMatch(JSON.stringify(state), /sensitive-token/);
+}
+
+async function testPendingReviewAndConcurrentRequestsAreBlocked() {
+  const counter = { calls: 0 };
+  const { repository, state } = createRepositoryDouble();
+  state.controls.set("open-id-fixture", { sync_run_id: "run-existing", status: "pending_review" });
+  await assert.rejects(
+    () => persistence.runPersistentTikTokSync({
+      env: SANDBOX_ENV,
+      accessToken: "fixture",
+      deps: {
+        withDatabase: databaseDouble(counter), repository,
+        getUserInfo: async () => profile(), ...lockDependencies()
+      }
+    }),
+    (error) => error.code === "first_import_pending_review"
+  );
+  assert.equal(state.runs.length, 0);
+
+  const rejectedCounter = { calls: 0 };
+  await assert.rejects(
+    () => persistence.runPersistentTikTokSync({
+      env: SANDBOX_ENV,
+      accessToken: "fixture",
+      deps: {
+        withDatabase: databaseDouble(rejectedCounter),
+        getUserInfo: async () => profile(),
+        ...lockDependencies({ reject: true })
+      }
+    }),
+    (error) => error.code === "sync_in_progress"
+  );
+  assert.equal(rejectedCounter.calls, 0);
+}
+
+async function testLockOwnershipAndExpiry() {
+  const entries = new Map();
+  const setCalls = [];
+  const redisCommand = async (command, ...args) => {
+    if (command === "SET") {
+      const [key, owner, nx, ex, ttl] = args;
+      setCalls.push({ nx, ex, ttl });
+      if (entries.has(key)) return null;
+      entries.set(key, owner);
+      return "OK";
+    }
+    if (command === "EVAL") {
+      const [, , key, owner] = args;
+      if (entries.get(key) !== owner) return 0;
+      entries.delete(key);
+      return 1;
+    }
+    return null;
+  };
+  const first = await syncLock.acquireSyncLock("fixture-open-id", { redisCommand, ownerToken: "owner-a", ttlSeconds: 5 });
+  assert.equal(first.ttlSeconds, 5);
+  assert.deepEqual(setCalls[0], { nx: "NX", ex: "EX", ttl: "5" });
+  assert.equal(await syncLock.acquireSyncLock("fixture-open-id", { redisCommand, ownerToken: "owner-b" }), null);
+  assert.equal(await syncLock.releaseSyncLock({ ...first, ownerToken: "wrong-owner" }, { redisCommand }), false);
+  assert.equal(await syncLock.releaseSyncLock(first, { redisCommand }), true);
+  assert.ok(await syncLock.acquireSyncLock("fixture-open-id", { redisCommand, ownerToken: "owner-b" }));
+
+  // Simulate Redis expiration: after expiry, a different owner can acquire it.
+  entries.delete(first.key);
+  assert.ok(await syncLock.acquireSyncLock("fixture-open-id", { redisCommand, ownerToken: "owner-c" }));
+}
+
+function testSafeSyncRunReportingAndDashboardPendingState() {
+  const routeSource = fs.readFileSync(path.join(__dirname, "../api/tiktok/sync.js"), "utf8");
+  const dashboardSource = fs.readFileSync(
+    path.join(__dirname, "../../dashboard/sandbox/dashboard/app.js"),
+    "utf8"
+  );
+  assert.match(routeSource, /syncRunId: persistenceResult\.syncRunId/);
+  assert.match(routeSource, /firstImportStatus: persistenceResult\.firstImportStatus/);
+  assert.doesNotMatch(routeSource, /NORTHSTAR_FIRST_IMPORT_OPEN_ID/);
+  assert.equal((dashboardSource.match(/state\.live\.loading \? "Syncing\.\.\." : "Sync Now"/g) || []).length, 2);
+  assert.match(dashboardSource, /if \(state\.live\.loading\) return;/);
 }
 
 (async () => {
   await testPaginationStopsAtCutoffAndDeduplicates();
   await testPaginationLimitIsReported();
   testPersistenceDisabledByDefault();
+  testPageLimitFailsClosed();
   await testEnvironmentMismatchFailsBeforeDatabaseAccess();
+  await testFirstImportAuthorizationAndEmptyDatabase();
   await testIdempotentEntitiesAndHistoricalSnapshots();
   await testPartialFailureIsRecorded();
   await testCatastrophicFailureMarksRunFailedWithoutSensitiveData();
+  await testPendingReviewAndConcurrentRequestsAreBlocked();
+  await testLockOwnershipAndExpiry();
+  testSafeSyncRunReportingAndDashboardPendingState();
   console.log("TikTok sync persistence tests passed.");
 })().catch((error) => {
   console.error(error);

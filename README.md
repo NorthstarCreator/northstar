@@ -196,6 +196,24 @@ Durable Display API synchronization:
 - This phase imports no products, orders, sales, commissions, refunds, samples,
   Creator Rewards, TikTok GO, mock data, or browser-local records.
 
+Controlled first import:
+
+- Persistence and first-import authorization are separate, disabled-by-default
+  gates: `NORTHSTAR_PERSIST_SYNC_ENABLED` and `NORTHSTAR_FIRST_IMPORT_ARMED`.
+- `NORTHSTAR_FIRST_IMPORT_OPEN_ID` must exactly match the connected TikTok
+  account. Its value stays server-side and must never be logged or returned.
+- `TIKTOK_VIDEO_SYNC_MAX_PAGES` is required while persistence is enabled and
+  must be an integer from 1 through 100.
+- A per-account Redis lock rejects overlapping requests and expires after a
+  bounded interval. Only the request that owns a lock may release it.
+- The first run is recorded in `first_import_controls` as `pending_review`.
+  Additional persistence syncs are blocked until the exact run is approved or
+  rolled back.
+- Approve after review with `SELECT approve_first_import('<sync-run-id>'::uuid);`.
+- Roll back the exact first run with
+  `SELECT * FROM rollback_first_import('<sync-run-id>'::uuid);`. Rollback marks
+  both the sync run and its control record as `rolled_back`.
+
 Token/session storage:
 
 - Use Upstash Redis through the Vercel Marketplace for the API project.

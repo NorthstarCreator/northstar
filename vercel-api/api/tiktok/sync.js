@@ -20,6 +20,7 @@ module.exports = async function handler(req, res) {
     if (!connection) return sendJson(req, res, 409, { error: "not_connected" });
     let profile;
     let page;
+    let persistenceResult = null;
     if (persistenceEnabled()) {
       const result = await runPersistentTikTokSync({
         accessToken: connection.accessToken,
@@ -27,6 +28,7 @@ module.exports = async function handler(req, res) {
       });
       profile = result.profile;
       page = result.page;
+      persistenceResult = result;
     } else {
       [profile, page] = await Promise.all([
         getUserInfo(connection.accessToken),
@@ -35,6 +37,10 @@ module.exports = async function handler(req, res) {
     }
     return sendJson(req, res, 200, {
       syncedAt: new Date().toISOString(),
+      ...(persistenceResult ? {
+        syncRunId: persistenceResult.syncRunId,
+        firstImportStatus: persistenceResult.firstImportStatus
+      } : {}),
       profile,
       videos: page.videos || [],
       cursor: page.cursor || 0,

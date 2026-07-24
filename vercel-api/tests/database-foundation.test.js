@@ -6,6 +6,10 @@ const migration = fs.readFileSync(
   path.join(__dirname, "../db/migrations/001_foundation.sql"),
   "utf8"
 );
+const firstImportMigration = fs.readFileSync(
+  path.join(__dirname, "../db/migrations/002_first_import_control.sql"),
+  "utf8"
+);
 
 function clearModule(modulePath) {
   delete require.cache[require.resolve(modulePath)];
@@ -75,12 +79,28 @@ function testSyncProvenanceColumns() {
 }
 
 function testFirstImportRollbackFunction() {
-  const sql = compactSql(migration);
+  const sql = compactSql(firstImportMigration);
+  assert.match(sql, /create table first_import_controls/);
+  assert.match(sql, /tiktok_open_id text not null unique/);
+  assert.match(sql, /sync_run_id uuid not null unique references sync_runs\(id\) on delete restrict/);
+  assert.match(sql, /check \(status in \('pending_review', 'approved', 'rolled_back'\)\)/);
   assert.match(sql, /create or replace function rollback_first_import\(p_sync_run_id uuid\)/);
+  assert.match(sql, /where sync_run_id = p_sync_run_id and status = 'pending_review'/);
   assert.match(sql, /delete from video_metric_snapshots where sync_run_id = p_sync_run_id/);
   assert.match(sql, /delete from account_metric_snapshots where sync_run_id = p_sync_run_id/);
   assert.match(sql, /where first_seen_sync_run_id = p_sync_run_id and last_seen_sync_run_id = p_sync_run_id/);
-  assert.match(sql, /set status = 'rolled_back'/);
+  assert.match(sql, /update sync_runs set status = 'rolled_back'/);
+  assert.match(sql, /update first_import_controls set status = 'rolled_back'/);
+}
+
+function testFirstImportApprovalFunction() {
+  const sql = compactSql(firstImportMigration);
+  assert.match(sql, /create or replace function approve_first_import\(p_sync_run_id uuid\)/);
+  assert.match(sql, /set status = 'approved'/);
+  assert.match(sql, /fic.sync_run_id = p_sync_run_id/);
+  assert.match(sql, /fic.status = 'pending_review'/);
+  assert.match(sql, /sr.status in \('succeeded', 'partial'\)/);
+  assert.match(sql, /raise exception 'first_import_not_pending_or_reviewable'/);
 }
 
 function testEnvironmentMappingAndMismatchProtection() {
@@ -253,6 +273,7 @@ function testRepositoryProvenanceAndCutoff() {
     testHistoricalCutoffDatabaseBoundary,
     testSyncProvenanceColumns,
     testFirstImportRollbackFunction,
+    testFirstImportApprovalFunction,
     testEnvironmentMappingAndMismatchProtection,
     testDatabaseUrlIsolationAndAmbiguity,
     testHistoricalCutoffServiceLayer,
