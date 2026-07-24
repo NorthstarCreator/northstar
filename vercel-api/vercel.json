@@ -1,6 +1,7 @@
 {
   "rewrites": [
     { "source": "/session", "destination": "/api/session" },
+    { "source": "/health/database", "destination": "/api/health/database" },
     { "source": "/auth/tiktok/start", "destination": "/api/auth/tiktok/start" },
     { "source": "/auth/tiktok/callback", "destination": "/api/auth/tiktok/callback" },
     { "source": "/auth/tiktok/disconnect", "destination": "/api/auth/tiktok/disconnect" },

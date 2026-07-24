@@ -85,28 +85,128 @@ function testFirstImportRollbackFunction() {
 
 function testEnvironmentMappingAndMismatchProtection() {
   const db = loadDb();
-  assert.equal(db.expectedDatabaseEnvironment({ NORTHSTAR_ENV: "tiktok_sandbox" }), "sandbox");
-  assert.equal(db.expectedDatabaseEnvironment({ NORTHSTAR_ENV: "production" }), "production");
-  assert.equal(db.expectedDatabaseEnvironment({ NODE_ENV: "test" }), "development");
+  assert.equal(
+    db.expectedDatabaseEnvironment({ NORTHSTAR_ENV: "tiktok_sandbox", NORTHSTAR_DATABASE_ENV: "sandbox" }),
+    "sandbox"
+  );
+  assert.equal(
+    db.expectedDatabaseEnvironment({ NORTHSTAR_ENV: "production", NORTHSTAR_DATABASE_ENV: "production" }),
+    "production"
+  );
+  assert.equal(
+    db.expectedDatabaseEnvironment({ NORTHSTAR_ENV: "development", NORTHSTAR_DATABASE_ENV: "development" }),
+    "development"
+  );
   assert.throws(
-    () => db.expectedDatabaseEnvironment({ NORTHSTAR_ENV: "unexpected" }),
-    /not configured/
+    () => db.expectedDatabaseEnvironment({ NORTHSTAR_ENV: "tiktok_sandbox", NORTHSTAR_DATABASE_ENV: "production" }),
+    /do not match/
+  );
+  assert.throws(
+    () => db.expectedDatabaseEnvironment({ NORTHSTAR_ENV: "unexpected", NORTHSTAR_DATABASE_ENV: "sandbox" }),
+    /application environment/
+  );
+  assert.throws(
+    () => db.expectedDatabaseEnvironment({ NORTHSTAR_ENV: "sandbox", NORTHSTAR_DATABASE_ENV: "unexpected" }),
+    /database environment/
+  );
+  assert.throws(
+    () => db.expectedDatabaseEnvironment({ NORTHSTAR_DATABASE_ENV: "development" }),
+    /application environment/
+  );
+  assert.throws(
+    () => db.expectedDatabaseEnvironment({ NORTHSTAR_ENV: "development" }),
+    /database environment/
+  );
+}
+
+function testDatabaseUrlIsolationAndAmbiguity() {
+  const db = loadDb();
+  assert.deepEqual(
+    db.databaseUrl({
+      NORTHSTAR_ENV: "production",
+      NORTHSTAR_DATABASE_ENV: "production",
+      DATABASE_URL: " postgres://production "
+    }),
+    { name: "DATABASE_URL", value: "postgres://production", environment: "production" }
+  );
+  assert.deepEqual(
+    db.databaseUrl({
+      NORTHSTAR_ENV: "tiktok_sandbox",
+      NORTHSTAR_DATABASE_ENV: "sandbox",
+      DATABASE_URL_SANDBOX: "postgres://sandbox"
+    }),
+    { name: "DATABASE_URL_SANDBOX", value: "postgres://sandbox", environment: "sandbox" }
+  );
+  assert.deepEqual(
+    db.databaseUrl({
+      NORTHSTAR_ENV: "development",
+      NORTHSTAR_DATABASE_ENV: "development",
+      POSTGRES_URL_DEVELOPMENT: "postgres://development"
+    }),
+    { name: "POSTGRES_URL_DEVELOPMENT", value: "postgres://development", environment: "development" }
+  );
+  assert.throws(
+    () => db.databaseUrl({
+      NORTHSTAR_ENV: "tiktok_sandbox",
+      NORTHSTAR_DATABASE_ENV: "sandbox",
+      DATABASE_URL_SANDBOX: "postgres://one",
+      POSTGRES_URL_SANDBOX: "postgres://two"
+    }),
+    /Ambiguous/
+  );
+  assert.throws(
+    () => db.databaseUrl({
+      NORTHSTAR_ENV: "development",
+      NORTHSTAR_DATABASE_ENV: "development",
+      DATABASE_URL: "postgres://production"
+    }),
+    /not configured for development/
+  );
+  assert.throws(
+    () => db.databaseUrl({
+      NORTHSTAR_ENV: "tiktok_sandbox",
+      NORTHSTAR_DATABASE_ENV: "sandbox",
+      DATABASE_URL: "postgres://production"
+    }),
+    /not configured for sandbox/
+  );
+  assert.throws(
+    () => db.databaseUrl({
+      NORTHSTAR_ENV: "production",
+      NORTHSTAR_DATABASE_ENV: "production",
+      DATABASE_URL_SANDBOX: "postgres://sandbox"
+    }),
+    /not configured for production/
+  );
+  assert.throws(
+    () => db.createSqlClient({
+      NORTHSTAR_ENV: "production",
+      NORTHSTAR_DATABASE_ENV: "sandbox",
+      DATABASE_URL: "postgres://must-not-open"
+    }),
+    /do not match/
   );
 }
 
 async function testDatabaseEnvironmentFailsClosed() {
   const db = loadDb();
   await assert.rejects(
-    () => db.assertDatabaseEnvironment(async () => [], { NORTHSTAR_ENV: "tiktok_sandbox" }),
+    () => db.assertDatabaseEnvironment(async () => [], {
+      NORTHSTAR_ENV: "tiktok_sandbox",
+      NORTHSTAR_DATABASE_ENV: "sandbox"
+    }),
     /not initialized/
   );
   await assert.rejects(
-    () => db.assertDatabaseEnvironment(async () => [{ environment: "production" }], { NORTHSTAR_ENV: "tiktok_sandbox" }),
+    () => db.assertDatabaseEnvironment(async () => [{ environment: "production" }], {
+      NORTHSTAR_ENV: "tiktok_sandbox",
+      NORTHSTAR_DATABASE_ENV: "sandbox"
+    }),
     /mismatch/
   );
   const result = await db.assertDatabaseEnvironment(
     async () => [{ environment: "sandbox" }],
-    { NORTHSTAR_ENV: "tiktok_sandbox" }
+    { NORTHSTAR_ENV: "tiktok_sandbox", NORTHSTAR_DATABASE_ENV: "sandbox" }
   );
   assert.deepEqual(result, { expected: "sandbox", actual: "sandbox" });
 }
@@ -154,6 +254,7 @@ function testRepositoryProvenanceAndCutoff() {
     testSyncProvenanceColumns,
     testFirstImportRollbackFunction,
     testEnvironmentMappingAndMismatchProtection,
+    testDatabaseUrlIsolationAndAmbiguity,
     testHistoricalCutoffServiceLayer,
     testRepositoryProvenanceAndCutoff
   ].forEach((test) => test());

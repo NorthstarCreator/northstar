@@ -11,7 +11,7 @@
     "@neondatabase/serverless": "^0.10.4"
   },
   "scripts": {
-    "check": "node -c api/session.js && node -c api/auth/tiktok/start.js && node -c api/auth/tiktok/callback.js && node -c api/auth/tiktok/disconnect.js && node -c api/tiktok/me.js && node -c api/tiktok/videos.js && node -c api/tiktok/sync.js && node -c lib/cors.js && node -c lib/crypto.js && node -c lib/session.js && node -c lib/tiktok.js && node -c lib/token-store.js && node -c lib/live-import-policy.js && node -c lib/db.js && node -c lib/sync-repository.js && node -c tests/sandbox-config.test.js && node -c tests/database-foundation.test.js",
-    "test": "node tests/sandbox-config.test.js && node tests/database-foundation.test.js"
+    "check": "node -c api/session.js && node -c api/health/database.js && node -c api/auth/tiktok/start.js && node -c api/auth/tiktok/callback.js && node -c api/auth/tiktok/disconnect.js && node -c api/tiktok/me.js && node -c api/tiktok/videos.js && node -c api/tiktok/sync.js && node -c lib/cors.js && node -c lib/crypto.js && node -c lib/session.js && node -c lib/tiktok.js && node -c lib/token-store.js && node -c lib/live-import-policy.js && node -c lib/db.js && node -c lib/sync-repository.js && node -c tests/sandbox-config.test.js && node -c tests/database-foundation.test.js && node -c tests/database-health.test.js",
+    "test": "node tests/sandbox-config.test.js && node tests/database-foundation.test.js && node tests/database-health.test.js"
   }
 }

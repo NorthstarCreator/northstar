@@ -1,11 +1,26 @@
 const VALID_DATABASE_ENVIRONMENTS = new Set(["production", "sandbox", "development"]);
 
+const DATABASE_URL_NAMES = Object.freeze({
+  production: ["DATABASE_URL", "POSTGRES_URL", "NEON_DATABASE_URL"],
+  sandbox: ["DATABASE_URL_SANDBOX", "POSTGRES_URL_SANDBOX", "NEON_DATABASE_URL_SANDBOX"],
+  development: ["DATABASE_URL_DEVELOPMENT", "POSTGRES_URL_DEVELOPMENT"]
+});
+
+function normalizeApplicationEnvironment(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "tiktok_sandbox") return "sandbox";
+  if (normalized === "northstar_production") return "production";
+  if (VALID_DATABASE_ENVIRONMENTS.has(normalized)) return normalized;
+  throw new Error("Invalid or missing NorthStar application environment.");
+}
+
 function expectedDatabaseEnvironment(env = process.env) {
-  if (env.NORTHSTAR_DATABASE_ENV) return normalizeDatabaseEnvironment(env.NORTHSTAR_DATABASE_ENV);
-  if (env.NORTHSTAR_ENV === "tiktok_sandbox") return "sandbox";
-  if (env.NORTHSTAR_ENV === "production" || env.NORTHSTAR_ENV === "northstar_production") return "production";
-  if (env.NORTHSTAR_ENV === "development" || env.NODE_ENV === "development" || env.NODE_ENV === "test") return "development";
-  throw new Error("NorthStar database environment is not configured.");
+  const applicationEnvironment = normalizeApplicationEnvironment(env.NORTHSTAR_ENV);
+  const databaseEnvironment = normalizeDatabaseEnvironment(env.NORTHSTAR_DATABASE_ENV);
+  if (applicationEnvironment !== databaseEnvironment) {
+    throw new Error("NorthStar application and database environments do not match.");
+  }
+  return databaseEnvironment;
 }
 
 function normalizeDatabaseEnvironment(value) {
@@ -18,16 +33,14 @@ function normalizeDatabaseEnvironment(value) {
 
 function databaseUrl(env = process.env) {
   const expected = expectedDatabaseEnvironment(env);
-  const names = expected === "sandbox"
-    ? ["DATABASE_URL_SANDBOX", "POSTGRES_URL_SANDBOX", "NEON_DATABASE_URL_SANDBOX"]
-    : expected === "production"
-      ? ["DATABASE_URL", "POSTGRES_URL", "NEON_DATABASE_URL"]
-      : ["DATABASE_URL_DEVELOPMENT", "POSTGRES_URL_DEVELOPMENT", "DATABASE_URL"];
-
-  const name = names.find((candidate) => env[candidate]);
-  if (!name) {
+  const populated = DATABASE_URL_NAMES[expected].filter((name) => String(env[name] || "").trim());
+  if (populated.length === 0) {
     throw new Error(`Database URL is not configured for ${expected}.`);
   }
+  if (populated.length > 1) {
+    throw new Error(`Ambiguous database URL configuration for ${expected}.`);
+  }
+  const [name] = populated;
   return { name, value: String(env[name]).trim(), environment: expected };
 }
 
@@ -73,6 +86,8 @@ async function withDatabase(callback, env = process.env) {
 
 module.exports = {
   VALID_DATABASE_ENVIRONMENTS,
+  DATABASE_URL_NAMES,
+  normalizeApplicationEnvironment,
   expectedDatabaseEnvironment,
   normalizeDatabaseEnvironment,
   databaseUrl,
