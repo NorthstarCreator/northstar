@@ -51,6 +51,22 @@ function safeErrorCode(error, fallback = "sync_failed") {
   return String(error?.code || fallback).replace(/[^a-z0-9_]/gi, "_").slice(0, 80) || fallback;
 }
 
+function privacySafeSyncLogger(details) {
+  console.error(JSON.stringify({
+    syncRunId: String(details.syncRunId),
+    stage: String(details.stage),
+    safeErrorCode: String(details.safeErrorCode)
+  }));
+}
+
+async function runSyncStage(stageCode, callback) {
+  try {
+    return await callback();
+  } catch (_error) {
+    throw safeError(stageCode);
+  }
+}
+
 async function runPersistentTikTokSync(options = {}) {
   const env = options.env || process.env;
   assertSandboxPersistenceEnvironment(env);
@@ -62,6 +78,7 @@ async function runPersistentTikTokSync(options = {}) {
     listVideosSinceCutoff,
     acquireSyncLock,
     releaseSyncLock,
+    logSyncFailure: privacySafeSyncLogger,
     ...options.deps
   };
 
@@ -96,6 +113,7 @@ async function runPersistentTikTokSync(options = {}) {
         videoMetricSnapshotsCreated: 0,
         errorCount: 0
       };
+      let failureStage = "account_upsert";
 
       try {
         const existing = await deps.repository.findConnectedAccount(sql, openId);
@@ -111,21 +129,20 @@ async function runPersistentTikTokSync(options = {}) {
           await deps.repository.attachAccountToFirstImportControl(sql, syncRunId, accountId);
         }
 
-        if (await deps.repository.insertAccountMetricSnapshot(
-          sql,
-          profile,
-          syncRunId,
-          accountId,
-          account.connectedTikTokAccountId
-        )) {
+        failureStage = "account_snapshot";
+        if (await runSyncStage("account_snapshot_failed", () => deps.repository.insertAccountMetricSnapshot(
+          sql, profile, syncRunId, accountId, account.connectedTikTokAccountId
+        ))) {
           counts.accountMetricSnapshotsCreated += 1;
         }
 
-        const page = await deps.listVideosSinceCutoff(options.accessToken, {
+        failureStage = "video_fetch";
+        const page = await runSyncStage("video_fetch_failed", () => deps.listVideosSinceCutoff(options.accessToken, {
           maxPages
-        });
+        }));
         counts.videosSkippedBeforeCutoff = Number(page.skippedBeforeCutoff || 0);
 
+        failureStage = "video_persistence";
         for (const video of page.videos || []) {
           try {
             const saved = await deps.repository.upsertVideo(sql, video, syncRunId, accountId);
@@ -156,6 +173,7 @@ async function runPersistentTikTokSync(options = {}) {
           });
         }
 
+        failureStage = "sync_completion";
         await deps.repository.finishSyncRun(sql, syncRunId, {
           ...counts,
           status: counts.errorCount > 0 ? "partial" : "succeeded",
@@ -171,10 +189,11 @@ async function runPersistentTikTokSync(options = {}) {
         };
       } catch (error) {
         const code = safeErrorCode(error);
+        deps.logSyncFailure({ syncRunId, stage: failureStage, safeErrorCode: code });
         try {
           await deps.repository.recordSyncError(sql, syncRunId, {
             accountId,
-            stage: "sync",
+            stage: failureStage,
             code
           });
           await deps.repository.finishSyncRun(sql, syncRunId, {
@@ -205,5 +224,7 @@ module.exports = {
   firstImportArmed,
   assertFirstImportAuthorization,
   safeErrorCode,
+  privacySafeSyncLogger,
+  runSyncStage,
   runPersistentTikTokSync
 };

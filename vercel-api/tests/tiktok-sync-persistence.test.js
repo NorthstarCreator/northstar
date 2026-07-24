@@ -373,6 +373,7 @@ async function testPartialFailureIsRecorded() {
 async function testCatastrophicFailureMarksRunFailedWithoutSensitiveData() {
   const counter = { calls: 0 };
   const { repository, state } = createRepositoryDouble();
+  const diagnostics = [];
   await assert.rejects(
     () => persistence.runPersistentTikTokSync({
       env: SANDBOX_ENV,
@@ -383,9 +384,9 @@ async function testCatastrophicFailureMarksRunFailedWithoutSensitiveData() {
         getUserInfo: async () => profile(),
         listVideosSinceCutoff: async () => {
           const error = new Error("sensitive-token-must-not-appear");
-          error.code = "video_fetch_failed";
           throw error;
         },
+        logSyncFailure: (details) => diagnostics.push(details),
         ...lockDependencies()
       }
     }),
@@ -397,7 +398,48 @@ async function testCatastrophicFailureMarksRunFailedWithoutSensitiveData() {
   );
   assert.equal(state.runs[0].status, "failed");
   assert.equal(state.errors[0].code, "video_fetch_failed");
+  assert.equal(state.errors[0].stage, "video_fetch");
+  assert.deepEqual(diagnostics, [{
+    syncRunId: "run-1",
+    stage: "video_fetch",
+    safeErrorCode: "video_fetch_failed"
+  }]);
+  assert.equal(state.videos.size, 0);
+  assert.equal(state.videoSnapshots.size, 0);
   assert.doesNotMatch(JSON.stringify(state), /sensitive-token/);
+  assert.doesNotMatch(JSON.stringify(diagnostics), /sensitive-token/);
+}
+
+async function testAccountSnapshotFailureUsesSafeStageCode() {
+  const counter = { calls: 0 };
+  const { repository, state } = createRepositoryDouble();
+  const diagnostics = [];
+  repository.insertAccountMetricSnapshot = async () => {
+    throw new Error("database-host-and-credential-must-not-appear");
+  };
+
+  await assert.rejects(
+    () => persistence.runPersistentTikTokSync({
+      env: SANDBOX_ENV,
+      accessToken: "sensitive-token-must-not-appear",
+      deps: {
+        withDatabase: databaseDouble(counter),
+        repository,
+        getUserInfo: async () => profile(),
+        listVideosSinceCutoff: async () => ({ videos: [], truncated: false }),
+        logSyncFailure: (details) => diagnostics.push(details),
+        ...lockDependencies()
+      }
+    }),
+    (error) => error.code === "account_snapshot_failed"
+  );
+
+  assert.equal(state.runs[0].status, "failed");
+  assert.equal(state.errors[0].stage, "account_snapshot");
+  assert.equal(state.errors[0].code, "account_snapshot_failed");
+  assert.equal(state.videos.size, 0);
+  assert.equal(state.videoSnapshots.size, 0);
+  assert.doesNotMatch(JSON.stringify({ state, diagnostics }), /credential|sensitive-token/);
 }
 
 async function testPendingReviewAndConcurrentRequestsAreBlocked() {
@@ -474,8 +516,34 @@ function testSafeSyncRunReportingAndDashboardPendingState() {
   assert.match(routeSource, /syncRunId: persistenceResult\.syncRunId/);
   assert.match(routeSource, /firstImportStatus: persistenceResult\.firstImportStatus/);
   assert.doesNotMatch(routeSource, /NORTHSTAR_FIRST_IMPORT_OPEN_ID/);
-  assert.equal((dashboardSource.match(/state\.live\.loading \? "Syncing\.\.\." : "Sync Now"/g) || []).length, 2);
-  assert.match(dashboardSource, /if \(state\.live\.loading\) return;/);
+  assert.equal((dashboardSource.match(/state\.live\.syncPending \? "Syncing\.\.\." : "Sync Now"/g) || []).length, 2);
+  assert.match(dashboardSource, /if \(state\.live\.syncPending\) return;/);
+  assert.doesNotMatch(dashboardSource, /state\.live\.loading \? "Syncing\.\.\."/);
+}
+
+function testPrivacySafeStructuredLogging() {
+  const originalError = console.error;
+  const output = [];
+  console.error = (value) => output.push(value);
+  try {
+    persistence.privacySafeSyncLogger({
+      syncRunId: "safe-run-id",
+      stage: "video_fetch",
+      safeErrorCode: "video_fetch_failed",
+      accessToken: "sensitive-token-must-not-appear",
+      openId: "private-account-id-must-not-appear"
+    });
+  } finally {
+    console.error = originalError;
+  }
+
+  assert.equal(output.length, 1);
+  assert.deepEqual(JSON.parse(output[0]), {
+    syncRunId: "safe-run-id",
+    stage: "video_fetch",
+    safeErrorCode: "video_fetch_failed"
+  });
+  assert.doesNotMatch(output[0], /sensitive-token|private-account/);
 }
 
 (async () => {
@@ -488,9 +556,11 @@ function testSafeSyncRunReportingAndDashboardPendingState() {
   await testIdempotentEntitiesAndHistoricalSnapshots();
   await testPartialFailureIsRecorded();
   await testCatastrophicFailureMarksRunFailedWithoutSensitiveData();
+  await testAccountSnapshotFailureUsesSafeStageCode();
   await testPendingReviewAndConcurrentRequestsAreBlocked();
   await testLockOwnershipAndExpiry();
   testSafeSyncRunReportingAndDashboardPendingState();
+  testPrivacySafeStructuredLogging();
   console.log("TikTok sync persistence tests passed.");
 })().catch((error) => {
   console.error(error);

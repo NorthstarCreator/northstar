@@ -30,6 +30,7 @@
       initializing: true,
       connected: false,
       loading: false,
+      syncPending: false,
       error: "",
       session: null,
       snapshot: null,
@@ -187,6 +188,8 @@
     const client = window.NORTHSTAR_TIKTOK_CLIENT;
     const adapter = window.NORTHSTAR_LIVE_ADAPTER;
     if (!client || !adapter) return;
+    if (preferSync && state.live.syncPending) return;
+    if (preferSync) state.live.syncPending = true;
     state.live.loading = true;
     state.live.error = "";
     render();
@@ -223,6 +226,7 @@
         ? "Connected. Profile or video details could not load yet."
         : (error?.message || "TikTok Sandbox data is unavailable.");
     } finally {
+      if (preferSync) state.live.syncPending = false;
       state.live.loading = false;
       rebuildDataFromLive();
       render();
@@ -819,7 +823,8 @@
   }
 
   function liveModeBadge() {
-    if (state.live.loading || state.live.initializing) return `<span class="status-pill loading">Checking TikTok Sandbox</span>`;
+    if (state.live.syncPending) return `<span class="status-pill loading">Syncing TikTok Sandbox</span>`;
+    if (state.live.loading || state.live.initializing) return `<span class="status-pill loading">Loading TikTok profile</span>`;
     if (isLiveConnected()) return `<span class="status-pill connected">TikTok Sandbox Connected</span>`;
     return `<span class="status-pill demo">Demo Mode</span>`;
   }
@@ -840,7 +845,7 @@
       <span class="sync-time">Last Sync: ${escapeHtml(lastSync)}</span>
       <span class="sync-actions">
         <button class="secondary-button tiny-button" type="button" data-action="connect-tiktok">${isLiveConnected() ? "Reconnect TikTok" : "Connect TikTok"}</button>
-        <button class="secondary-button tiny-button" type="button" data-action="sync-tiktok" ${isLiveConnected() && !state.live.loading ? "" : "disabled"}>${state.live.loading ? "Syncing..." : "Sync Now"}</button>
+        <button class="secondary-button tiny-button" type="button" data-action="sync-tiktok" ${isLiveConnected() && !state.live.syncPending ? "" : "disabled"}>${state.live.syncPending ? "Syncing..." : "Sync Now"}</button>
         <button class="secondary-button tiny-button" type="button" data-action="disconnect-tiktok" ${isLiveConnected() ? "" : "disabled"}>Disconnect</button>
       </span>
     `;
@@ -1302,7 +1307,8 @@
   }
 
   function statusText() {
-    if (state.live.loading) return "Syncing";
+    if (state.live.syncPending) return "Syncing";
+    if (state.live.loading || state.live.initializing) return "Loading profile";
     if (isLiveConnected()) return "Connected";
     if (state.live.error) return "Connection error";
     return "Not connected";
@@ -1335,7 +1341,7 @@
             ${connectionField("Videos retrieved", `${number.format(live?.videos?.length || 0)} public videos`)}
           </div>
           <p class="source-note">Supplies profile, followers, account statistics, public videos, views, likes, comments, and shares. It does not supply Shop products, orders, GMV, commissions, samples, Creator Rewards, or TikTok GO.</p>
-          <div class="button-row"><button class="primary-button" type="button" data-action="connect-tiktok">${isLiveConnected() ? "Reconnect Content" : "Connect Content"}</button><button class="secondary-button" type="button" data-action="sync-tiktok" ${isLiveConnected() && !state.live.loading ? "" : "disabled"}>${state.live.loading ? "Syncing..." : "Sync Now"}</button><button class="secondary-button" type="button" data-action="disconnect-tiktok" ${isLiveConnected() ? "" : "disabled"}>Disconnect</button></div>
+          <div class="button-row"><button class="primary-button" type="button" data-action="connect-tiktok">${isLiveConnected() ? "Reconnect Content" : "Connect Content"}</button><button class="secondary-button" type="button" data-action="sync-tiktok" ${isLiveConnected() && !state.live.syncPending ? "" : "disabled"}>${state.live.syncPending ? "Syncing..." : "Sync Now"}</button><button class="secondary-button" type="button" data-action="disconnect-tiktok" ${isLiveConnected() ? "" : "disabled"}>Disconnect</button></div>
         </article>
         <article class="section integration-card pending">
           ${heading("TikTok Shop", "Commerce, products, orders, and commissions", "Data Hub")}
@@ -1570,7 +1576,7 @@
     const id = action.dataset.id;
     if (action.dataset.action === "connect-tiktok") return window.NORTHSTAR_TIKTOK_CLIENT?.startConnect();
     if (action.dataset.action === "sync-tiktok") {
-      if (state.live.loading) return;
+      if (state.live.syncPending) return;
       return loadLiveTikTok({ preferSync: true });
     }
     if (action.dataset.action === "disconnect-tiktok") return disconnectLiveTikTok();
