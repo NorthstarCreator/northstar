@@ -199,6 +199,103 @@ async function testPaginationLimitIsReported() {
   assert.equal(result.has_more, true);
 }
 
+async function testTransientVideoPageFailureRetriesAndCompletes() {
+  let attempts = 0;
+  const waits = [];
+  const result = await tiktok.listVideosSinceCutoff("not-a-real-token", {
+    maxPages: 2,
+    maxRetries: 2,
+    retryDelayMs: 10,
+    sleep: async (delayMs) => waits.push(delayMs),
+    listPage: async () => {
+      attempts += 1;
+      if (attempts < 3) {
+        const error = new Error("raw TikTok detail must not escape");
+        error.code = "tiktok_api_rate_limited";
+        error.retryable = true;
+        error.retryAfterMs = 0;
+        throw error;
+      }
+      return {
+        videos: [video("recovered-video", "1761955200")],
+        cursor: 20,
+        has_more: false
+      };
+    }
+  });
+
+  assert.equal(attempts, 3);
+  assert.deepEqual(waits, [10, 20]);
+  assert.deepEqual(result.videos.map((item) => item.id), ["recovered-video"]);
+  assert.equal(result.pagesFetched, 1);
+}
+
+async function testTikTokRateLimitResponseIsClassifiedAndRetried() {
+  const originalFetch = global.fetch;
+  let requests = 0;
+  try {
+    global.fetch = async () => {
+      requests += 1;
+      if (requests < 3) {
+        return {
+          ok: false,
+          status: 429,
+          headers: { get: () => "0" },
+          json: async () => ({
+            error: {
+              code: "rate_limit_exceeded",
+              message: "raw provider response must not escape"
+            }
+          })
+        };
+      }
+      return {
+        ok: true,
+        status: 200,
+        headers: { get: () => null },
+        json: async () => ({
+          data: {
+            videos: [video("api-recovered-video", "1761955200")],
+            cursor: 20,
+            has_more: false
+          },
+          error: { code: "ok" }
+        })
+      };
+    };
+
+    const result = await tiktok.listVideosSinceCutoff("not-a-real-token", {
+      maxPages: 1,
+      maxRetries: 2,
+      retryDelayMs: 0,
+      sleep: async () => {}
+    });
+    assert.equal(requests, 3);
+    assert.deepEqual(result.videos.map((item) => item.id), ["api-recovered-video"]);
+    assert.doesNotMatch(JSON.stringify(result), /raw provider response/);
+  } finally {
+    global.fetch = originalFetch;
+  }
+}
+
+async function testPaginationStallFailsSafely() {
+  await assert.rejects(
+    () => tiktok.listVideosSinceCutoff("not-a-real-token", {
+      maxPages: 2,
+      listPage: async () => ({
+        videos: [video("new", "1761955200")],
+        cursor: 0,
+        has_more: true
+      })
+    }),
+    (error) => {
+      assert.equal(error.code, "tiktok_video_pagination_stalled");
+      assert.equal(error.safeMessage, "TikTok video pagination did not advance.");
+      return true;
+    }
+  );
+}
+
 function testPersistenceDisabledByDefault() {
   assert.equal(persistence.persistenceEnabled({}), false);
   assert.equal(persistence.persistenceEnabled({ NORTHSTAR_PERSIST_SYNC_ENABLED: "false" }), false);
@@ -402,12 +499,138 @@ async function testCatastrophicFailureMarksRunFailedWithoutSensitiveData() {
   assert.deepEqual(diagnostics, [{
     syncRunId: "run-1",
     stage: "video_fetch",
-    safeErrorCode: "video_fetch_failed"
+    safeErrorCode: "video_fetch_failed",
+    safeErrorMessage: null
   }]);
   assert.equal(state.videos.size, 0);
   assert.equal(state.videoSnapshots.size, 0);
   assert.doesNotMatch(JSON.stringify(state), /sensitive-token/);
   assert.doesNotMatch(JSON.stringify(diagnostics), /sensitive-token/);
+}
+
+async function testRecurringTransientVideoFetchRecoversWithoutDuplicates() {
+  const counter = { calls: 0 };
+  const { repository, state } = createRepositoryDouble();
+  state.controls.set("open-id-fixture", {
+    sync_run_id: "approved-first-run",
+    status: "approved",
+    account_id: "account-1"
+  });
+  state.accounts.set("open-id-fixture", {
+    accountId: "account-1",
+    connectedTikTokAccountId: "connected-1",
+    firstSeenSyncRunId: "approved-first-run"
+  });
+  state.videos.set("existing-video", {
+    videoId: "video-row-1",
+    accountId: "account-1",
+    firstSeenSyncRunId: "approved-first-run",
+    lastSeenSyncRunId: "approved-first-run"
+  });
+  let secondPageAttempts = 0;
+
+  const result = await persistence.runPersistentTikTokSync({
+    env: SANDBOX_ENV,
+    accessToken: "not-a-real-token",
+    deps: {
+      withDatabase: databaseDouble(counter),
+      repository,
+      getUserInfo: async () => profile(),
+      listVideosSinceCutoff: (accessToken, options) => tiktok.listVideosSinceCutoff(accessToken, {
+        ...options,
+        maxRetries: 2,
+        retryDelayMs: 0,
+        sleep: async () => {},
+        listPage: async (_token, cursor) => {
+          if (cursor === 0) {
+            return {
+              videos: [video("existing-video", "1761955200")],
+              cursor: 20,
+              has_more: true
+            };
+          }
+          secondPageAttempts += 1;
+          if (secondPageAttempts === 1) {
+            const error = new Error("raw provider response");
+            error.code = "tiktok_api_temporarily_unavailable";
+            error.retryable = true;
+            throw error;
+          }
+          return {
+            videos: [video("new-video", "1761868800")],
+            cursor: 40,
+            has_more: false
+          };
+        }
+      }),
+      ...lockDependencies()
+    }
+  });
+
+  assert.equal(secondPageAttempts, 2);
+  assert.equal(result.counts.videosInserted, 1);
+  assert.equal(result.counts.videosUpdated, 1);
+  assert.equal(result.counts.videoMetricSnapshotsCreated, 2);
+  assert.equal(state.videos.size, 2);
+  assert.equal(state.runs[0].status, "succeeded");
+}
+
+async function testExhaustedVideoFetchStoresSanitizedDiagnostic() {
+  const counter = { calls: 0 };
+  const { repository, state } = createRepositoryDouble();
+  const diagnostics = [];
+  state.controls.set("open-id-fixture", {
+    sync_run_id: "approved-first-run",
+    status: "approved",
+    account_id: "account-1"
+  });
+
+  await assert.rejects(
+    () => persistence.runPersistentTikTokSync({
+      env: SANDBOX_ENV,
+      accessToken: "sensitive-token-must-not-appear",
+      deps: {
+        withDatabase: databaseDouble(counter),
+        repository,
+        getUserInfo: async () => profile(),
+        listVideosSinceCutoff: async () => {
+          const error = new Error("sensitive-token-must-not-appear raw provider response");
+          error.code = "tiktok_api_rate_limited";
+          error.safeMessage = "untrusted message must not be stored";
+          throw error;
+        },
+        logSyncFailure: (details) => diagnostics.push(details),
+        ...lockDependencies()
+      }
+    }),
+    (error) => {
+      assert.equal(error.code, "video_fetch_rate_limited");
+      assert.equal(error.safeMessage, undefined);
+      assert.doesNotMatch(error.message, /sensitive-token|untrusted/);
+      return true;
+    }
+  );
+
+  assert.equal(state.runs[0].status, "failed");
+  assert.equal(state.runs[0].safeErrorCode, "video_fetch_rate_limited");
+  assert.equal(
+    state.runs[0].safeErrorMessage,
+    "TikTok temporarily limited video requests after retry attempts."
+  );
+  assert.equal(state.errors[0].code, "video_fetch_rate_limited");
+  assert.equal(
+    state.errors[0].message,
+    "TikTok temporarily limited video requests after retry attempts."
+  );
+  assert.deepEqual(diagnostics, [{
+    syncRunId: "run-1",
+    stage: "video_fetch",
+    safeErrorCode: "video_fetch_rate_limited",
+    safeErrorMessage: "TikTok temporarily limited video requests after retry attempts."
+  }]);
+  assert.equal(state.videos.size, 0);
+  assert.equal(state.videoSnapshots.size, 0);
+  assert.doesNotMatch(JSON.stringify({ state, diagnostics }), /sensitive-token|untrusted message|raw provider/);
 }
 
 async function testAccountSnapshotFailureUsesSafeStageCode() {
@@ -530,6 +753,7 @@ function testPrivacySafeStructuredLogging() {
       syncRunId: "safe-run-id",
       stage: "video_fetch",
       safeErrorCode: "video_fetch_failed",
+      safeErrorMessage: "TikTok video data was temporarily unavailable after retry attempts.",
       accessToken: "sensitive-token-must-not-appear",
       openId: "private-account-id-must-not-appear"
     });
@@ -541,7 +765,8 @@ function testPrivacySafeStructuredLogging() {
   assert.deepEqual(JSON.parse(output[0]), {
     syncRunId: "safe-run-id",
     stage: "video_fetch",
-    safeErrorCode: "video_fetch_failed"
+    safeErrorCode: "video_fetch_failed",
+    safeErrorMessage: "TikTok video data was temporarily unavailable after retry attempts."
   });
   assert.doesNotMatch(output[0], /sensitive-token|private-account/);
 }
@@ -549,6 +774,9 @@ function testPrivacySafeStructuredLogging() {
 (async () => {
   await testPaginationStopsAtCutoffAndDeduplicates();
   await testPaginationLimitIsReported();
+  await testTransientVideoPageFailureRetriesAndCompletes();
+  await testTikTokRateLimitResponseIsClassifiedAndRetried();
+  await testPaginationStallFailsSafely();
   testPersistenceDisabledByDefault();
   testPageLimitFailsClosed();
   await testEnvironmentMismatchFailsBeforeDatabaseAccess();
@@ -556,6 +784,8 @@ function testPrivacySafeStructuredLogging() {
   await testIdempotentEntitiesAndHistoricalSnapshots();
   await testPartialFailureIsRecorded();
   await testCatastrophicFailureMarksRunFailedWithoutSensitiveData();
+  await testRecurringTransientVideoFetchRecoversWithoutDuplicates();
+  await testExhaustedVideoFetchStoresSanitizedDiagnostic();
   await testAccountSnapshotFailureUsesSafeStageCode();
   await testPendingReviewAndConcurrentRequestsAreBlocked();
   await testLockOwnershipAndExpiry();

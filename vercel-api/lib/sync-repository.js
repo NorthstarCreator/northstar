@@ -260,13 +260,17 @@ async function insertVideoMetricSnapshot(sql, videoId, syncRunId, metrics) {
 
 async function recordSyncError(sql, syncRunId, details = {}) {
   const code = String(details.code || "sync_record_failed").replace(/[^a-z0-9_]/gi, "_").slice(0, 80);
+  const message = details.message
+    ? String(details.message).replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 240)
+    : null;
   await sql`
     INSERT INTO sync_run_errors (
-      sync_run_id, account_id, stage, record_type, external_id, safe_error_code
+      sync_run_id, account_id, stage, record_type, external_id, safe_error_code,
+      safe_error_message
     )
     VALUES (
       ${syncRunId}::uuid, ${details.accountId || null}::uuid, ${details.stage || "sync"},
-      ${details.recordType || null}, ${details.externalId || null}, ${code}
+      ${details.recordType || null}, ${details.externalId || null}, ${code}, ${message}
     )
   `;
 }
@@ -283,6 +287,7 @@ async function finishSyncRun(sql, syncRunId, result = {}) {
         video_metric_snapshots_created = ${result.videoMetricSnapshotsCreated || 0},
         error_count = ${result.errorCount || 0},
         safe_error_code = ${result.safeErrorCode || null},
+        safe_error_message = ${result.safeErrorMessage || null},
         updated_at = CURRENT_TIMESTAMP
     WHERE id = ${syncRunId}::uuid
   `;

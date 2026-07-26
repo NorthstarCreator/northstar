@@ -47,6 +47,42 @@ function safeError(code) {
   return error;
 }
 
+const SAFE_VIDEO_FETCH_ERRORS = Object.freeze({
+  tiktok_api_rate_limited: {
+    code: "video_fetch_rate_limited",
+    message: "TikTok temporarily limited video requests after retry attempts."
+  },
+  tiktok_api_temporarily_unavailable: {
+    code: "video_fetch_temporarily_unavailable",
+    message: "TikTok video data was temporarily unavailable after retry attempts."
+  },
+  tiktok_api_network_error: {
+    code: "video_fetch_network_error",
+    message: "TikTok video data could not be reached after retry attempts."
+  },
+  tiktok_api_authorization_failed: {
+    code: "video_fetch_authorization_failed",
+    message: "TikTok authorization no longer permits the requested video data."
+  },
+  tiktok_api_request_rejected: {
+    code: "video_fetch_request_rejected",
+    message: "TikTok rejected the video data request."
+  },
+  tiktok_video_pagination_stalled: {
+    code: "video_fetch_pagination_stalled",
+    message: "TikTok video pagination did not advance."
+  }
+});
+
+function safeStageError(stageCode, cause) {
+  const mapped = stageCode === "video_fetch_failed"
+    ? SAFE_VIDEO_FETCH_ERRORS[cause?.code]
+    : null;
+  const error = safeError(mapped?.code || stageCode);
+  error.safeMessage = mapped?.message || null;
+  return error;
+}
+
 function safeErrorCode(error, fallback = "sync_failed") {
   return String(error?.code || fallback).replace(/[^a-z0-9_]/gi, "_").slice(0, 80) || fallback;
 }
@@ -55,15 +91,16 @@ function privacySafeSyncLogger(details) {
   console.error(JSON.stringify({
     syncRunId: String(details.syncRunId),
     stage: String(details.stage),
-    safeErrorCode: String(details.safeErrorCode)
+    safeErrorCode: String(details.safeErrorCode),
+    safeErrorMessage: details.safeErrorMessage ? String(details.safeErrorMessage) : null
   }));
 }
 
 async function runSyncStage(stageCode, callback) {
   try {
     return await callback();
-  } catch (_error) {
-    throw safeError(stageCode);
+  } catch (error) {
+    throw safeStageError(stageCode, error);
   }
 }
 
@@ -189,18 +226,26 @@ async function runPersistentTikTokSync(options = {}) {
         };
       } catch (error) {
         const code = safeErrorCode(error);
-        deps.logSyncFailure({ syncRunId, stage: failureStage, safeErrorCode: code });
+        const safeMessage = error?.safeMessage || null;
+        deps.logSyncFailure({
+          syncRunId,
+          stage: failureStage,
+          safeErrorCode: code,
+          safeErrorMessage: safeMessage
+        });
         try {
           await deps.repository.recordSyncError(sql, syncRunId, {
             accountId,
             stage: failureStage,
-            code
+            code,
+            message: safeMessage
           });
           await deps.repository.finishSyncRun(sql, syncRunId, {
             ...counts,
             errorCount: counts.errorCount + 1,
             status: "failed",
-            safeErrorCode: code
+            safeErrorCode: code,
+            safeErrorMessage: safeMessage
           });
         } catch (recordingError) {
           // The original failure remains authoritative; no sensitive detail is emitted.
@@ -224,6 +269,7 @@ module.exports = {
   firstImportArmed,
   assertFirstImportAuthorization,
   safeErrorCode,
+  safeStageError,
   privacySafeSyncLogger,
   runSyncStage,
   runPersistentTikTokSync
