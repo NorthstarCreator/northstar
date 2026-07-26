@@ -28,6 +28,9 @@
     generator: { productId: null, tool: null, variant: 0, saved: false },
     live: {
       initializing: true,
+      phase: "initializing",
+      safeCode: "",
+      sessionConnected: false,
       connected: false,
       loading: false,
       syncPending: false,
@@ -180,31 +183,25 @@
   function liveStatusFromUrl() {
     const value = new URLSearchParams(window.location.search).get("tiktok");
     if (!value) return "";
-    if (value === "connected") return "TikTok Sandbox connected. Syncing approved Display API fields now.";
+    if (value === "connected") return "TikTok authorization completed. Verifying fresh account data now.";
     return `TikTok Sandbox returned ${value.replaceAll("_", " ")}. No sensitive details were exposed.`;
   }
 
   async function loadLiveTikTok({ preferSync = false } = {}) {
     const client = window.NORTHSTAR_TIKTOK_CLIENT;
     const adapter = window.NORTHSTAR_LIVE_ADAPTER;
-    if (!client || !adapter) return;
+    if (!client || !adapter) return false;
     if (preferSync && state.live.syncPending) return;
     if (preferSync) state.live.syncPending = true;
     state.live.loading = true;
+    state.live.phase = "loading";
+    state.live.safeCode = "";
     state.live.error = "";
     render();
     try {
       const mePayload = preferSync ? await client.sync() : await client.me();
       if (!mePayload.connected && !mePayload.profile) {
-        state.live.connected = !!state.live.connected;
-        state.live.snapshot = null;
-        if (state.live.connected) {
-          state.live.error = "Connected. Profile or video details could not load yet.";
-        }
-        state.live.loading = false;
-        rebuildDataFromLive();
-        render();
-        return;
+        throw new Error("profile_unavailable");
       }
       const videosPayload = mePayload.videos ? mePayload : await client.videos();
       const snapshot = adapter.buildLiveSnapshot({
@@ -214,17 +211,23 @@
       });
       if (snapshot) {
         state.live.connected = true;
+        state.live.sessionConnected = true;
+        state.live.phase = "live";
+        state.live.safeCode = "";
         state.live.snapshot = snapshot;
         state.live.lastSyncAt = snapshot.syncedAt;
         state.accountId = snapshot.account.id;
         state.live.error = "";
-      } else if (state.live.connected) {
-        state.live.error = "Connected. Profile or video details could not load yet.";
-      }
+      } else throw new Error("snapshot_unavailable");
+      return true;
     } catch (error) {
-      state.live.error = state.live.connected
-        ? "Connected. Profile or video details could not load yet."
-        : (error?.message || "TikTok Sandbox data is unavailable.");
+      state.live.connected = false;
+      state.live.phase = "api_unavailable";
+      state.live.safeCode = "api_unavailable";
+      state.live.error = state.live.snapshot
+        ? "Live connection error. Existing information is stale."
+        : "Live connection error. Account information is unavailable.";
+      return false;
     } finally {
       if (preferSync) state.live.syncPending = false;
       state.live.loading = false;
@@ -235,8 +238,17 @@
 
   async function bootstrapLiveTikTok() {
     const client = window.NORTHSTAR_TIKTOK_CLIENT;
-    if (!client) {
+    const adapter = window.NORTHSTAR_LIVE_ADAPTER;
+    if (!client || !adapter) {
+      state.live.phase = "client_unavailable";
+      state.live.safeCode = "client_unavailable";
+      state.live.sessionConnected = false;
+      state.live.connected = false;
+      state.live.snapshot = null;
+      state.live.lastSyncAt = null;
+      state.live.error = "Live connection unavailable (client_unavailable).";
       state.live.initializing = false;
+      rebuildDataFromLive();
       render();
       return;
     }
@@ -244,10 +256,24 @@
     try {
       const session = await client.bootstrapSession();
       state.live.session = session.session || null;
-      state.live.connected = !!session.connected;
-      if (session.connected) await loadLiveTikTok();
+      state.live.sessionConnected = !!session.connected;
+      state.live.connected = false;
+      state.live.snapshot = null;
+      state.live.lastSyncAt = null;
+      rebuildDataFromLive();
+      if (session.connected) {
+        state.live.phase = "loading";
+        await loadLiveTikTok();
+      } else {
+        state.live.phase = "demo";
+        state.live.safeCode = "";
+        state.live.error = "";
+      }
     } catch (error) {
-      state.live.error = "TikTok Sandbox API is not connected for this local preview yet.";
+      state.live.connected = false;
+      state.live.phase = "api_unavailable";
+      state.live.safeCode = "api_unavailable";
+      state.live.error = "Live connection error. Account information is unavailable.";
     } finally {
       state.live.initializing = false;
       render();
@@ -262,6 +288,9 @@
     try {
       await client.disconnect();
       state.live.connected = false;
+      state.live.sessionConnected = false;
+      state.live.phase = "demo";
+      state.live.safeCode = "";
       state.live.snapshot = null;
       state.live.lastSyncAt = null;
       state.live.error = "TikTok Sandbox disconnected for this session.";
@@ -826,6 +855,8 @@
   function liveModeBadge() {
     if (state.live.syncPending) return `<span class="status-pill loading">Syncing TikTok Sandbox</span>`;
     if (state.live.loading || state.live.initializing) return `<span class="status-pill loading">Loading TikTok profile</span>`;
+    if (state.live.phase === "client_unavailable") return `<span class="status-pill demo">Live connection unavailable</span>`;
+    if (state.live.phase === "api_unavailable") return `<span class="status-pill demo">Live data unavailable</span>`;
     if (isLiveConnected()) return `<span class="status-pill connected">TikTok Sandbox Connected</span>`;
     return `<span class="status-pill demo">Demo Mode</span>`;
   }
@@ -838,16 +869,23 @@
     const message = state.live.error || (isLiveConnected()
       ? "Live profile, stats, and public videos come from approved TikTok Display API Sandbox scopes."
       : "Demo records are visible until a TikTok Sandbox account is authorized.");
+    const clientReady = !!window.NORTHSTAR_TIKTOK_CLIENT;
+    const unavailable = ["client_unavailable", "api_unavailable"].includes(state.live.phase);
+    const modeLabel = state.live.phase === "client_unavailable"
+      ? "Live connection unavailable"
+      : state.live.phase === "api_unavailable"
+        ? (state.live.snapshot ? "Stale live data" : "Live data unavailable")
+        : isLiveConnected() ? "TikTok Sandbox" : "Demo Prototype";
     els.syncStrip.innerHTML = `
       <span>Data Mode</span>
-      <strong>${isLiveConnected() ? "TikTok Sandbox" : "Demo Prototype"}</strong>
+      <strong>${modeLabel}</strong>
       <span class="dot ${isLiveConnected() ? "live" : ""}"></span>
       <span>${escapeHtml(message)}</span>
       <span class="sync-time">Last Sync: ${escapeHtml(lastSync)}</span>
       <span class="sync-actions">
-        <button class="secondary-button tiny-button" type="button" data-action="connect-tiktok">${isLiveConnected() ? "Reconnect TikTok" : "Connect TikTok"}</button>
+        <button class="secondary-button tiny-button" type="button" data-action="connect-tiktok" ${clientReady && !unavailable ? "" : "disabled"}>${isLiveConnected() ? "Reconnect TikTok" : "Connect TikTok"}</button>
         <button class="secondary-button tiny-button" type="button" data-action="sync-tiktok" ${isLiveConnected() && !state.live.syncPending ? "" : "disabled"}>${state.live.syncPending ? "Syncing..." : "Sync Now"}</button>
-        <button class="secondary-button tiny-button" type="button" data-action="disconnect-tiktok" ${isLiveConnected() ? "" : "disabled"}>Disconnect</button>
+        <button class="secondary-button tiny-button" type="button" data-action="disconnect-tiktok" ${clientReady && state.live.sessionConnected && state.live.phase !== "client_unavailable" ? "" : "disabled"}>Disconnect</button>
       </span>
     `;
   }

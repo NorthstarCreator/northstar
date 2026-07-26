@@ -5,7 +5,7 @@ const vm = require("node:vm");
 
 const dashboardDir = path.join(__dirname, "../../dashboard/sandbox/dashboard");
 const appSource = fs.readFileSync(path.join(dashboardDir, "app.js"), "utf8");
-const clientSource = fs.readFileSync(path.join(dashboardDir, "tiktok-sandbox-client.js"), "utf8");
+const clientSource = fs.readFileSync(path.join(dashboardDir, "northstar-live-client.js"), "utf8");
 
 async function testReadOnlyInitializationNeverPostsSync() {
   const requests = [];
@@ -50,7 +50,7 @@ async function testExplicitSyncIsTheOnlyPostPath() {
   await context.window.NORTHSTAR_TIKTOK_CLIENT.sync();
   assert.equal(requests.filter((request) => request.url.endsWith("/tiktok/sync") && request.method === "POST").length, 1);
 
-  assert.match(appSource, /if \(session\.connected\) await loadLiveTikTok\(\);/);
+  assert.match(appSource, /if \(session\.connected\) \{[\s\S]*await loadLiveTikTok\(\);/);
   assert.match(appSource, /if \(action\.dataset\.action === "sync-tiktok"\)[\s\S]*loadLiveTikTok\(\{ preferSync: true \}\)/);
   assert.equal((appSource.match(/client\.sync\(\)/g) || []).length, 1);
 }

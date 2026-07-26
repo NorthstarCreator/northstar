@@ -177,7 +177,7 @@ async function flushPromises(times = 12) {
   }
 }
 
-async function testActualEntrypointUsesFreshPersistedData() {
+async function runActualEntrypoint({ sessionConnected = true, omitClient = false, failProfile = false } = {}) {
   const indexSource = fs.readFileSync(path.join(dashboardDir, "index.html"), "utf8");
   const scripts = [...indexSource.matchAll(/<script\s+src="([^"]+)"/g)].map((match) => match[1]);
   assert.deepEqual(scripts, [
@@ -186,7 +186,7 @@ async function testActualEntrypointUsesFreshPersistedData() {
     "data-mode.js",
     "live-period.js",
     "live-data-adapter.js",
-    "tiktok-sandbox-client.js",
+    "northstar-live-client.js",
     "app.js"
   ]);
 
@@ -227,9 +227,10 @@ async function testActualEntrypointUsesFreshPersistedData() {
     fetch: async (url, options = {}) => {
       requests.push({ url, options });
       if (url.endsWith("/session")) {
-        return response({ connected: true, csrfToken: "fixture-csrf", session: { authenticated: true } });
+        return response({ connected: sessionConnected, csrfToken: "fixture-csrf", session: { authenticated: sessionConnected } });
       }
       if (url.endsWith("/tiktok/me")) {
+        if (failProfile) throw new Error("fixture_api_failure");
         return response({
           connected: true,
           profile: {
@@ -259,6 +260,7 @@ async function testActualEntrypointUsesFreshPersistedData() {
 
   let adapterCalls = 0;
   for (const script of scripts) {
+    if (omitClient && script === "northstar-live-client.js") continue;
     vm.runInContext(fs.readFileSync(path.join(dashboardDir, script), "utf8"), context, { filename: script });
     if (script === "live-data-adapter.js") {
       const original = window.NORTHSTAR_LIVE_ADAPTER.buildLiveSnapshot;
@@ -267,11 +269,17 @@ async function testActualEntrypointUsesFreshPersistedData() {
         return original(payload);
       };
     }
-    if (script === "tiktok-sandbox-client.js") {
+    if (script === "northstar-live-client.js") {
       window.NORTHSTAR_SANDBOX_DATA.videos = legacyCachedFixture(freshVideos);
     }
   }
   await flushPromises();
+
+  return { adapterCalls, documentListeners, elements, freshVideos, requests };
+}
+
+async function testActualEntrypointUsesFreshPersistedData() {
+  const { adapterCalls, documentListeners, elements, requests } = await runActualEntrypoint();
 
   assert.deepEqual(requests.map(({ url }) => new URL(url).pathname), ["/session", "/tiktok/me", "/tiktok/videos"]);
   assert.ok(requests.every(({ options }) => options.credentials === "include"));
@@ -298,12 +306,43 @@ async function testActualEntrypointUsesFreshPersistedData() {
   assert.ok(newestIndex >= 0 && olderJulyIndex >= 0 && newestIndex < olderJulyIndex);
 }
 
+async function testFirefoxDisconnectedSessionStaysInDemoMode() {
+  const { elements, requests } = await runActualEntrypoint({ sessionConnected: false });
+  assert.deepEqual(requests.map(({ url }) => new URL(url).pathname), ["/session"]);
+  assert.match(elements.syncStrip.innerHTML, /Demo Prototype/);
+  assert.match(elements.syncStrip.innerHTML, /Last Sync: Not synced/);
+  assert.match(elements.content.innerHTML, /145,650/);
+  assert.doesNotMatch(elements.syncStrip.innerHTML, /TikTok Sandbox Connected/);
+}
+
+async function testSafariBlockedClientFailsVisiblyWithoutRequests() {
+  const { elements, requests } = await runActualEntrypoint({ omitClient: true });
+  assert.equal(requests.length, 0);
+  assert.match(elements.syncStrip.innerHTML, /Live connection unavailable/);
+  assert.match(elements.syncStrip.innerHTML, /client_unavailable/);
+  assert.doesNotMatch(elements.syncStrip.innerHTML, /TikTok Sandbox Connected/);
+  assert.match(elements.syncStrip.innerHTML, /data-action="sync-tiktok" disabled/);
+  assert.match(elements.syncStrip.innerHTML, /data-action="disconnect-tiktok" disabled/);
+}
+
+async function testAuthenticatedBootstrapFailureIsNotShownAsLive() {
+  const { elements, requests } = await runActualEntrypoint({ failProfile: true });
+  assert.deepEqual(requests.map(({ url }) => new URL(url).pathname), ["/session", "/tiktok/me"]);
+  assert.match(elements.syncStrip.innerHTML, /Live data unavailable/);
+  assert.match(elements.syncStrip.innerHTML, /Account information is unavailable/);
+  assert.doesNotMatch(elements.syncStrip.innerHTML, /TikTok Sandbox Connected/);
+  assert.match(elements.syncStrip.innerHTML, /data-action="sync-tiktok" disabled/);
+}
+
 (async () => {
   testEasternMonthAndNewest();
   testFollowerSummaryIgnoresFailedRuns();
   await testPersistedReadIsCompleteAndSuccessfulOnly();
   testAdapterPreservesAllPersistedRows();
   await testActualEntrypointUsesFreshPersistedData();
+  await testFirefoxDisconnectedSessionStaysInDemoMode();
+  await testSafariBlockedClientFailsVisiblyWithoutRequests();
+  await testAuthenticatedBootstrapFailureIsNotShownAsLive();
   console.log("Dashboard persisted-data tests passed.");
 })().catch((error) => {
   console.error(error);
