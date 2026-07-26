@@ -12,19 +12,28 @@
   }
 
   function dateFromVideo(video) {
+    if (video.published_at) {
+      const published = new Date(video.published_at);
+      if (!Number.isNaN(published.getTime())) {
+        return window.NORTHSTAR_LIVE_PERIOD?.dateKey(published) || published.toISOString().slice(0, 10);
+      }
+    }
     if (video.create_time) {
       const created = new Date(Number(video.create_time) * 1000);
-      if (!Number.isNaN(created.getTime())) return created.toISOString().slice(0, 10);
+      if (!Number.isNaN(created.getTime())) {
+        return window.NORTHSTAR_LIVE_PERIOD?.dateKey(created) || created.toISOString().slice(0, 10);
+      }
     }
     if (video.publish_date) return String(video.publish_date).slice(0, 10);
     return "";
   }
 
   function timeFromVideo(video) {
-    if (!video.create_time) return "";
-    const created = new Date(Number(video.create_time) * 1000);
+    const created = video.published_at
+      ? new Date(video.published_at)
+      : new Date(Number(video.create_time) * 1000);
     if (Number.isNaN(created.getTime())) return "";
-    return created.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    return created.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" });
   }
 
   function normalizeAccount(payload) {
@@ -40,6 +49,7 @@
       focus: "TikTok Sandbox connected account",
       followers: number(profile.follower_count),
       followerChange: 0,
+      followerSnapshots: [],
       following: number(profile.following_count),
       likes: number(profile.likes_count),
       videoCount: number(profile.video_count),
@@ -61,18 +71,19 @@
       hook: title,
       date: dateFromVideo(video),
       time: timeFromVideo(video),
+      publishedAt: video.published_at || (video.create_time ? new Date(Number(video.create_time) * 1000).toISOString() : ""),
       duration: number(video.duration),
       views: number(video.view_count),
       likes: number(video.like_count),
       comments: number(video.comment_count),
       shares: number(video.share_count),
-      saves: 0,
+      saves: number(video.save_count),
       units: 0,
       gmv: 0,
       earnings: 0,
-      watchTime: 0,
-      completion: 0,
-      followers: 0,
+      watchTime: number(video.average_watch_time_seconds),
+      completion: number(video.completion_rate),
+      followers: number(video.followers_gained),
       coverImage: video.cover_image_url || "",
       thumbnailUrl: video.cover_image_url || "",
       videoUrl: video.share_url || video.embed_link || "",
@@ -98,6 +109,16 @@
   function buildLiveSnapshot({ mePayload, videosPayload, syncedAt }) {
     const account = normalizeAccount(mePayload);
     if (!account) return null;
+    account.followerSnapshots = (Array.isArray(videosPayload?.accountMetricSnapshots)
+      ? videosPayload.accountMetricSnapshots
+      : []).map((item) => ({
+        snapshotAt: item.snapshot_at,
+        followerCount: number(item.follower_count),
+        followingCount: number(item.following_count),
+        likesCount: number(item.likes_count),
+        videoCount: number(item.video_count),
+        syncStatus: item.sync_status
+      }));
     const rawVideos = Array.isArray(videosPayload?.videos) ? videosPayload.videos : [];
     const seen = new Set();
     const videos = rawVideos
@@ -111,7 +132,9 @@
       connected: true,
       account,
       videos,
-      source: createDisplaySource(),
+      source: videosPayload?.source === "northstar_postgres"
+        ? { ...createDisplaySource(), name: "Northstar Persisted TikTok Data", type: "Live Sandbox", shortName: "Neon + Display API" }
+        : createDisplaySource(),
       syncedAt: syncedAt || new Date().toISOString(),
       unsupported: [
         "TikTok Shop GMV, commissions, orders, samples, Creator Rewards, TikTok GO, and audience demographics are demo-only in this Sandbox phase."

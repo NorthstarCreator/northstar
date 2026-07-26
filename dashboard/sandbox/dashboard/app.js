@@ -313,18 +313,12 @@
     return `<div class="section-heading"><div class="heading-title" style="--section-accent:${sectionAccent[accentName]}">${icon(iconName)}<div><p class="eyebrow">${eyebrow}</p><h3>${title}</h3></div></div></div>`;
   }
 
-  function dateWindow() {
-    const today = new Date("2026-07-16T12:00:00");
-    if (state.dateRange === "today") return [new Date("2026-07-16T00:00:00"), new Date("2026-07-16T23:59:59")];
-    if (state.dateRange === "week") return [new Date("2026-07-10T00:00:00"), today];
-    if (state.dateRange === "custom") return [new Date(`${state.customStart}T00:00:00`), new Date(`${state.customEnd}T23:59:59`)];
-    return [new Date("2026-07-01T00:00:00"), today];
-  }
-
   function inRange(date) {
-    const [start, end] = dateWindow();
-    const current = new Date(`${date}T12:00:00`);
-    return current >= start && current <= end;
+    return window.NORTHSTAR_LIVE_PERIOD.inRange(date, {
+      kind: state.dateRange,
+      customStart: state.customStart,
+      customEnd: state.customEnd
+    });
   }
 
   const accountIds = () => state.accountId === "all" ? list("accounts").map((item) => item.id) : [state.accountId];
@@ -333,6 +327,13 @@
   const filteredDays = () => list("days").filter((day) => inRange(day.date));
 
   function periodFollowerGain(accountId = state.accountId) {
+    if (accountId !== "all" && isLiveAccountId(accountId)) {
+      return window.NORTHSTAR_LIVE_PERIOD.followerSummary(account(accountId)?.followerSnapshots, {
+        kind: state.dateRange,
+        customStart: state.customStart,
+        customEnd: state.customEnd
+      }).change;
+    }
     const days = Math.max(1, filteredDays().length);
     const scale = Math.min(1, days / Math.max(1, list("days").length));
     if (accountId === "all") return list("accounts").reduce((sum, item) => sum + periodFollowerGain(item.id), 0);
@@ -467,7 +468,7 @@
   function filteredVideos(extra = {}) {
     return list("videos")
       .filter(accountMatches)
-      .filter((item) => item.date ? inRange(item.date) : isLiveAccountId(item.accountId))
+      .filter((item) => item.publishedAt || item.date ? inRange(item.publishedAt || item.date) : isLiveAccountId(item.accountId))
       .filter((item) => !extra.productId || item.productId === extra.productId)
       .filter((item) => !extra.sourceId || itemSources(item).includes(extra.sourceId));
   }
@@ -960,7 +961,7 @@
         </aside>
       </section>
       <section class="metric-grid primary-metrics">
-        ${metricCard("Followers", number.format(total.followers), `+${number.format(periodFollowerGain())} this month`, "white", 'data-page="audience"', "followers")}
+        ${metricCard("Followers", number.format(total.followers), `+${number.format(periodFollowerGain())} ${periodLabel()}`, "white", 'data-page="audience"', "followers")}
         ${metricCard("Views", number.format(total.views), `${number.format(Math.round(total.views / Math.max(1, total.videos)))} avg/video`, "white", 'data-page="view-performance"', "views")}
         ${metricCard("Videos Posted", total.videos, `Posted this month<br>Goal: 32 videos/month`, "white", 'data-page="videos"', "videos")}
         ${metricCard("Total Earnings", money.format(total.earnings), earningsModeLabel(), "white", 'data-page="earnings"', "earnings")}
@@ -1392,13 +1393,14 @@
 
   function sortVideos(items) {
     const key = state.page === "product-detail" ? state.productVideoSort : state.videoSort;
+    if (key === "newest") return window.NORTHSTAR_LIVE_PERIOD.newest(items);
+    if (key === "oldest") return window.NORTHSTAR_LIVE_PERIOD.newest(items).reverse();
     return [...items].sort((a, b) => {
       if (key === "views") return (b.views || 0) - (a.views || 0);
       if (key === "sales") return (b.units || 0) - (a.units || 0);
       if (key === "earnings") return (b.earnings || 0) - (a.earnings || 0);
       if (key === "time") return String(a.time || "").localeCompare(String(b.time || ""));
-      if (key === "oldest") return new Date(a.date) - new Date(b.date);
-      return new Date(b.date) - new Date(a.date);
+      return window.NORTHSTAR_LIVE_PERIOD.newest([a, b])[0] === a ? -1 : 1;
     });
   }
 
