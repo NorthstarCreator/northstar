@@ -203,11 +203,13 @@
       if (!mePayload.connected && !mePayload.profile) {
         throw new Error("profile_unavailable");
       }
-      const videosPayload = mePayload.videos ? mePayload : await client.videos();
+      const videosPayload = preferSync
+        ? await client.videos()
+        : (mePayload.videos ? mePayload : await client.videos());
       const snapshot = adapter.buildLiveSnapshot({
         mePayload,
         videosPayload,
-        syncedAt: mePayload.syncedAt || new Date().toISOString()
+        syncedAt: videosPayload.lastSuccessfulSyncAt || null
       });
       if (snapshot) {
         state.live.connected = true;

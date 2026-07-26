@@ -8,7 +8,7 @@ async function readPersistedTikTokDashboard(sql, openId) {
     LIMIT 1
   `;
   const account = accountRows[0] || null;
-  if (!account) return { account: null, videos: [], accountMetricSnapshots: [] };
+  if (!account) return { account: null, videos: [], accountMetricSnapshots: [], lastSuccessfulSyncAt: null };
 
   const videos = await sql`
     SELECT
@@ -66,7 +66,24 @@ async function readPersistedTikTokDashboard(sql, openId) {
     ORDER BY ams.snapshot_at ASC, ams.created_at ASC
   `;
 
-  return { account, videos, accountMetricSnapshots };
+  const successfulSyncRows = await sql`
+    SELECT sr.finished_at
+    FROM sync_runs sr
+    WHERE sr.account_id = ${account.id}::uuid
+      AND sr.platform = 'tiktok'
+      AND sr.sync_type IN ('initial_display_api', 'incremental_display_api')
+      AND sr.status = 'succeeded'
+      AND sr.finished_at IS NOT NULL
+    ORDER BY sr.finished_at DESC
+    LIMIT 1
+  `;
+
+  return {
+    account,
+    videos,
+    accountMetricSnapshots,
+    lastSuccessfulSyncAt: successfulSyncRows[0]?.finished_at || null
+  };
 }
 
 module.exports = { readPersistedTikTokDashboard };

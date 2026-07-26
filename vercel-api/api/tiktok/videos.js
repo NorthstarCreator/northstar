@@ -23,6 +23,7 @@ module.exports = async function handler(req, res) {
         source: "northstar_postgres",
         videos: persisted.videos,
         accountMetricSnapshots: persisted.accountMetricSnapshots,
+        lastSuccessfulSyncAt: persisted.lastSuccessfulSyncAt,
         cursor: 0,
         hasMore: false
       });

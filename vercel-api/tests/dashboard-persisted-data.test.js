@@ -58,7 +58,8 @@ async function testPersistedReadIsCompleteAndSuccessfulOnly() {
     [
       { snapshot_at: "2026-07-24T19:13:00Z", follower_count: 123156, sync_status: "succeeded" },
       { snapshot_at: "2026-07-26T01:18:48Z", follower_count: 123300, sync_status: "succeeded" }
-    ]
+    ],
+    [{ finished_at: "2026-07-26T01:18:48Z" }]
   ];
   const queries = [];
   async function sql(strings) {
@@ -69,10 +70,15 @@ async function testPersistedReadIsCompleteAndSuccessfulOnly() {
   assert.equal(result.videos.length, 806);
   assert.equal(result.videos[0].id, "video-0");
   assert.equal(result.accountMetricSnapshots.length, 2);
+  assert.equal(result.lastSuccessfulSyncAt, "2026-07-26T01:18:48Z");
   assert.match(queries[1], /sr\.status = 'succeeded'/);
   assert.match(queries[1], /v\.published_at >= TIMESTAMPTZ '2025-10-01 00:00:00\+00'/);
   assert.match(queries[1], /ORDER BY v\.published_at DESC/);
   assert.match(queries[2], /sr\.status = 'succeeded'/);
+  assert.match(queries[3], /sr\.status = 'succeeded'/);
+  assert.match(queries[3], /sr\.platform = 'tiktok'/);
+  assert.match(queries[3], /initial_display_api/);
+  assert.match(queries[3], /ORDER BY sr\.finished_at DESC/);
   assert.doesNotMatch(queries.join("\n"), /LIMIT 100/);
 }
 
@@ -86,20 +92,39 @@ function testAdapterPreservesAllPersistedRows() {
     view_count: index
   }));
   const snapshot = context.window.NORTHSTAR_LIVE_ADAPTER.buildLiveSnapshot({
-    mePayload: { profile: { open_id: "fixture-open-id", display_name: "Fixture Creator", follower_count: 123300 } },
+    mePayload: { profile: { open_id: "fixture-open-id", display_name: "Fixture Creator", follower_count: 123359 } },
     videosPayload: {
       source: "northstar_postgres",
       videos,
       accountMetricSnapshots: [
         { snapshot_at: "2026-07-24T19:13:00Z", follower_count: 123156, sync_status: "succeeded" },
         { snapshot_at: "2026-07-26T01:18:48Z", follower_count: 123300, sync_status: "succeeded" }
-      ]
-    }
+      ],
+      lastSuccessfulSyncAt: "2026-07-26T01:18:48Z"
+    },
+    syncedAt: "2026-07-26T01:18:48Z"
   });
   assert.equal(snapshot.videos.length, 806);
   assert.equal(snapshot.account.followers, 123300);
   assert.equal(snapshot.account.followerSnapshots.length, 2);
   assert.equal(snapshot.videos[0].publishedAt, videos[0].published_at);
+  assert.equal(snapshot.syncedAt, "2026-07-26T01:18:48Z");
+}
+
+function testPersistedSnapshotOmitsBrowserTimeFallback() {
+  const adapterSource = fs.readFileSync(path.join(dashboardDir, "live-data-adapter.js"), "utf8");
+  const context = { window: { NORTHSTAR_LIVE_PERIOD: period } };
+  vm.runInNewContext(adapterSource, context);
+  const snapshot = context.window.NORTHSTAR_LIVE_ADAPTER.buildLiveSnapshot({
+    mePayload: { profile: { open_id: "fixture-open-id", follower_count: 123359 } },
+    videosPayload: {
+      source: "northstar_postgres",
+      videos: [],
+      accountMetricSnapshots: []
+    },
+    syncedAt: null
+  });
+  assert.equal(snapshot.syncedAt, null);
 }
 
 function response(payload) {
@@ -177,7 +202,12 @@ async function flushPromises(times = 12) {
   }
 }
 
-async function runActualEntrypoint({ sessionConnected = true, omitClient = false, failProfile = false } = {}) {
+async function runActualEntrypoint({
+  sessionConnected = true,
+  omitClient = false,
+  failProfile = false,
+  lastSuccessfulSyncAt = "2026-07-26T01:18:48Z"
+} = {}) {
   const indexSource = fs.readFileSync(path.join(dashboardDir, "index.html"), "utf8");
   const scripts = [...indexSource.matchAll(/<script\s+src="([^"]+)"/g)].map((match) => match[1]);
   assert.deepEqual(scripts, [
@@ -236,7 +266,7 @@ async function runActualEntrypoint({ sessionConnected = true, omitClient = false
           profile: {
             open_id: "fixture-open-id",
             display_name: "Fixture Creator",
-            follower_count: 123300,
+            follower_count: 123359,
             following_count: 500,
             likes_count: 900000,
             video_count: 2062
@@ -251,7 +281,8 @@ async function runActualEntrypoint({ sessionConnected = true, omitClient = false
             { snapshot_at: "2026-07-24T19:13:00Z", follower_count: 123156, sync_status: "succeeded" },
             { snapshot_at: "2026-07-24T23:54:00Z", follower_count: 123158, sync_status: "failed" },
             { snapshot_at: "2026-07-26T01:18:48Z", follower_count: 123300, sync_status: "succeeded" }
-          ]
+          ],
+          lastSuccessfulSyncAt
         });
       }
       throw new Error(`Unexpected request: ${url}`);
@@ -287,6 +318,7 @@ async function testActualEntrypointUsesFreshPersistedData() {
   assert.equal(adapterCalls, 1);
   assert.match(elements.content.innerHTML, /123,300/);
   assert.match(elements.content.innerHTML, /\+144 this month/);
+  assert.match(elements.syncStrip.innerHTML, /Last Sync: 7\/25\/2026, 9:18:48 PM/);
 
   documentListeners.click({
     target: {
@@ -304,6 +336,11 @@ async function testActualEntrypointUsesFreshPersistedData() {
   const newestIndex = elements.content.innerHTML.indexOf("July 25 persisted newest");
   const olderJulyIndex = elements.content.innerHTML.indexOf("Persisted July video 1");
   assert.ok(newestIndex >= 0 && olderJulyIndex >= 0 && newestIndex < olderJulyIndex);
+}
+
+async function testMissingPersistedSyncTimeStaysNotSynced() {
+  const { elements } = await runActualEntrypoint({ lastSuccessfulSyncAt: null });
+  assert.match(elements.syncStrip.innerHTML, /Last Sync: Not synced/);
 }
 
 async function testFirefoxDisconnectedSessionStaysInDemoMode() {
@@ -337,9 +374,11 @@ async function testAuthenticatedBootstrapFailureIsNotShownAsLive() {
 (async () => {
   testEasternMonthAndNewest();
   testFollowerSummaryIgnoresFailedRuns();
+  testPersistedSnapshotOmitsBrowserTimeFallback();
   await testPersistedReadIsCompleteAndSuccessfulOnly();
   testAdapterPreservesAllPersistedRows();
   await testActualEntrypointUsesFreshPersistedData();
+  await testMissingPersistedSyncTimeStaysNotSynced();
   await testFirefoxDisconnectedSessionStaysInDemoMode();
   await testSafariBlockedClientFailsVisiblyWithoutRequests();
   await testAuthenticatedBootstrapFailureIsNotShownAsLive();

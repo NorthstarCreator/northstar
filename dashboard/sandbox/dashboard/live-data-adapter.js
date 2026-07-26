@@ -119,6 +119,13 @@
         videoCount: number(item.video_count),
         syncStatus: item.sync_status
       }));
+    if (videosPayload?.source === "northstar_postgres" && account.followerSnapshots.length) {
+      const latestPersistedFollowers = [...account.followerSnapshots]
+        .filter((item) => !item.syncStatus || item.syncStatus === "succeeded")
+        .sort((a, b) => new Date(a.snapshotAt).getTime() - new Date(b.snapshotAt).getTime())
+        .at(-1);
+      if (latestPersistedFollowers) account.followers = latestPersistedFollowers.followerCount;
+    }
     const rawVideos = Array.isArray(videosPayload?.videos) ? videosPayload.videos : [];
     const seen = new Set();
     const videos = rawVideos
@@ -135,7 +142,7 @@
       source: videosPayload?.source === "northstar_postgres"
         ? { ...createDisplaySource(), name: "Northstar Persisted TikTok Data", type: "Live Sandbox", shortName: "Neon + Display API" }
         : createDisplaySource(),
-      syncedAt: syncedAt || new Date().toISOString(),
+      syncedAt: syncedAt || null,
       unsupported: [
         "TikTok Shop GMV, commissions, orders, samples, Creator Rewards, TikTok GO, and audience demographics are demo-only in this Sandbox phase."
       ]
