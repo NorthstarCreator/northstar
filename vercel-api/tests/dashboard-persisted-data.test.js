@@ -406,11 +406,23 @@ async function flushPromises(times = 12) {
   }
 }
 
+function deferred() {
+  let resolve;
+  let reject;
+  const promise = new Promise((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, reject, resolve };
+}
+
 async function runActualEntrypoint({
   sessionConnected = true,
   omitClient = false,
   failProfile = false,
-  lastSuccessfulSyncAt = "2026-07-26T01:18:48Z"
+  lastSuccessfulSyncAt = "2026-07-26T01:18:48Z",
+  holdSession = false,
+  videoRequestHandler = null
 } = {}) {
   const indexSource = fs.readFileSync(path.join(dashboardDir, "index.html"), "utf8");
   const scripts = [...indexSource.matchAll(/<script\s+src="([^"]+)"/g)].map((match) => match[1]);
@@ -442,6 +454,19 @@ async function runActualEntrypoint({
   };
   const freshVideos = persistedVideoFixture();
   const requests = [];
+  const sessionGate = holdSession ? deferred() : null;
+  let videoRequestCount = 0;
+  const videoPayload = () => ({
+    source: "northstar_postgres_live_overlay",
+    videos: freshVideos.map((video) => ({ ...video, live_status: "refreshed", live_read_at: "2026-07-26T14:00:00Z" })),
+    accountMetricSnapshots: [
+      { snapshot_at: "2026-07-24T19:13:00Z", follower_count: 123156, sync_status: "succeeded" },
+      { snapshot_at: "2026-07-24T23:54:00Z", follower_count: 123158, sync_status: "failed" },
+      { snapshot_at: "2026-07-26T01:18:48Z", follower_count: 123300, sync_status: "succeeded" }
+    ],
+    lastSuccessfulSyncAt,
+    overlay: { status: "live", readAt: "2026-07-26T14:00:00Z", requestCount: 4 }
+  });
   const window = {
     location: { search: "", href: "https://northstar-dashboard-sandbox.vercel.app/" }
   };
@@ -461,6 +486,7 @@ async function runActualEntrypoint({
     fetch: async (url, options = {}) => {
       requests.push({ url, options });
       if (url.endsWith("/session")) {
+        if (sessionGate) return sessionGate.promise;
         return response({ connected: sessionConnected, csrfToken: "fixture-csrf", session: { authenticated: sessionConnected } });
       }
       if (url.endsWith("/tiktok/me")) {
@@ -478,17 +504,11 @@ async function runActualEntrypoint({
         });
       }
       if (new URL(url).pathname === "/tiktok/videos") {
-        return response({
-          source: "northstar_postgres_live_overlay",
-          videos: freshVideos.map((video) => ({ ...video, live_status: "refreshed", live_read_at: "2026-07-26T14:00:00Z" })),
-          accountMetricSnapshots: [
-            { snapshot_at: "2026-07-24T19:13:00Z", follower_count: 123156, sync_status: "succeeded" },
-            { snapshot_at: "2026-07-24T23:54:00Z", follower_count: 123158, sync_status: "failed" },
-            { snapshot_at: "2026-07-26T01:18:48Z", follower_count: 123300, sync_status: "succeeded" }
-          ],
-          lastSuccessfulSyncAt,
-          overlay: { status: "live", readAt: "2026-07-26T14:00:00Z", requestCount: 4 }
-        });
+        videoRequestCount += 1;
+        const payload = videoPayload();
+        return videoRequestHandler
+          ? videoRequestHandler({ count: videoRequestCount, payload, url })
+          : response(payload);
       }
       throw new Error(`Unexpected request: ${url}`);
     }
@@ -509,9 +529,22 @@ async function runActualEntrypoint({
       window.NORTHSTAR_SANDBOX_DATA.videos = legacyCachedFixture(freshVideos);
     }
   }
-  await flushPromises();
+  await flushPromises(holdSession ? 4 : 12);
 
-  return { adapterCalls, documentListeners, elements, freshVideos, requests };
+  return {
+    adapterCalls,
+    documentListeners,
+    elements,
+    freshVideos,
+    requests,
+    flush: flushPromises,
+    resolveSession(payload = { connected: sessionConnected, csrfToken: "fixture-csrf", session: { authenticated: sessionConnected } }) {
+      sessionGate?.resolve(response(payload));
+    },
+    rejectSession(error = new Error("fixture_session_failure")) {
+      sessionGate?.reject(error);
+    }
+  };
 }
 
 async function testActualEntrypointUsesFreshPersistedData() {
@@ -558,7 +591,83 @@ async function testFirefoxDisconnectedSessionStaysInDemoMode() {
   assert.match(elements.syncStrip.innerHTML, /Demo Prototype/);
   assert.match(elements.syncStrip.innerHTML, /Last Sync: Not synced/);
   assert.match(elements.content.innerHTML, /145,650/);
+  assert.doesNotMatch(elements.content.innerHTML, /· Live/);
   assert.doesNotMatch(elements.syncStrip.innerHTML, /TikTok Sandbox Connected/);
+}
+
+async function testStartupDoesNotRenderDemoBeforeSessionResolves() {
+  const runtime = await runActualEntrypoint({ holdSession: true });
+  assert.deepEqual(runtime.requests.map(({ url }) => new URL(url).pathname), ["/session"]);
+  assert.match(runtime.elements.syncStrip.innerHTML, /Checking live connection/);
+  assert.match(runtime.elements.content.innerHTML, /Checking live connection/);
+  assert.match(runtime.elements.accountLabel.textContent, /Checking account/);
+  assert.doesNotMatch(runtime.elements.syncStrip.innerHTML, /Demo Prototype/);
+  assert.doesNotMatch(runtime.elements.content.innerHTML, /145,650|644,700|\$1,387/);
+  assert.doesNotMatch(runtime.elements.accountLabel.textContent, /All Accounts/);
+
+  runtime.resolveSession({ connected: false, csrfToken: "fixture-csrf", session: { authenticated: false } });
+  await runtime.flush();
+  assert.match(runtime.elements.syncStrip.innerHTML, /Demo Prototype/);
+  assert.match(runtime.elements.content.innerHTML, /145,650/);
+  assert.doesNotMatch(runtime.elements.content.innerHTML, /· Live/);
+}
+
+function dispatchDateRange(listener, id) {
+  listener({
+    target: {
+      closest(selector) {
+        if (selector === "[data-page]") return null;
+        if (selector === "[data-action]") return { dataset: { action: "date-range", id } };
+        return null;
+      }
+    }
+  });
+}
+
+async function testLateOverlayFailureCannotReplaceAuthenticatedStateWithDemo() {
+  const delayedSecondVideos = deferred();
+  const runtime = await runActualEntrypoint({
+    videoRequestHandler({ count, payload }) {
+      if (count === 2) return delayedSecondVideos.promise;
+      return response(payload);
+    }
+  });
+  assert.match(runtime.elements.content.innerHTML, /123,359/);
+  assert.match(runtime.elements.syncStrip.innerHTML, /<strong>TikTok Sandbox<\/strong>/);
+
+  dispatchDateRange(runtime.documentListeners.click, "week");
+  await runtime.flush(4);
+  assert.match(runtime.elements.syncStrip.innerHTML, /Refreshing live data/);
+  assert.match(runtime.elements.content.innerHTML, /123,359/);
+  assert.doesNotMatch(runtime.elements.syncStrip.innerHTML, /Demo Prototype/);
+
+  dispatchDateRange(runtime.documentListeners.click, "month");
+  delayedSecondVideos.reject(new Error("fixture_obsolete_overlay_failure"));
+  await runtime.flush(16);
+
+  assert.match(runtime.elements.syncStrip.innerHTML, /<strong>TikTok Sandbox<\/strong>/);
+  assert.match(runtime.elements.content.innerHTML, /123,359/);
+  assert.match(runtime.elements.accountLabel.textContent, /Fixture Creator/);
+  assert.doesNotMatch(runtime.elements.syncStrip.innerHTML, /Demo Prototype/);
+  assert.doesNotMatch(runtime.elements.content.innerHTML, /145,650|644,700|\$1,387/);
+  assert.equal(runtime.requests.filter(({ url }) => new URL(url).pathname === "/tiktok/sync").length, 0);
+}
+
+async function testOverlayFailureRetainsAuthenticatedSnapshotAsStale() {
+  const runtime = await runActualEntrypoint({
+    videoRequestHandler({ count, payload }) {
+      if (count === 2) throw new Error("fixture_overlay_failure");
+      return response(payload);
+    }
+  });
+  dispatchDateRange(runtime.documentListeners.click, "week");
+  await runtime.flush();
+  assert.match(runtime.elements.syncStrip.innerHTML, /TikTok Sandbox · Stale/);
+  assert.match(runtime.elements.syncStrip.innerHTML, /Existing authenticated information remains available/);
+  assert.match(runtime.elements.content.innerHTML, /123,359/);
+  assert.doesNotMatch(runtime.elements.syncStrip.innerHTML, /Demo Prototype/);
+  assert.doesNotMatch(runtime.elements.syncStrip.innerHTML, /data-action="sync-tiktok" disabled/);
+  assert.doesNotMatch(runtime.elements.syncStrip.innerHTML, /data-action="disconnect-tiktok" disabled/);
 }
 
 async function testSafariBlockedClientFailsVisiblyWithoutRequests() {
@@ -598,6 +707,9 @@ async function testAuthenticatedBootstrapFailureIsNotShownAsLive() {
   await testActualEntrypointUsesFreshPersistedData();
   await testMissingPersistedSyncTimeStaysNotSynced();
   await testFirefoxDisconnectedSessionStaysInDemoMode();
+  await testStartupDoesNotRenderDemoBeforeSessionResolves();
+  await testLateOverlayFailureCannotReplaceAuthenticatedStateWithDemo();
+  await testOverlayFailureRetainsAuthenticatedSnapshotAsStale();
   await testSafariBlockedClientFailsVisiblyWithoutRequests();
   await testAuthenticatedBootstrapFailureIsNotShownAsLive();
   console.log("Dashboard persisted-data tests passed.");

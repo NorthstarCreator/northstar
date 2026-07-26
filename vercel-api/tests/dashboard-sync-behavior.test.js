@@ -66,21 +66,36 @@ function testSyncPendingControlsBothButtonsAndDoubleClicks() {
   assert.equal((appSource.match(/!state\.live\.syncPending/g) || []).length, 2);
   assert.doesNotMatch(appSource, /state\.live\.loading \? "Syncing\.\.\."/);
   assert.match(appSource, /if \(state\.live\.syncPending\) return "Syncing";/);
-  assert.match(appSource, /if \(state\.live\.loading \|\| state\.live\.initializing\) return "Loading profile";/);
+  assert.match(appSource, /state\.live\.phase === "refreshing"/);
+  assert.match(appSource, /Refreshing live data/);
 }
 
-function testLatestReadSelectionIsQueuedWhileLoading() {
-  assert.match(appSource, /readRefreshQueued: false/);
-  assert.match(appSource, /if \(!preferSync && state\.live\.loading\) \{[\s\S]*state\.live\.readRefreshQueued = true;[\s\S]*return;/);
-  assert.match(appSource, /const refreshQueued = state\.live\.readRefreshQueued;[\s\S]*state\.live\.readRefreshQueued = false;/);
-  assert.match(appSource, /if \(refreshQueued\) Promise\.resolve\(\)\.then\(\(\) => loadLiveTikTok\(\)\);/);
+function testLatestReadSelectionUsesGenerationAndSelectionKey() {
+  assert.match(appSource, /readRequestGeneration: 0/);
+  assert.match(appSource, /queuedReadRequest: null/);
+  assert.match(appSource, /generation: \+\+state\.live\.readRequestGeneration/);
+  assert.match(appSource, /selectionKey: currentLiveSelectionKey\(\)/);
+  assert.match(appSource, /request\.generation === state\.live\.readRequestGeneration/);
+  assert.match(appSource, /request\.selectionKey === currentLiveSelectionKey\(\)/);
+  assert.match(appSource, /if \(!preferSync && !isCurrentLiveRead\(readRequest\)\) return false;/);
+  assert.match(appSource, /state\.live\.queuedReadRequest = readRequest/);
+  assert.match(appSource, /queuedRequest\.selectionKey === currentLiveSelectionKey\(\)/);
+}
+
+function testDemoRequiresExplicitDisconnectedSession() {
+  assert.match(appSource, /function enterExplicitDemoMode\(session = null\)/);
+  assert.match(appSource, /if \(session\.connected\) \{[\s\S]*await loadLiveTikTok\(\);[\s\S]*\} else \{[\s\S]*enterExplicitDemoMode\(session\.session \|\| null\)/);
+  assert.match(appSource, /shouldHideDataUntilConnectionResolves/);
+  assert.match(appSource, /Checking live connection/);
+  assert.doesNotMatch(appSource, /catch \(error\) \{[\s\S]{0,300}phase = "demo"/);
 }
 
 (async () => {
   await testReadOnlyInitializationNeverPostsSync();
   await testExplicitSyncIsTheOnlyPostPath();
   testSyncPendingControlsBothButtonsAndDoubleClicks();
-  testLatestReadSelectionIsQueuedWhileLoading();
+  testLatestReadSelectionUsesGenerationAndSelectionKey();
+  testDemoRequiresExplicitDisconnectedSession();
   console.log("Dashboard sync behavior tests passed.");
 })().catch((error) => {
   console.error(error);

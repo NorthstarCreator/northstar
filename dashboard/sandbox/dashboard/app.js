@@ -33,7 +33,11 @@
       sessionConnected: false,
       connected: false,
       loading: false,
-      readRefreshQueued: false,
+      readInFlight: false,
+      readRequestGeneration: 0,
+      activeReadGeneration: 0,
+      queuedReadRequest: null,
+      sessionRequestGeneration: 0,
       syncPending: false,
       error: "",
       session: null,
@@ -144,6 +148,12 @@
   const itemSources = (item) => Array.isArray(item?.sourceIds) ? item.sourceIds : [];
   const isLiveAccountId = (id = state.accountId) => !!state.live.snapshot?.account && id === state.live.snapshot.account.id;
   const isLiveConnected = () => !!state.live.connected;
+  const hasLiveSnapshot = () => !!state.live.snapshot?.account;
+  const isExplicitDemoMode = () => state.live.phase === "demo" && state.live.sessionConnected === false;
+  const shouldHideDataUntilConnectionResolves = () => !hasLiveSnapshot() && !isExplicitDemoMode();
+  const isAuthenticatedSessionAvailable = () => state.live.sessionConnected
+    && state.live.phase !== "client_unavailable"
+    && !(state.live.phase === "api_unavailable" && !hasLiveSnapshot());
   const realRevenueSourceNames = new Set(["tiktok_shop_affiliate_api", "official_tiktok_shop_report", "creator_rewards_source", "tiktok_go_source"]);
 
   function revenueRecordSource(item = {}) {
@@ -188,39 +198,83 @@
     return `TikTok Sandbox returned ${value.replaceAll("_", " ")}. No sensitive details were exposed.`;
   }
 
-  async function loadLiveTikTok({ preferSync = false } = {}) {
+  function currentLiveSelectionKey() {
+    return [state.accountId, state.dateRange, state.customStart, state.customEnd].join("|");
+  }
+
+  function createLiveReadRequest() {
+    return {
+      generation: ++state.live.readRequestGeneration,
+      selectionKey: currentLiveSelectionKey(),
+      period: window.NORTHSTAR_LIVE_PERIOD.range({
+        kind: state.dateRange,
+        customStart: state.customStart,
+        customEnd: state.customEnd
+      })
+    };
+  }
+
+  function isCurrentLiveRead(request) {
+    return request.generation === state.live.readRequestGeneration
+      && request.selectionKey === currentLiveSelectionKey();
+  }
+
+  function enterExplicitDemoMode(session = null) {
+    state.live.readRequestGeneration += 1;
+    state.live.queuedReadRequest = null;
+    state.live.session = session;
+    state.live.sessionConnected = false;
+    state.live.connected = false;
+    state.live.phase = "demo";
+    state.live.safeCode = "";
+    state.live.snapshot = null;
+    state.live.lastSyncAt = null;
+    state.live.error = "";
+    state.accountId = "all";
+    rebuildDataFromLive();
+  }
+
+  async function loadLiveTikTok({ preferSync = false, request = null } = {}) {
     const client = window.NORTHSTAR_TIKTOK_CLIENT;
     const adapter = window.NORTHSTAR_LIVE_ADAPTER;
     if (!client || !adapter) return false;
     if (preferSync && state.live.syncPending) return;
-    if (!preferSync && state.live.loading) {
-      state.live.readRefreshQueued = true;
-      return;
+    const readRequest = request || createLiveReadRequest();
+    if (!preferSync && state.live.readInFlight) {
+      state.live.queuedReadRequest = readRequest;
+      if (hasLiveSnapshot()) {
+        state.live.connected = true;
+        state.live.phase = "refreshing";
+        state.live.error = "Refreshing live data…";
+      }
+      render();
+      return false;
     }
     if (preferSync) state.live.syncPending = true;
+    if (!preferSync) {
+      state.live.readInFlight = true;
+      state.live.activeReadGeneration = readRequest.generation;
+    }
     state.live.loading = true;
-    state.live.phase = "loading";
+    state.live.phase = hasLiveSnapshot() ? "refreshing" : "loading";
+    if (hasLiveSnapshot()) state.live.connected = true;
     state.live.safeCode = "";
-    state.live.error = "";
+    state.live.error = hasLiveSnapshot() ? "Refreshing live data…" : "";
     render();
     try {
       const mePayload = preferSync ? await client.sync() : await client.me();
       if (!mePayload.connected && !mePayload.profile) {
         throw new Error("profile_unavailable");
       }
-      const period = window.NORTHSTAR_LIVE_PERIOD.range({
-        kind: state.dateRange,
-        customStart: state.customStart,
-        customEnd: state.customEnd
-      });
       const videosPayload = preferSync
-        ? await client.videos(period)
-        : (mePayload.videos ? mePayload : await client.videos(period));
+        ? await client.videos(readRequest.period)
+        : (mePayload.videos ? mePayload : await client.videos(readRequest.period));
       const snapshot = adapter.buildLiveSnapshot({
         mePayload,
         videosPayload,
         syncedAt: videosPayload.lastSuccessfulSyncAt || null
       });
+      if (!preferSync && !isCurrentLiveRead(readRequest)) return false;
       if (snapshot) {
         state.live.connected = true;
         state.live.sessionConnected = true;
@@ -235,65 +289,80 @@
       } else throw new Error("snapshot_unavailable");
       return true;
     } catch (error) {
-      state.live.connected = false;
-      state.live.phase = "api_unavailable";
-      state.live.safeCode = "api_unavailable";
-      state.live.error = state.live.snapshot
-        ? "Live connection error. Existing information is stale."
-        : "Live connection error. Account information is unavailable.";
+      if (preferSync || isCurrentLiveRead(readRequest)) {
+        state.live.connected = hasLiveSnapshot() && state.live.sessionConnected;
+        state.live.phase = hasLiveSnapshot() ? "stale" : "api_unavailable";
+        state.live.safeCode = "api_unavailable";
+        state.live.error = hasLiveSnapshot()
+          ? "Live refresh failed. Existing authenticated information remains available and is marked stale."
+          : "Live connection error. Account information is unavailable.";
+      }
       return false;
     } finally {
-      const refreshQueued = state.live.readRefreshQueued;
-      state.live.readRefreshQueued = false;
       if (preferSync) state.live.syncPending = false;
-      state.live.loading = false;
-      rebuildDataFromLive();
-      render();
-      if (refreshQueued) Promise.resolve().then(() => loadLiveTikTok());
+      if (preferSync || state.live.activeReadGeneration === readRequest.generation) {
+        state.live.loading = false;
+        if (!preferSync) state.live.readInFlight = false;
+        rebuildDataFromLive();
+        render();
+        const queuedRequest = state.live.queuedReadRequest;
+        state.live.queuedReadRequest = null;
+        if (!preferSync && queuedRequest) {
+          const latestRequest = queuedRequest.selectionKey === currentLiveSelectionKey()
+            ? queuedRequest
+            : createLiveReadRequest();
+          Promise.resolve().then(() => loadLiveTikTok({ request: latestRequest }));
+        }
+      }
     }
   }
 
   async function bootstrapLiveTikTok() {
     const client = window.NORTHSTAR_TIKTOK_CLIENT;
     const adapter = window.NORTHSTAR_LIVE_ADAPTER;
+    const sessionGeneration = ++state.live.sessionRequestGeneration;
     if (!client || !adapter) {
       state.live.phase = "client_unavailable";
       state.live.safeCode = "client_unavailable";
-      state.live.sessionConnected = false;
-      state.live.connected = false;
-      state.live.snapshot = null;
-      state.live.lastSyncAt = null;
+      state.live.connected = hasLiveSnapshot() && state.live.sessionConnected;
       state.live.error = "Live connection unavailable (client_unavailable).";
       state.live.initializing = false;
       rebuildDataFromLive();
       render();
       return;
     }
+    state.live.initializing = !hasLiveSnapshot();
+    state.live.phase = hasLiveSnapshot() ? "refreshing" : "checking";
+    if (hasLiveSnapshot()) state.live.connected = true;
     state.live.error = liveStatusFromUrl();
+    render();
     try {
       const session = await client.bootstrapSession();
+      if (sessionGeneration !== state.live.sessionRequestGeneration) return;
       state.live.session = session.session || null;
       state.live.sessionConnected = !!session.connected;
-      state.live.connected = false;
-      state.live.snapshot = null;
-      state.live.lastSyncAt = null;
-      rebuildDataFromLive();
       if (session.connected) {
-        state.live.phase = "loading";
+        state.live.connected = hasLiveSnapshot();
+        state.live.phase = hasLiveSnapshot() ? "refreshing" : "loading";
         await loadLiveTikTok();
       } else {
-        state.live.phase = "demo";
-        state.live.safeCode = "";
-        state.live.error = "";
+        enterExplicitDemoMode(session.session || null);
       }
     } catch (error) {
-      state.live.connected = false;
-      state.live.phase = "api_unavailable";
-      state.live.safeCode = "api_unavailable";
-      state.live.error = "Live connection error. Account information is unavailable.";
+      if (sessionGeneration === state.live.sessionRequestGeneration) {
+        state.live.connected = hasLiveSnapshot() && state.live.sessionConnected;
+        state.live.phase = hasLiveSnapshot() ? "stale" : "api_unavailable";
+        state.live.safeCode = "api_unavailable";
+        state.live.error = hasLiveSnapshot()
+          ? "Live session refresh failed. Existing authenticated information remains available and is marked stale."
+          : "Live connection error. Account information is unavailable.";
+      }
     } finally {
-      state.live.initializing = false;
-      render();
+      if (sessionGeneration === state.live.sessionRequestGeneration) {
+        state.live.initializing = false;
+        rebuildDataFromLive();
+        render();
+      }
     }
   }
 
@@ -875,9 +944,12 @@
 
   function liveModeBadge() {
     if (state.live.syncPending) return `<span class="status-pill loading">Syncing TikTok Sandbox</span>`;
-    if (state.live.loading || state.live.initializing) return `<span class="status-pill loading">Loading TikTok profile</span>`;
+    if (state.live.phase === "checking") return `<span class="status-pill loading">Checking live connection…</span>`;
+    if (state.live.phase === "refreshing") return `<span class="status-pill loading">Refreshing live data…</span>`;
+    if ((state.live.loading || state.live.initializing) && !hasLiveSnapshot()) return `<span class="status-pill loading">Loading TikTok profile</span>`;
     if (state.live.phase === "client_unavailable") return `<span class="status-pill demo">Live connection unavailable</span>`;
     if (state.live.phase === "api_unavailable") return `<span class="status-pill demo">Live data unavailable</span>`;
+    if (state.live.phase === "stale") return `<span class="status-pill connected">TikTok Sandbox Connected · Stale</span>`;
     if (isLiveConnected()) return `<span class="status-pill connected">TikTok Sandbox Connected</span>`;
     return `<span class="status-pill demo">Demo Mode</span>`;
   }
@@ -887,16 +959,25 @@
     const lastSync = state.live.lastSyncAt
       ? new Date(state.live.lastSyncAt).toLocaleString()
       : "Not synced";
-    const message = state.live.error || (isLiveConnected()
+    const message = state.live.error || (state.live.phase === "checking"
+      ? "Checking live connection…"
+      : isLiveConnected()
       ? "Live profile, stats, and public videos come from approved TikTok Display API Sandbox scopes."
       : "Demo records are visible until a TikTok Sandbox account is authorized.");
     const clientReady = !!window.NORTHSTAR_TIKTOK_CLIENT;
     const unavailable = ["client_unavailable", "api_unavailable"].includes(state.live.phase);
-    const modeLabel = state.live.phase === "client_unavailable"
+    const modeLabel = state.live.phase === "checking"
+      ? "Checking live connection…"
+      : state.live.phase === "refreshing"
+        ? "TikTok Sandbox · Refreshing"
+        : state.live.phase === "stale"
+          ? "TikTok Sandbox · Stale"
+          : state.live.phase === "client_unavailable"
       ? "Live connection unavailable"
       : state.live.phase === "api_unavailable"
         ? (state.live.snapshot ? "Stale live data" : "Live data unavailable")
         : isLiveConnected() ? "TikTok Sandbox" : "Demo Prototype";
+    const authenticated = isAuthenticatedSessionAvailable();
     els.syncStrip.innerHTML = `
       <span>Data Mode</span>
       <strong>${modeLabel}</strong>
@@ -905,8 +986,8 @@
       <span class="sync-time">Last Sync: ${escapeHtml(lastSync)}</span>
       <span class="sync-actions">
         <button class="secondary-button tiny-button" type="button" data-action="connect-tiktok" ${clientReady && !unavailable ? "" : "disabled"}>${isLiveConnected() ? "Reconnect TikTok" : "Connect TikTok"}</button>
-        <button class="secondary-button tiny-button" type="button" data-action="sync-tiktok" ${isLiveConnected() && !state.live.syncPending ? "" : "disabled"}>${state.live.syncPending ? "Syncing..." : "Sync Now"}</button>
-        <button class="secondary-button tiny-button" type="button" data-action="disconnect-tiktok" ${clientReady && state.live.sessionConnected && state.live.phase !== "client_unavailable" ? "" : "disabled"}>Disconnect</button>
+        <button class="secondary-button tiny-button" type="button" data-action="sync-tiktok" ${authenticated && !state.live.syncPending ? "" : "disabled"}>${state.live.syncPending ? "Syncing..." : "Sync Now"}</button>
+        <button class="secondary-button tiny-button" type="button" data-action="disconnect-tiktok" ${clientReady && authenticated ? "" : "disabled"}>Disconnect</button>
       </span>
     `;
   }
@@ -1020,7 +1101,7 @@
         </aside>
       </section>
       <section class="metric-grid primary-metrics">
-        ${metricCard("Followers", number.format(total.followers), `+${number.format(periodFollowerGain())} ${periodLabel()} · Live`, "white", 'data-page="audience"', "followers")}
+        ${metricCard("Followers", number.format(total.followers), isLiveConnected() ? `+${number.format(periodFollowerGain())} ${periodLabel()} · Live` : `+${number.format(periodFollowerGain())} ${periodLabel()} · Demo data`, "white", 'data-page="audience"', "followers")}
         ${metricCard("Views", number.format(total.views), `${number.format(Math.round(total.views / Math.max(1, total.videos)))} avg/video`, "white", 'data-page="view-performance"', "views")}
         ${metricCard("Videos Posted", total.videos, `Posted this month<br>Goal: 32 videos/month`, "white", 'data-page="videos"', "videos")}
         ${metricCard("Total Earnings", money.format(total.earnings), earningsModeLabel(), "white", 'data-page="earnings"', "earnings")}
@@ -1401,7 +1482,7 @@
             ${connectionField("Videos retrieved", `${number.format(live?.videos?.length || 0)} public videos`)}
           </div>
           <p class="source-note">Supplies profile, followers, account statistics, public videos, views, likes, comments, and shares. It does not supply Shop products, orders, GMV, commissions, samples, Creator Rewards, or TikTok GO.</p>
-          <div class="button-row"><button class="primary-button" type="button" data-action="connect-tiktok">${isLiveConnected() ? "Reconnect Content" : "Connect Content"}</button><button class="secondary-button" type="button" data-action="sync-tiktok" ${isLiveConnected() && !state.live.syncPending ? "" : "disabled"}>${state.live.syncPending ? "Syncing..." : "Sync Now"}</button><button class="secondary-button" type="button" data-action="disconnect-tiktok" ${isLiveConnected() ? "" : "disabled"}>Disconnect</button></div>
+          <div class="button-row"><button class="primary-button" type="button" data-action="connect-tiktok">${isAuthenticatedSessionAvailable() ? "Reconnect Content" : "Connect Content"}</button><button class="secondary-button" type="button" data-action="sync-tiktok" ${isAuthenticatedSessionAvailable() && !state.live.syncPending ? "" : "disabled"}>${state.live.syncPending ? "Syncing..." : "Sync Now"}</button><button class="secondary-button" type="button" data-action="disconnect-tiktok" ${isAuthenticatedSessionAvailable() ? "" : "disabled"}>Disconnect</button></div>
         </article>
         <article class="section integration-card pending">
           ${heading("TikTok Shop", "Commerce, products, orders, and commissions", "Data Hub")}
@@ -1596,13 +1677,20 @@
     const activeNav = ["audience", "view-performance"].includes(state.page) ? "brief" : ["source-detail", "order-detail"].includes(state.page) ? "earnings" : state.page;
     els.nav.innerHTML = navItems.map(([id, label]) => `<button class="${activeNav === id ? "active" : ""}" type="button" data-page="${id}"><span class="nav-icon nav-${id}" aria-hidden="true">${navIcons[id]}</span><span>${label}</span></button>`).join("");
     const active = account();
-    els.accountAvatar.className = `avatar ${state.accountId === "all" ? "avatar-all" : `avatar-${active?.id || "all"}`}`;
-    els.accountAvatar.innerHTML = state.accountId === "all"
-      ? "<i>RR</i><i>TT</i>"
-      : active?.avatarUrl ? `<img src="${escapeAttr(active.avatarUrl)}" alt="">` : `<i>${active?.initials || "NS"}</i>`;
-    els.accountLabel.textContent = accountName();
+    const connectionPending = shouldHideDataUntilConnectionResolves();
+    els.accountAvatar.className = `avatar ${connectionPending ? "avatar-all" : state.accountId === "all" ? "avatar-all" : `avatar-${active?.id || "all"}`}`;
+    els.accountAvatar.innerHTML = connectionPending
+      ? "<i>NS</i>"
+      : state.accountId === "all"
+        ? "<i>RR</i><i>TT</i>"
+        : active?.avatarUrl ? `<img src="${escapeAttr(active.avatarUrl)}" alt="">` : `<i>${active?.initials || "NS"}</i>`;
+    els.accountLabel.textContent = connectionPending
+      ? (state.live.phase === "checking" || state.live.initializing ? "Checking account…" : "Account unavailable")
+      : accountName();
     els.dateLabel.textContent = state.dateRange === "custom" ? `${formatBriefDate(state.customStart)} → ${formatBriefDate(state.customEnd)}` : readableRange();
-    els.accountMenu.innerHTML = [`<button role="option" data-action="account" data-id="all">${identity("all")}<span>All Accounts<small>Combined view</small></span></button>`, ...list("accounts").map((item) => `<button role="option" data-action="account" data-id="${item.id}">${identity(item.id)}<span>${item.name}<small>${item.focus}</small></span></button>`)].join("");
+    els.accountMenu.innerHTML = connectionPending
+      ? `<span class="source-note">Account choices appear after the live connection check completes.</span>`
+      : [`<button role="option" data-action="account" data-id="all">${identity("all")}<span>All Accounts<small>Combined view</small></span></button>`, ...list("accounts").map((item) => `<button role="option" data-action="account" data-id="${item.id}">${identity(item.id)}<span>${item.name}<small>${item.focus}</small></span></button>`)].join("");
     const dateOptions = els.dateMenu.querySelector(".date-options");
     if (dateOptions) dateOptions.innerHTML = dateRanges.map(([id, label]) => `<button class="${state.dateRange === id ? "active" : ""}" type="button" data-action="date-range" data-id="${id}">${label}</button>`).join("");
     renderSyncStrip();
@@ -1613,6 +1701,11 @@
     const titles = { brief: "Morning Brief", audience: "Audience", "view-performance": "View Performance", opportunities: "Opportunity Center", earnings: "Earnings", products: "Products", videos: "Videos", data: "Data Hub", settings: "Settings", "product-detail": "Product Studio", "video-detail": "Video Detail", "source-detail": source()?.name || "Revenue Source", "opportunity-detail": "Opportunity Detail", "order-detail": "Order Detail" };
     const pages = { brief: renderBrief, audience: renderAudience, "view-performance": renderViewPerformance, opportunities: renderOpportunities, earnings: renderEarnings, products: renderProducts, videos: renderVideos, data: renderDataHub, settings: renderSettings, "product-detail": renderProductDetail, "video-detail": renderVideoDetail, "source-detail": renderSourceDetail, "opportunity-detail": renderOpportunityDetail, "order-detail": renderOrderDetail };
     els.title.textContent = titles[state.page] || "Morning Brief";
+    if (shouldHideDataUntilConnectionResolves()) {
+      const checking = state.live.phase === "checking" || state.live.initializing;
+      els.content.innerHTML = `<section class="section"><p class="eyebrow">Morning Brief</p><h2>${checking ? "Checking live connection…" : "Live information is unavailable"}</h2><p>${checking ? "Northstar is securely checking this browser session before showing account data." : escapeHtml(state.live.error || "Northstar could not load authenticated account information.")}</p></section>`;
+      return;
+    }
     try {
       els.content.innerHTML = (pages[state.page] || renderBrief)();
     } catch {
