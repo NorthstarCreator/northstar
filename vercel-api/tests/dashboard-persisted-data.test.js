@@ -300,7 +300,8 @@ function testAdapterPreservesAllPersistedRows() {
         { snapshot_at: "2026-07-24T19:13:00Z", follower_count: 123156, sync_status: "succeeded" },
         { snapshot_at: "2026-07-26T01:18:48Z", follower_count: 123300, sync_status: "succeeded" }
       ],
-      lastSuccessfulSyncAt: "2026-07-26T01:18:48Z"
+      lastSuccessfulSyncAt: "2026-07-26T01:18:48Z",
+      overlay: { status: "live", readAt: "2026-07-26T14:00:00Z" }
     },
     syncedAt: "2026-07-26T01:18:48Z"
   });
@@ -309,6 +310,7 @@ function testAdapterPreservesAllPersistedRows() {
   assert.equal(snapshot.account.followerSnapshots.length, 2);
   assert.equal(snapshot.videos[0].publishedAt, videos[0].published_at);
   assert.equal(snapshot.syncedAt, "2026-07-26T01:18:48Z");
+  assert.equal(snapshot.liveUpdatedAt, "2026-07-26T14:00:00Z");
 }
 
 function testPersistedSnapshotOmitsBrowserTimeFallback() {
@@ -325,6 +327,7 @@ function testPersistedSnapshotOmitsBrowserTimeFallback() {
     syncedAt: null
   });
   assert.equal(snapshot.syncedAt, null);
+  assert.equal(snapshot.liveUpdatedAt, null);
 }
 
 function response(payload) {
@@ -558,7 +561,8 @@ async function testActualEntrypointUsesFreshPersistedData() {
   assert.equal(adapterCalls, 1);
   assert.match(elements.content.innerHTML, /123,359/);
   assert.match(elements.content.innerHTML, /\+203 this month · Live/);
-  assert.match(elements.syncStrip.innerHTML, /Last Sync: 7\/25\/2026, 9:18:48 PM/);
+  assert.match(elements.syncStrip.innerHTML, /Live Updated: 7\/26\/2026, 10:00:00 AM/);
+  assert.match(elements.syncStrip.innerHTML, /Last Saved Sync: 7\/25\/2026, 9:18:48 PM/);
 
   documentListeners.click({
     target: {
@@ -582,14 +586,16 @@ async function testActualEntrypointUsesFreshPersistedData() {
 
 async function testMissingPersistedSyncTimeStaysNotSynced() {
   const { elements } = await runActualEntrypoint({ lastSuccessfulSyncAt: null });
-  assert.match(elements.syncStrip.innerHTML, /Last Sync: Not synced/);
+  assert.match(elements.syncStrip.innerHTML, /Live Updated: 7\/26\/2026, 10:00:00 AM/);
+  assert.match(elements.syncStrip.innerHTML, /Last Saved Sync: Not synced/);
 }
 
 async function testFirefoxDisconnectedSessionStaysInDemoMode() {
   const { elements, requests } = await runActualEntrypoint({ sessionConnected: false });
   assert.deepEqual(requests.map(({ url }) => new URL(url).pathname), ["/session"]);
   assert.match(elements.syncStrip.innerHTML, /Demo Prototype/);
-  assert.match(elements.syncStrip.innerHTML, /Last Sync: Not synced/);
+  assert.match(elements.syncStrip.innerHTML, /Live Updated: Not connected/);
+  assert.match(elements.syncStrip.innerHTML, /Last Saved Sync: Not connected/);
   assert.match(elements.content.innerHTML, /145,650/);
   assert.doesNotMatch(elements.content.innerHTML, /· Live/);
   assert.doesNotMatch(elements.syncStrip.innerHTML, /TikTok Sandbox Connected/);
@@ -609,7 +615,33 @@ async function testStartupDoesNotRenderDemoBeforeSessionResolves() {
   await runtime.flush();
   assert.match(runtime.elements.syncStrip.innerHTML, /Demo Prototype/);
   assert.match(runtime.elements.content.innerHTML, /145,650/);
+  assert.match(runtime.elements.syncStrip.innerHTML, /Live Updated: Not connected/);
+  assert.match(runtime.elements.syncStrip.innerHTML, /Last Saved Sync: Not connected/);
   assert.doesNotMatch(runtime.elements.content.innerHTML, /· Live/);
+}
+
+async function testSuccessfulRefreshAdvancesOnlyLiveUpdated() {
+  const runtime = await runActualEntrypoint({
+    videoRequestHandler({ count, payload }) {
+      if (count === 2) {
+        return response({
+          ...payload,
+          overlay: { ...payload.overlay, readAt: "2026-07-26T15:30:00Z" }
+        });
+      }
+      return response(payload);
+    }
+  });
+  assert.match(runtime.elements.syncStrip.innerHTML, /Live Updated: 7\/26\/2026, 10:00:00 AM/);
+  assert.match(runtime.elements.syncStrip.innerHTML, /Last Saved Sync: 7\/25\/2026, 9:18:48 PM/);
+
+  dispatchDateRange(runtime.documentListeners.click, "week");
+  await runtime.flush();
+
+  assert.match(runtime.elements.syncStrip.innerHTML, /Live Updated: 7\/26\/2026, 11:30:00 AM/);
+  assert.match(runtime.elements.syncStrip.innerHTML, /Last Saved Sync: 7\/25\/2026, 9:18:48 PM/);
+  assert.equal(runtime.requests.filter(({ url }) => new URL(url).pathname === "/tiktok/sync").length, 0);
+  assert.ok(runtime.requests.every(({ options }) => !options.method || options.method === "GET"));
 }
 
 function dispatchDateRange(listener, id) {
@@ -660,6 +692,8 @@ async function testOverlayFailureRetainsAuthenticatedSnapshotAsStale() {
       return response(payload);
     }
   });
+  assert.match(runtime.elements.syncStrip.innerHTML, /Live Updated: 7\/26\/2026, 10:00:00 AM/);
+  assert.match(runtime.elements.syncStrip.innerHTML, /Last Saved Sync: 7\/25\/2026, 9:18:48 PM/);
   dispatchDateRange(runtime.documentListeners.click, "week");
   await runtime.flush();
   assert.match(runtime.elements.syncStrip.innerHTML, /TikTok Sandbox · Stale/);
@@ -668,6 +702,9 @@ async function testOverlayFailureRetainsAuthenticatedSnapshotAsStale() {
   assert.doesNotMatch(runtime.elements.syncStrip.innerHTML, /Demo Prototype/);
   assert.doesNotMatch(runtime.elements.syncStrip.innerHTML, /data-action="sync-tiktok" disabled/);
   assert.doesNotMatch(runtime.elements.syncStrip.innerHTML, /data-action="disconnect-tiktok" disabled/);
+  assert.match(runtime.elements.syncStrip.innerHTML, /Live Updated: 7\/26\/2026, 10:00:00 AM/);
+  assert.match(runtime.elements.syncStrip.innerHTML, /Last Saved Sync: 7\/25\/2026, 9:18:48 PM/);
+  assert.equal(runtime.requests.filter(({ url }) => new URL(url).pathname === "/tiktok/sync").length, 0);
 }
 
 async function testSafariBlockedClientFailsVisiblyWithoutRequests() {
@@ -708,6 +745,7 @@ async function testAuthenticatedBootstrapFailureIsNotShownAsLive() {
   await testMissingPersistedSyncTimeStaysNotSynced();
   await testFirefoxDisconnectedSessionStaysInDemoMode();
   await testStartupDoesNotRenderDemoBeforeSessionResolves();
+  await testSuccessfulRefreshAdvancesOnlyLiveUpdated();
   await testLateOverlayFailureCannotReplaceAuthenticatedStateWithDemo();
   await testOverlayFailureRetainsAuthenticatedSnapshotAsStale();
   await testSafariBlockedClientFailsVisiblyWithoutRequests();

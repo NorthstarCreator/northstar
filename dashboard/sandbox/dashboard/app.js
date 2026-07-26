@@ -42,7 +42,8 @@
       error: "",
       session: null,
       snapshot: null,
-      lastSyncAt: null
+      liveUpdatedAt: null,
+      lastSavedSyncAt: null
     },
     history: []
   };
@@ -228,7 +229,8 @@
     state.live.phase = "demo";
     state.live.safeCode = "";
     state.live.snapshot = null;
-    state.live.lastSyncAt = null;
+    state.live.liveUpdatedAt = null;
+    state.live.lastSavedSyncAt = null;
     state.live.error = "";
     state.accountId = "all";
     rebuildDataFromLive();
@@ -278,12 +280,15 @@
       if (snapshot) {
         state.live.connected = true;
         state.live.sessionConnected = true;
-        state.live.phase = "live";
+        state.live.phase = snapshot.liveUpdatedAt ? "live" : "stale";
         state.live.safeCode = "";
         state.live.snapshot = snapshot;
-        state.live.lastSyncAt = snapshot.syncedAt;
+        state.live.lastSavedSyncAt = snapshot.syncedAt;
+        if (snapshot.liveUpdatedAt) state.live.liveUpdatedAt = snapshot.liveUpdatedAt;
         state.accountId = snapshot.account.id;
-        state.live.error = snapshot.overlay && snapshot.overlay.status !== "live"
+        state.live.error = !snapshot.liveUpdatedAt
+          ? "Live refresh failed. Persisted information remains available and is labeled with its last saved sync time."
+          : snapshot.overlay && snapshot.overlay.status !== "live"
           ? "Live video refresh was limited. Persisted history remains available and is labeled with its last sync time."
           : "";
       } else throw new Error("snapshot_unavailable");
@@ -378,7 +383,8 @@
       state.live.phase = "demo";
       state.live.safeCode = "";
       state.live.snapshot = null;
-      state.live.lastSyncAt = null;
+      state.live.liveUpdatedAt = null;
+      state.live.lastSavedSyncAt = null;
       state.live.error = "TikTok Sandbox disconnected for this session.";
       if (isLiveAccountId()) state.accountId = "all";
       rebuildDataFromLive();
@@ -954,11 +960,26 @@
     return `<span class="status-pill demo">Demo Mode</span>`;
   }
 
+  function formatFreshnessTime(value, fallback) {
+    if (!value) return fallback;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return fallback;
+    return date.toLocaleString("en-US", {
+      timeZone: "America/New_York",
+      month: "numeric",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit"
+    });
+  }
+
   function renderSyncStrip() {
     if (!els.syncStrip) return;
-    const lastSync = state.live.lastSyncAt
-      ? new Date(state.live.lastSyncAt).toLocaleString()
-      : "Not synced";
+    const disconnected = isExplicitDemoMode();
+    const liveUpdated = formatFreshnessTime(state.live.liveUpdatedAt, disconnected ? "Not connected" : "Not updated");
+    const lastSavedSync = formatFreshnessTime(state.live.lastSavedSyncAt, disconnected ? "Not connected" : "Not synced");
     const message = state.live.error || (state.live.phase === "checking"
       ? "Checking live connection…"
       : isLiveConnected()
@@ -983,7 +1004,7 @@
       <strong>${modeLabel}</strong>
       <span class="dot ${isLiveConnected() ? "live" : ""}"></span>
       <span>${escapeHtml(message)}</span>
-      <span class="sync-time">Last Sync: ${escapeHtml(lastSync)}</span>
+      <span class="sync-freshness"><strong>Live Updated: ${escapeHtml(liveUpdated)}</strong><small>Last Saved Sync: ${escapeHtml(lastSavedSync)}</small></span>
       <span class="sync-actions">
         <button class="secondary-button tiny-button" type="button" data-action="connect-tiktok" ${clientReady && !unavailable ? "" : "disabled"}>${isLiveConnected() ? "Reconnect TikTok" : "Connect TikTok"}</button>
         <button class="secondary-button tiny-button" type="button" data-action="sync-tiktok" ${authenticated && !state.live.syncPending ? "" : "disabled"}>${state.live.syncPending ? "Syncing..." : "Sync Now"}</button>
@@ -1469,7 +1490,9 @@
     const live = state.live.snapshot;
     const contentStatus = statusText();
     const shopStatus = "Awaiting API approval";
-    const lastSync = state.live.lastSyncAt ? new Date(state.live.lastSyncAt).toLocaleString() : "Not synced";
+    const disconnected = isExplicitDemoMode();
+    const liveUpdated = formatFreshnessTime(state.live.liveUpdatedAt, disconnected ? "Not connected" : "Not updated");
+    const lastSavedSync = formatFreshnessTime(state.live.lastSavedSyncAt, disconnected ? "Not connected" : "Not synced");
     return `<section class="page-intro"><div class="intro-heading" style="--section-accent:${sectionAccent["Data Hub"]}">${icon("Data Hub")}<div><p class="eyebrow">Data Hub</p><h2>Unified Northstar sources, separate technical connections.</h2><p>Content and Shop connect independently, then flow into the same Morning Brief, Earnings, Products, and Videos pages.</p></div></div></section>
       <section class="integration-grid">
         <article class="section integration-card ${isLiveConnected() ? "connected" : "not-connected"}">
@@ -1478,7 +1501,8 @@
           <div class="connection-grid compact">
             ${connectionField("Status", contentStatus)}
             ${connectionField("Scopes", "user.info.basic · user.info.stats · video.list")}
-            ${connectionField("Last sync", lastSync)}
+            ${connectionField("Live Updated", liveUpdated)}
+            ${connectionField("Last Saved Sync", lastSavedSync)}
             ${connectionField("Videos retrieved", `${number.format(live?.videos?.length || 0)} public videos`)}
           </div>
           <p class="source-note">Supplies profile, followers, account statistics, public videos, views, likes, comments, and shares. It does not supply Shop products, orders, GMV, commissions, samples, Creator Rewards, or TikTok GO.</p>

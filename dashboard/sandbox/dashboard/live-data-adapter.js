@@ -158,6 +158,7 @@
         ? { ...createDisplaySource(), name: "Northstar Persisted TikTok Data", type: "Live Sandbox", shortName: "Neon + Display API" }
         : createDisplaySource(),
       syncedAt: syncedAt || null,
+      liveUpdatedAt: videosPayload?.overlay?.readAt || null,
       overlay: videosPayload?.overlay || null,
       unsupported: [
         "TikTok Shop GMV, commissions, orders, samples, Creator Rewards, TikTok GO, and audience demographics are demo-only in this Sandbox phase."

@@ -527,11 +527,23 @@ select, input {
   min-width: 0;
 }
 
-.sync-time {
+.sync-freshness {
   margin-left: auto;
+  display: grid;
+  gap: 2px;
+  text-align: right;
+}
+
+.sync-freshness strong {
+  color: var(--ink);
+  font-size: .84rem;
+  font-weight: 800;
+}
+
+.sync-freshness small {
   color: var(--muted);
-  font-size: .82rem;
-  font-weight: 760;
+  font-size: .74rem;
+  font-weight: 680;
 }
 
 .sync-actions {
@@ -2607,9 +2619,10 @@ select, input {
     border-radius: 22px;
     align-items: flex-start;
   }
-  .sync-time {
+  .sync-freshness {
     width: 100%;
     margin-left: 0;
+    text-align: left;
   }
   .sync-actions {
     width: 100%;
