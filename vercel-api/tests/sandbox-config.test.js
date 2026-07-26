@@ -70,6 +70,18 @@ function testRejectedUnknownOrigin() {
   assert.equal(cors.validatePostOrigin(requestDouble(UNKNOWN_ORIGIN)), false);
 }
 
+function testAuthenticatedJsonIsPrivateAndNonCacheable() {
+  const cors = loadCors({ NORTHSTAR_ENV: "tiktok_sandbox" });
+  const res = responseDouble();
+  cors.sendJson(requestDouble(SANDBOX_DASHBOARD_ORIGIN), res, 200, { connected: true });
+  assert.equal(res.headers["Access-Control-Allow-Origin"], SANDBOX_DASHBOARD_ORIGIN);
+  assert.equal(res.headers["Access-Control-Allow-Credentials"], "true");
+  assert.equal(res.headers["Cache-Control"], "private, no-store, max-age=0");
+  assert.equal(res.headers.Pragma, "no-cache");
+  assert.equal(res.headers.Expires, "0");
+  assert.deepEqual(JSON.parse(res.body), { connected: true });
+}
+
 function testSandboxCookieSameSiteNone() {
   const session = loadSession({ NORTHSTAR_ENV: "tiktok_sandbox" });
   const res = responseDouble();
@@ -113,6 +125,7 @@ function testProductionOriginUnchanged() {
   testAllowedSandboxOrigin,
   testAllowedFallbackVercelSandboxOrigin,
   testRejectedUnknownOrigin,
+  testAuthenticatedJsonIsPrivateAndNonCacheable,
   testSandboxCookieSameSiteNone,
   testProductionCookieUnchanged,
   testOAuthRedirectTarget,

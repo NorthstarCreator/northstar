@@ -63,6 +63,9 @@ function sendJson(req, res, status, payload) {
   applyCors(req, res);
   res.statusCode = status;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.setHeader("Cache-Control", "private, no-store, max-age=0");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
   res.end(JSON.stringify(payload));
 }
 

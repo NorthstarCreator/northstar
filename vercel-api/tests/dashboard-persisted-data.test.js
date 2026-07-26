@@ -102,11 +102,208 @@ function testAdapterPreservesAllPersistedRows() {
   assert.equal(snapshot.videos[0].publishedAt, videos[0].published_at);
 }
 
+function response(payload) {
+  return {
+    ok: true,
+    status: 200,
+    json: async () => payload
+  };
+}
+
+function createElement(id) {
+  return {
+    id,
+    innerHTML: "",
+    textContent: "",
+    className: "",
+    value: "",
+    hidden: false,
+    dataset: {},
+    addEventListener() {},
+    setAttribute() {},
+    focus() {},
+    querySelector(selector) {
+      if (id === "dateMenu" && selector === ".date-options") return createElement("dateOptions");
+      return null;
+    }
+  };
+}
+
+function persistedVideoFixture() {
+  const july = julyFixture().map((video, index) => ({
+    id: video.id,
+    published_at: video.publishedAt,
+    title: video.id === "newest" ? "July 25 persisted newest" : `Persisted July video ${index + 1}`,
+    view_count: 1000 + index,
+    like_count: 100 + index,
+    comment_count: index,
+    share_count: index
+  }));
+  const older = Array.from({ length: 749 }, (_, index) => ({
+    id: `older-${index}`,
+    published_at: new Date(Date.UTC(2026, 5, 30, 23, 59) - index * 60000).toISOString(),
+    title: `Persisted older video ${index + 1}`,
+    view_count: 500 + index,
+    like_count: 50,
+    comment_count: 5,
+    share_count: 2
+  }));
+  return [...july, ...older];
+}
+
+function legacyCachedFixture(freshVideos) {
+  return [...freshVideos.slice(0, 38), ...freshVideos.slice(57, 119)].map((video) => ({
+    id: `tt-${video.id}`,
+    tiktokVideoId: video.id,
+    accountId: "tiktok-fixture-open-id",
+    title: `LEGACY CACHED: ${video.title}`,
+    date: period.dateKey(video.published_at),
+    publishedAt: video.published_at,
+    time: "8:00 AM",
+    views: video.view_count,
+    likes: video.like_count,
+    comments: video.comment_count,
+    shares: video.share_count,
+    units: 0,
+    gmv: 0,
+    earnings: 0,
+    sourceIds: ["tiktok-display"]
+  }));
+}
+
+async function flushPromises(times = 12) {
+  for (let index = 0; index < times; index += 1) {
+    await new Promise((resolve) => setImmediate(resolve));
+  }
+}
+
+async function testActualEntrypointUsesFreshPersistedData() {
+  const indexSource = fs.readFileSync(path.join(dashboardDir, "index.html"), "utf8");
+  const scripts = [...indexSource.matchAll(/<script\s+src="([^"]+)"/g)].map((match) => match[1]);
+  assert.deepEqual(scripts, [
+    "config.js",
+    "mock-data.js",
+    "data-mode.js",
+    "live-period.js",
+    "live-data-adapter.js",
+    "tiktok-sandbox-client.js",
+    "app.js"
+  ]);
+
+  const ids = [
+    "sidebarNav", "pageTitle", "content", "accountButton", "accountMenu", "accountAvatar",
+    "accountLabel", "dateButton", "dateMenu", "dateLabel", "customDatePanel", "customStart",
+    "customEnd", "syncStrip", "modalRoot", "addAccountButton"
+  ];
+  const elements = Object.fromEntries(ids.map((id) => [id, createElement(id)]));
+  const documentListeners = {};
+  const document = {
+    getElementById(id) {
+      if (!elements[id]) elements[id] = createElement(id);
+      return elements[id];
+    },
+    addEventListener(type, listener) {
+      documentListeners[type] = listener;
+    }
+  };
+  const freshVideos = persistedVideoFixture();
+  const requests = [];
+  const window = {
+    location: { search: "", href: "https://northstar-dashboard-sandbox.vercel.app/" }
+  };
+  window.window = window;
+  const context = vm.createContext({
+    window,
+    document,
+    console,
+    Intl,
+    Date,
+    URL,
+    URLSearchParams,
+    navigator: {},
+    alert() {},
+    setTimeout,
+    clearTimeout,
+    fetch: async (url, options = {}) => {
+      requests.push({ url, options });
+      if (url.endsWith("/session")) {
+        return response({ connected: true, csrfToken: "fixture-csrf", session: { authenticated: true } });
+      }
+      if (url.endsWith("/tiktok/me")) {
+        return response({
+          connected: true,
+          profile: {
+            open_id: "fixture-open-id",
+            display_name: "Fixture Creator",
+            follower_count: 123300,
+            following_count: 500,
+            likes_count: 900000,
+            video_count: 2062
+          }
+        });
+      }
+      if (url.endsWith("/tiktok/videos")) {
+        return response({
+          source: "northstar_postgres",
+          videos: freshVideos,
+          accountMetricSnapshots: [
+            { snapshot_at: "2026-07-24T19:13:00Z", follower_count: 123156, sync_status: "succeeded" },
+            { snapshot_at: "2026-07-24T23:54:00Z", follower_count: 123158, sync_status: "failed" },
+            { snapshot_at: "2026-07-26T01:18:48Z", follower_count: 123300, sync_status: "succeeded" }
+          ]
+        });
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    }
+  });
+
+  let adapterCalls = 0;
+  for (const script of scripts) {
+    vm.runInContext(fs.readFileSync(path.join(dashboardDir, script), "utf8"), context, { filename: script });
+    if (script === "live-data-adapter.js") {
+      const original = window.NORTHSTAR_LIVE_ADAPTER.buildLiveSnapshot;
+      window.NORTHSTAR_LIVE_ADAPTER.buildLiveSnapshot = (payload) => {
+        adapterCalls += 1;
+        return original(payload);
+      };
+    }
+    if (script === "tiktok-sandbox-client.js") {
+      window.NORTHSTAR_SANDBOX_DATA.videos = legacyCachedFixture(freshVideos);
+    }
+  }
+  await flushPromises();
+
+  assert.deepEqual(requests.map(({ url }) => new URL(url).pathname), ["/session", "/tiktok/me", "/tiktok/videos"]);
+  assert.ok(requests.every(({ options }) => options.credentials === "include"));
+  assert.ok(requests.every(({ options }) => options.cache === "no-store"));
+  assert.equal(adapterCalls, 1);
+  assert.match(elements.content.innerHTML, /123,300/);
+  assert.match(elements.content.innerHTML, /\+144 this month/);
+
+  documentListeners.click({
+    target: {
+      closest(selector) {
+        if (selector === "[data-page]") return { dataset: { page: "videos" } };
+        return null;
+      }
+    }
+  });
+
+  assert.match(elements.content.innerHTML, /57 videos/);
+  assert.match(elements.content.innerHTML, /July 25 persisted newest/);
+  assert.equal((elements.content.innerHTML.match(/class="video-row"/g) || []).length, 57);
+  assert.equal(elements.content.innerHTML.includes("LEGACY CACHED:"), false);
+  const newestIndex = elements.content.innerHTML.indexOf("July 25 persisted newest");
+  const olderJulyIndex = elements.content.innerHTML.indexOf("Persisted July video 1");
+  assert.ok(newestIndex >= 0 && olderJulyIndex >= 0 && newestIndex < olderJulyIndex);
+}
+
 (async () => {
   testEasternMonthAndNewest();
   testFollowerSummaryIgnoresFailedRuns();
   await testPersistedReadIsCompleteAndSuccessfulOnly();
   testAdapterPreservesAllPersistedRows();
+  await testActualEntrypointUsesFreshPersistedData();
   console.log("Dashboard persisted-data tests passed.");
 })().catch((error) => {
   console.error(error);

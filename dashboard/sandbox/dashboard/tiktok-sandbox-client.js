@@ -22,6 +22,7 @@
     const response = await fetch(apiUrl(path), {
       method: "GET",
       credentials: "include",
+      cache: "no-store",
       headers: { "Accept": "application/json" }
     });
     return parseJson(response);

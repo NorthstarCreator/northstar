@@ -12,7 +12,7 @@ async function testReadOnlyInitializationNeverPostsSync() {
   const context = {
     window: { NORTHSTAR_CONFIG: { apiOrigin: "https://sandbox-api.example.test" } },
     fetch: async (url, options) => {
-      requests.push({ url, method: options.method, credentials: options.credentials });
+      requests.push({ url, method: options.method, credentials: options.credentials, cache: options.cache });
       return {
         ok: true,
         json: async () => url.endsWith("/session")
@@ -33,6 +33,7 @@ async function testReadOnlyInitializationNeverPostsSync() {
     { url: "https://sandbox-api.example.test/tiktok/videos", method: "GET" }
   ]);
   assert.ok(requests.every((request) => request.credentials === "include"));
+  assert.ok(requests.every((request) => request.cache === "no-store"));
   assert.equal(requests.some((request) => request.url.endsWith("/tiktok/sync")), false);
 }
 
