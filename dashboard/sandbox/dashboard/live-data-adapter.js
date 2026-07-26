@@ -36,6 +36,19 @@
     return created.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" });
   }
 
+  function freshnessTime(value) {
+    const date = new Date(value || "");
+    if (Number.isNaN(date.getTime())) return "";
+    return date.toLocaleString("en-US", {
+      month: "numeric",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      timeZone: "America/New_York"
+    });
+  }
+
   function normalizeAccount(payload) {
     const profile = payload?.profile || null;
     if (!profile?.open_id) return null;
@@ -59,7 +72,7 @@
     };
   }
 
-  function normalizeVideo(video, account) {
+  function normalizeVideo(video, account, lastSuccessfulSyncAt) {
     const title = text(video.title || video.video_description, "TikTok video");
     return {
       id: `tt-${safeId(video.id)}`,
@@ -89,7 +102,16 @@
       videoUrl: video.share_url || video.embed_link || "",
       notes: "Live TikTok Sandbox Display API record. Commerce, save, and audience demographic fields are not included in this initial scope.",
       status: "Live",
-      source: "tiktok_display_api"
+      source: "tiktok_display_api",
+      freshnessStatus: video.live_status || "persisted",
+      freshnessReadAt: video.live_read_at || "",
+      freshnessLabel: video.live_status === "not_yet_synced"
+        ? "Live · Not yet synced"
+        : video.live_status === "refreshed"
+          ? `Live as of ${freshnessTime(video.live_read_at)}`
+          : lastSuccessfulSyncAt
+            ? `Last synced ${freshnessTime(lastSuccessfulSyncAt)}`
+            : "Not synced"
     };
   }
 
@@ -119,17 +141,10 @@
         videoCount: number(item.video_count),
         syncStatus: item.sync_status
       }));
-    if (videosPayload?.source === "northstar_postgres" && account.followerSnapshots.length) {
-      const latestPersistedFollowers = [...account.followerSnapshots]
-        .filter((item) => !item.syncStatus || item.syncStatus === "succeeded")
-        .sort((a, b) => new Date(a.snapshotAt).getTime() - new Date(b.snapshotAt).getTime())
-        .at(-1);
-      if (latestPersistedFollowers) account.followers = latestPersistedFollowers.followerCount;
-    }
     const rawVideos = Array.isArray(videosPayload?.videos) ? videosPayload.videos : [];
     const seen = new Set();
     const videos = rawVideos
-      .map((video) => normalizeVideo(video, account))
+      .map((video) => normalizeVideo(video, account, syncedAt))
       .filter((video) => {
         if (!video.tiktokVideoId || seen.has(video.tiktokVideoId)) return false;
         seen.add(video.tiktokVideoId);
@@ -139,10 +154,11 @@
       connected: true,
       account,
       videos,
-      source: videosPayload?.source === "northstar_postgres"
+      source: String(videosPayload?.source || "").startsWith("northstar_postgres")
         ? { ...createDisplaySource(), name: "Northstar Persisted TikTok Data", type: "Live Sandbox", shortName: "Neon + Display API" }
         : createDisplaySource(),
       syncedAt: syncedAt || null,
+      overlay: videosPayload?.overlay || null,
       unsupported: [
         "TikTok Shop GMV, commissions, orders, samples, Creator Rewards, TikTok GO, and audience demographics are demo-only in this Sandbox phase."
       ]

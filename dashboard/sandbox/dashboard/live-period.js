@@ -77,5 +77,23 @@
     };
   }
 
-  return { TIME_ZONE, dateKey, range, inRange, newest, followerSummary };
+  function liveFollowerSummary(snapshots, currentFollowerCount, options = {}) {
+    const bounds = range(options);
+    const current = Number(currentFollowerCount || 0);
+    const valid = (Array.isArray(snapshots) ? snapshots : [])
+      .filter((item) => !item.syncStatus || item.syncStatus === "succeeded")
+      .map((item) => ({ ...item, key: dateKey(item.snapshotAt), time: new Date(item.snapshotAt).getTime() }))
+      .filter((item) => item.key && Number.isFinite(item.time) && Number.isFinite(Number(item.followerCount)))
+      .sort((a, b) => a.time - b.time);
+    const inside = valid.filter((item) => item.key >= bounds.start && item.key <= bounds.end);
+    const before = valid.filter((item) => item.key < bounds.start);
+    const baseline = inside[0] || before[before.length - 1] || null;
+    return {
+      total: current,
+      change: baseline ? current - Number(baseline.followerCount) : 0,
+      baseline: baseline ? Number(baseline.followerCount) : current
+    };
+  }
+
+  return { TIME_ZONE, dateKey, range, inRange, newest, followerSummary, liveFollowerSummary };
 });

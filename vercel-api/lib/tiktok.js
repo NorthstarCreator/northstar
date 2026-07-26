@@ -3,6 +3,7 @@ const TIKTOK_TOKEN_URL = "https://open.tiktokapis.com/v2/oauth/token/";
 const TIKTOK_REVOKE_URL = "https://open.tiktokapis.com/v2/oauth/revoke/";
 const TIKTOK_USER_INFO_URL = "https://open.tiktokapis.com/v2/user/info/";
 const TIKTOK_VIDEO_LIST_URL = "https://open.tiktokapis.com/v2/video/list/";
+const TIKTOK_VIDEO_QUERY_URL = "https://open.tiktokapis.com/v2/video/query/";
 const {
   LIVE_IMPORT_CUTOFF: NORTHSTAR_LIVE_IMPORT_CUTOFF,
   isOnOrAfterLiveImportCutoff
@@ -201,6 +202,34 @@ async function listVideos(accessToken, cursor = 0, maxCount = 20) {
   return payload.data || { videos: [], cursor: 0, has_more: false };
 }
 
+async function queryVideos(accessToken, videoIds) {
+  const ids = [...new Set((Array.isArray(videoIds) ? videoIds : []).map(String).filter(Boolean))];
+  if (!ids.length || ids.length > 20) {
+    throw apiError("tiktok_video_query_invalid", "TikTok video refresh requested an invalid batch.");
+  }
+  const fields = [
+    "id",
+    "title",
+    "video_description",
+    "duration",
+    "cover_image_url",
+    "share_url",
+    "embed_link",
+    "create_time",
+    "view_count",
+    "like_count",
+    "comment_count",
+    "share_count"
+  ].join(",");
+  const url = new URL(TIKTOK_VIDEO_QUERY_URL);
+  url.searchParams.set("fields", fields);
+  const payload = await tiktokFetch(url.toString(), accessToken, {
+    method: "POST",
+    body: JSON.stringify({ filters: { video_ids: ids } })
+  });
+  return payload.data || { videos: [] };
+}
+
 async function listAllVideos(accessToken, maxPages = 5) {
   let cursor = 0;
   let hasMore = true;
@@ -300,6 +329,7 @@ module.exports = {
   revokeToken,
   getUserInfo,
   listVideos,
+  queryVideos,
   listAllVideos,
   listVideosSinceCutoff,
   isOnOrAfterLiveImportCutoff,

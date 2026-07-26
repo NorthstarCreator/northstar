@@ -74,6 +74,12 @@ Northstar is local only. There is no login, no backend server, and no public web
 
 NorthStar now includes a deployable TikTok Sandbox foundation without changing the private local app.
 
+### Read-only live dashboard overlay
+
+Authenticated dashboard reads combine the complete persisted Neon history with a temporary TikTok Display API overlay. The overlay discovers videos newer than the latest successful sync with `video.list`, refreshes selected-period videos with `video.query` in batches of 20, and merges records only by exact TikTok video ID. It never writes to Neon and never creates a sync run; **Sync Now** remains the only persistence action.
+
+Each overlay is capped at 50 TikTok requests, including retry attempts. If a long range exceeds that ceiling or TikTok temporarily rejects a request, Northstar keeps the complete persisted history visible and labels unrefreshed records with the latest successful sync time. No continuous polling is used. Identical simultaneous overlay reads are coalesced only within the same warm serverless instance; this is an in-memory optimization, not a globally coordinated lock across Vercel instances.
+
 Public surfaces:
 
 - Marketing and legal site: `https://northstar-creator.com`

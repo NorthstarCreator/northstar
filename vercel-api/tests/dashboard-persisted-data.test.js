@@ -6,6 +6,11 @@ const vm = require("node:vm");
 const dashboardDir = path.join(__dirname, "../../dashboard/sandbox/dashboard");
 const period = require(path.join(dashboardDir, "live-period.js"));
 const { readPersistedTikTokDashboard } = require("../lib/dashboard-read-model");
+const {
+  buildTikTokLiveOverlay,
+  coalesceLiveOverlay,
+  safeOverlayError
+} = require("../lib/tiktok-live-overlay");
 
 function julyFixture() {
   const videos = [];
@@ -37,6 +42,18 @@ function testEasternMonthAndNewest() {
   assert.equal(period.inRange("2026-08-01T04:00:00Z", fullJuly), false);
 }
 
+function testEasternTodayWeekAndCustomRanges() {
+  const now = "2026-07-26T02:30:00Z"; // July 25 at 10:30 PM Eastern.
+  assert.deepEqual(period.range({ kind: "today", now }), { start: "2026-07-25", end: "2026-07-25" });
+  assert.deepEqual(period.range({ kind: "week", now }), { start: "2026-07-19", end: "2026-07-25" });
+  assert.deepEqual(
+    period.range({ kind: "custom", customStart: "2025-10-01", customEnd: "2026-01-31", now }),
+    { start: "2025-10-01", end: "2026-01-31" }
+  );
+  assert.equal(period.inRange("2026-07-26T01:59:59Z", { kind: "today", now }), true);
+  assert.equal(period.inRange("2026-07-26T04:00:00Z", { kind: "today", now }), false);
+}
+
 function testFollowerSummaryIgnoresFailedRuns() {
   const snapshots = [
     { snapshotAt: "2026-07-24T19:13:00Z", followerCount: 123156, syncStatus: "succeeded" },
@@ -46,6 +63,189 @@ function testFollowerSummaryIgnoresFailedRuns() {
   ];
   const summary = period.followerSummary(snapshots, { kind: "month", now: "2026-07-26T02:00:00Z" });
   assert.deepEqual(summary, { total: 123300, change: 144, baseline: 123156 });
+}
+
+function testLiveFollowerSummaryUsesFreshCurrentAndSuccessfulBaseline() {
+  const snapshots = [
+    { snapshotAt: "2026-07-24T19:13:00Z", followerCount: 123156, syncStatus: "succeeded" },
+    { snapshotAt: "2026-07-24T20:08:00Z", followerCount: 900000, syncStatus: "failed" },
+    { snapshotAt: "2026-07-26T01:18:48Z", followerCount: 123300, syncStatus: "succeeded" }
+  ];
+  assert.deepEqual(
+    period.liveFollowerSummary(snapshots, 123359, { kind: "month", now: "2026-07-26T14:00:00Z" }),
+    { total: 123359, change: 203, baseline: 123156 }
+  );
+}
+
+async function testLiveOverlayBatchesMergesAndPreservesHistory() {
+  const persisted = Array.from({ length: 45 }, (_, index) => ({
+    id: `known-${index}`,
+    title: `Persisted ${index}`,
+    published_at: `2026-07-${String(1 + (index % 25)).padStart(2, "0")}T15:00:00Z`,
+    view_count: index,
+    cover_image_url: index === 0 ? "persisted-cover" : ""
+  }));
+  const querySizes = [];
+  const result = await buildTikTokLiveOverlay({
+    accessToken: "fixture-token",
+    persistedVideos: persisted,
+    lastSuccessfulSyncAt: "2026-07-25T01:00:00Z",
+    range: { start: "2026-07-01", end: "2026-07-31" },
+    now: new Date("2026-07-26T14:00:00Z"),
+    listPage: async () => ({
+      videos: [{ id: "new-live", title: "New live", create_time: Math.floor(Date.parse("2026-07-26T12:00:00Z") / 1000), view_count: 77 }],
+      cursor: 1,
+      has_more: false
+    }),
+    queryBatch: async (_token, ids) => {
+      querySizes.push(ids.length);
+      return { videos: ids.map((id) => ({ id, view_count: 1000 + Number(id.split("-")[1]) })) };
+    },
+    sleep: async () => {}
+  });
+  assert.deepEqual(querySizes, [20, 20, 5]);
+  assert.equal(result.videos.length, 46);
+  assert.equal(new Set(result.videos.map((video) => video.id)).size, 46);
+  assert.equal(result.videos.find((video) => video.id === "known-0").view_count, 1000);
+  assert.equal(result.videos.find((video) => video.id === "known-0").cover_image_url, "persisted-cover");
+  assert.equal(result.videos.find((video) => video.id === "new-live").live_status, "not_yet_synced");
+  assert.equal(result.overlay.requestCount, 4);
+  assert.equal(result.overlay.newCount, 1);
+}
+
+async function testLiveOverlayDiscoversMultiplePagesUntilLastSync() {
+  const cursors = [];
+  const pages = new Map([
+    ["0", {
+      videos: [{ id: "newest-live", create_time: Math.floor(Date.parse("2026-07-26T12:00:00Z") / 1000) }],
+      cursor: 20,
+      has_more: true
+    }],
+    ["20", {
+      videos: [{ id: "second-live", create_time: Math.floor(Date.parse("2026-07-25T12:00:00Z") / 1000) }],
+      cursor: 40,
+      has_more: true
+    }],
+    ["40", {
+      videos: [{ id: "at-last-sync", create_time: Math.floor(Date.parse("2026-07-24T12:00:00Z") / 1000) }],
+      cursor: 60,
+      has_more: true
+    }]
+  ]);
+  const result = await buildTikTokLiveOverlay({
+    accessToken: "fixture-token",
+    persistedVideos: [],
+    lastSuccessfulSyncAt: "2026-07-24T12:00:00Z",
+    range: { start: "2026-07-01", end: "2026-07-31" },
+    listPage: async (_token, cursor) => {
+      cursors.push(cursor);
+      return pages.get(String(cursor));
+    },
+    queryBatch: async () => ({ videos: [] }),
+    sleep: async () => {}
+  });
+  assert.deepEqual(cursors, [0, 20, 40]);
+  assert.deepEqual(result.videos.map((video) => video.id), ["newest-live", "second-live"]);
+  assert.equal(result.overlay.requestCount, 3);
+  assert.equal(result.overlay.truncated, false);
+}
+
+async function testLiveOverlayRejectsRepeatedDiscoveryCursor() {
+  let calls = 0;
+  await assert.rejects(
+    buildTikTokLiveOverlay({
+      accessToken: "fixture-token",
+      persistedVideos: [],
+      lastSuccessfulSyncAt: "2026-07-01T00:00:00Z",
+      range: { start: "2026-07-01", end: "2026-07-31" },
+      listPage: async () => {
+        calls += 1;
+        return {
+          videos: [{ id: `page-${calls}`, create_time: Math.floor(Date.parse("2026-07-26T12:00:00Z") / 1000) }],
+          cursor: 0,
+          has_more: true
+        };
+      },
+      queryBatch: async () => ({ videos: [] }),
+      sleep: async () => {}
+    }),
+    (error) => error?.code === "tiktok_video_pagination_stalled"
+  );
+  assert.equal(calls, 1);
+}
+
+async function testLiveOverlayCeilingKeepsUnrefreshedHistory() {
+  const persisted = Array.from({ length: 1100 }, (_, index) => ({
+    id: `history-${index}`,
+    published_at: "2026-07-15T12:00:00Z",
+    view_count: index
+  }));
+  const result = await buildTikTokLiveOverlay({
+    accessToken: "fixture-token",
+    persistedVideos: persisted,
+    lastSuccessfulSyncAt: "2026-07-20T00:00:00Z",
+    range: { start: "2025-10-01", end: "2026-07-31" },
+    listPage: async () => ({ videos: [], cursor: 0, has_more: false }),
+    queryBatch: async (_token, ids) => ({ videos: ids.map((id) => ({ id, view_count: 9999 })) }),
+    sleep: async () => {}
+  });
+  assert.equal(result.videos.length, 1100);
+  assert.equal(result.overlay.requestCount, 50);
+  assert.equal(result.overlay.status, "partial");
+  assert.equal(result.overlay.safeCode, "live_request_ceiling");
+  assert.ok(result.videos.some((video) => video.live_status === "persisted"));
+}
+
+async function testLiveOverlayCoalescesIdenticalRequests() {
+  let calls = 0;
+  const factory = async () => {
+    calls += 1;
+    await new Promise((resolve) => setImmediate(resolve));
+    return { ok: true };
+  };
+  const [first, second] = await Promise.all([
+    coalesceLiveOverlay("same-session:month", factory),
+    coalesceLiveOverlay("same-session:month", factory)
+  ]);
+  assert.equal(calls, 1);
+  assert.deepEqual(first, second);
+}
+
+async function testProviderFailureUsesSafeFallbackClassification() {
+  const error = Object.assign(new Error("raw provider detail must not escape"), {
+    code: "tiktok_api_rate_limited",
+    retryable: false
+  });
+  await assert.rejects(
+    buildTikTokLiveOverlay({
+      accessToken: "fixture-token",
+      persistedVideos: [],
+      lastSuccessfulSyncAt: "2026-07-25T00:00:00Z",
+      range: { start: "2026-07-01", end: "2026-07-31" },
+      listPage: async () => { throw error; },
+      sleep: async () => {}
+    }),
+    (caught) => safeOverlayError(caught).safeCode === "live_rate_limited"
+  );
+  assert.doesNotMatch(JSON.stringify(safeOverlayError(error)), /raw provider detail/);
+}
+
+function testLiveOverlayRouteIsReadOnly() {
+  const routeSource = fs.readFileSync(path.join(__dirname, "../api/tiktok/videos.js"), "utf8");
+  const overlaySource = fs.readFileSync(path.join(__dirname, "../lib/tiktok-live-overlay.js"), "utf8");
+  const readModelSource = fs.readFileSync(path.join(__dirname, "../lib/dashboard-read-model.js"), "utf8");
+  const combined = `${routeSource}\n${overlaySource}`;
+  assert.doesNotMatch(combined, /\b(?:INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM|UPSERT)\b/i);
+  assert.doesNotMatch(combined, /createSyncRun|persistTikTokSync|sync_runs|video_metric_snapshots/);
+  assert.match(routeSource, /readPersistedTikTokDashboard/);
+  assert.match(routeSource, /buildTikTokLiveOverlay/);
+  assert.match(routeSource, /requireSession\(req\)/);
+  assert.match(routeSource, /activeConnection\(session\.id\)/);
+  assert.match(routeSource, /readPersistedTikTokDashboard\(sql, connection\.openId\)/);
+  assert.match(readModelSource, /cta\.tiktok_open_id = \$\{openId\}/);
+  assert.match(readModelSource, /v\.account_id = \$\{account\.id\}::uuid/);
+  assert.match(readModelSource, /ams\.account_id = \$\{account\.id\}::uuid/);
+  assert.match(readModelSource, /sr\.account_id = \$\{account\.id\}::uuid/);
 }
 
 async function testPersistedReadIsCompleteAndSuccessfulOnly() {
@@ -105,7 +305,7 @@ function testAdapterPreservesAllPersistedRows() {
     syncedAt: "2026-07-26T01:18:48Z"
   });
   assert.equal(snapshot.videos.length, 806);
-  assert.equal(snapshot.account.followers, 123300);
+  assert.equal(snapshot.account.followers, 123359);
   assert.equal(snapshot.account.followerSnapshots.length, 2);
   assert.equal(snapshot.videos[0].publishedAt, videos[0].published_at);
   assert.equal(snapshot.syncedAt, "2026-07-26T01:18:48Z");
@@ -158,7 +358,11 @@ function persistedVideoFixture() {
   const july = julyFixture().map((video, index) => ({
     id: video.id,
     published_at: video.publishedAt,
-    title: video.id === "newest" ? "July 25 persisted newest" : `Persisted July video ${index + 1}`,
+    title: video.id === "newest"
+      ? "July 25 persisted newest"
+      : index === 1
+        ? '<img src=x onerror="provider-content-must-not-execute">'
+        : `Persisted July video ${index + 1}`,
     view_count: 1000 + index,
     like_count: 100 + index,
     comment_count: index,
@@ -273,16 +477,17 @@ async function runActualEntrypoint({
           }
         });
       }
-      if (url.endsWith("/tiktok/videos")) {
+      if (new URL(url).pathname === "/tiktok/videos") {
         return response({
-          source: "northstar_postgres",
-          videos: freshVideos,
+          source: "northstar_postgres_live_overlay",
+          videos: freshVideos.map((video) => ({ ...video, live_status: "refreshed", live_read_at: "2026-07-26T14:00:00Z" })),
           accountMetricSnapshots: [
             { snapshot_at: "2026-07-24T19:13:00Z", follower_count: 123156, sync_status: "succeeded" },
             { snapshot_at: "2026-07-24T23:54:00Z", follower_count: 123158, sync_status: "failed" },
             { snapshot_at: "2026-07-26T01:18:48Z", follower_count: 123300, sync_status: "succeeded" }
           ],
-          lastSuccessfulSyncAt
+          lastSuccessfulSyncAt,
+          overlay: { status: "live", readAt: "2026-07-26T14:00:00Z", requestCount: 4 }
         });
       }
       throw new Error(`Unexpected request: ${url}`);
@@ -313,11 +518,13 @@ async function testActualEntrypointUsesFreshPersistedData() {
   const { adapterCalls, documentListeners, elements, requests } = await runActualEntrypoint();
 
   assert.deepEqual(requests.map(({ url }) => new URL(url).pathname), ["/session", "/tiktok/me", "/tiktok/videos"]);
+  assert.equal(new URL(requests[2].url).searchParams.get("start"), "2026-07-01");
+  assert.equal(new URL(requests[2].url).searchParams.get("end"), "2026-07-26");
   assert.ok(requests.every(({ options }) => options.credentials === "include"));
   assert.ok(requests.every(({ options }) => options.cache === "no-store"));
   assert.equal(adapterCalls, 1);
-  assert.match(elements.content.innerHTML, /123,300/);
-  assert.match(elements.content.innerHTML, /\+144 this month/);
+  assert.match(elements.content.innerHTML, /123,359/);
+  assert.match(elements.content.innerHTML, /\+203 this month · Live/);
   assert.match(elements.syncStrip.innerHTML, /Last Sync: 7\/25\/2026, 9:18:48 PM/);
 
   documentListeners.click({
@@ -331,6 +538,8 @@ async function testActualEntrypointUsesFreshPersistedData() {
 
   assert.match(elements.content.innerHTML, /57 videos/);
   assert.match(elements.content.innerHTML, /July 25 persisted newest/);
+  assert.match(elements.content.innerHTML, /&lt;img src=x onerror=&quot;provider-content-must-not-execute&quot;&gt;/);
+  assert.doesNotMatch(elements.content.innerHTML, /<img src=x onerror="provider-content-must-not-execute">/);
   assert.equal((elements.content.innerHTML.match(/class="video-row"/g) || []).length, 57);
   assert.equal(elements.content.innerHTML.includes("LEGACY CACHED:"), false);
   const newestIndex = elements.content.innerHTML.indexOf("July 25 persisted newest");
@@ -373,8 +582,17 @@ async function testAuthenticatedBootstrapFailureIsNotShownAsLive() {
 
 (async () => {
   testEasternMonthAndNewest();
+  testEasternTodayWeekAndCustomRanges();
   testFollowerSummaryIgnoresFailedRuns();
+  testLiveFollowerSummaryUsesFreshCurrentAndSuccessfulBaseline();
   testPersistedSnapshotOmitsBrowserTimeFallback();
+  await testLiveOverlayBatchesMergesAndPreservesHistory();
+  await testLiveOverlayDiscoversMultiplePagesUntilLastSync();
+  await testLiveOverlayRejectsRepeatedDiscoveryCursor();
+  await testLiveOverlayCeilingKeepsUnrefreshedHistory();
+  await testLiveOverlayCoalescesIdenticalRequests();
+  await testProviderFailureUsesSafeFallbackClassification();
+  testLiveOverlayRouteIsReadOnly();
   await testPersistedReadIsCompleteAndSuccessfulOnly();
   testAdapterPreservesAllPersistedRows();
   await testActualEntrypointUsesFreshPersistedData();

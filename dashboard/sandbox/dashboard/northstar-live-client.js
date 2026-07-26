@@ -2,6 +2,7 @@
   const config = window.NORTHSTAR_CONFIG || {};
   const apiOrigin = config.apiOrigin || "";
   let csrfToken = "";
+  const pendingVideoRequests = new Map();
 
   function apiUrl(path) {
     return `${apiOrigin}${path}`;
@@ -54,8 +55,16 @@
     return get("/tiktok/me");
   }
 
-  async function videos() {
-    return get("/tiktok/videos");
+  async function videos(period = {}) {
+    const params = new URLSearchParams();
+    if (period.start) params.set("start", period.start);
+    if (period.end) params.set("end", period.end);
+    const query = params.toString();
+    const path = `/tiktok/videos${query ? `?${query}` : ""}`;
+    if (pendingVideoRequests.has(path)) return pendingVideoRequests.get(path);
+    const pending = get(path).finally(() => pendingVideoRequests.delete(path));
+    pendingVideoRequests.set(path, pending);
+    return pending;
   }
 
   async function sync() {

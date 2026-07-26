@@ -33,6 +33,7 @@
       sessionConnected: false,
       connected: false,
       loading: false,
+      readRefreshQueued: false,
       syncPending: false,
       error: "",
       session: null,
@@ -192,6 +193,10 @@
     const adapter = window.NORTHSTAR_LIVE_ADAPTER;
     if (!client || !adapter) return false;
     if (preferSync && state.live.syncPending) return;
+    if (!preferSync && state.live.loading) {
+      state.live.readRefreshQueued = true;
+      return;
+    }
     if (preferSync) state.live.syncPending = true;
     state.live.loading = true;
     state.live.phase = "loading";
@@ -203,9 +208,14 @@
       if (!mePayload.connected && !mePayload.profile) {
         throw new Error("profile_unavailable");
       }
+      const period = window.NORTHSTAR_LIVE_PERIOD.range({
+        kind: state.dateRange,
+        customStart: state.customStart,
+        customEnd: state.customEnd
+      });
       const videosPayload = preferSync
-        ? await client.videos()
-        : (mePayload.videos ? mePayload : await client.videos());
+        ? await client.videos(period)
+        : (mePayload.videos ? mePayload : await client.videos(period));
       const snapshot = adapter.buildLiveSnapshot({
         mePayload,
         videosPayload,
@@ -219,7 +229,9 @@
         state.live.snapshot = snapshot;
         state.live.lastSyncAt = snapshot.syncedAt;
         state.accountId = snapshot.account.id;
-        state.live.error = "";
+        state.live.error = snapshot.overlay && snapshot.overlay.status !== "live"
+          ? "Live video refresh was limited. Persisted history remains available and is labeled with its last sync time."
+          : "";
       } else throw new Error("snapshot_unavailable");
       return true;
     } catch (error) {
@@ -231,10 +243,13 @@
         : "Live connection error. Account information is unavailable.";
       return false;
     } finally {
+      const refreshQueued = state.live.readRefreshQueued;
+      state.live.readRefreshQueued = false;
       if (preferSync) state.live.syncPending = false;
       state.live.loading = false;
       rebuildDataFromLive();
       render();
+      if (refreshQueued) Promise.resolve().then(() => loadLiveTikTok());
     }
   }
 
@@ -359,11 +374,15 @@
 
   function periodFollowerGain(accountId = state.accountId) {
     if (accountId !== "all" && isLiveAccountId(accountId)) {
-      return window.NORTHSTAR_LIVE_PERIOD.followerSummary(account(accountId)?.followerSnapshots, {
+      return window.NORTHSTAR_LIVE_PERIOD.liveFollowerSummary(
+        account(accountId)?.followerSnapshots,
+        account(accountId)?.followers,
+        {
         kind: state.dateRange,
         customStart: state.customStart,
         customEnd: state.customEnd
-      }).change;
+        }
+      ).change;
     }
     const days = Math.max(1, filteredDays().length);
     const scale = Math.min(1, days / Math.max(1, list("days").length));
@@ -1001,7 +1020,7 @@
         </aside>
       </section>
       <section class="metric-grid primary-metrics">
-        ${metricCard("Followers", number.format(total.followers), `+${number.format(periodFollowerGain())} ${periodLabel()}`, "white", 'data-page="audience"', "followers")}
+        ${metricCard("Followers", number.format(total.followers), `+${number.format(periodFollowerGain())} ${periodLabel()} · Live`, "white", 'data-page="audience"', "followers")}
         ${metricCard("Views", number.format(total.views), `${number.format(Math.round(total.views / Math.max(1, total.videos)))} avg/video`, "white", 'data-page="view-performance"', "views")}
         ${metricCard("Videos Posted", total.videos, `Posted this month<br>Goal: 32 videos/month`, "white", 'data-page="videos"', "videos")}
         ${metricCard("Total Earnings", money.format(total.earnings), earningsModeLabel(), "white", 'data-page="earnings"', "earnings")}
@@ -1344,7 +1363,7 @@
       ? shopShare > 0 ? `Shop Ads generated ${shopShare}% of this video's shop commission, but organic sales paid a different average rate.` : "This video is currently earning from organic product-linked traffic in the sandbox data."
       : "No TikTok Shop orders are connected to this video in the sandbox data yet.";
     const sourceNames = itemSources(item).map((id) => source(id)?.name).filter(Boolean).join(" + ") || "No source linked";
-    return `${backButton()}<section class="product-studio">${productImage(item, "large")}<div><p class="eyebrow">Video Detail</p><h2>${item.title}</h2><p>${accountName(item.accountId)} · Posted ${formatBriefDateTime(item.date, item.time)}</p></div></section><section class="metric-grid compact">${metricCard("Views", number.format(item.views), "Video performance", "white")}${metricCard("Earnings", money.format(item.earnings), sourceNames, "selected")}${metricCard("Units Sold", number.format(item.units), linked?.name || "Linked product", "white")}${metricCard("Shares", number.format(item.shares), "Audience signal", "white")}</section><section class="section attribution-section">${heading("Sales Attribution", "Video earnings by origin", "Sales Attribution")}<div class="attribution-grid">${orderSummary.organic_video.orders ? attributionSummaryCard("organic_video", orderSummary.organic_video) : ""}${orderSummary.shop_ad.orders ? attributionSummaryCard("shop_ad", orderSummary.shop_ad) : ""}</div>${insightCard(insight)}</section>`;
+    return `${backButton()}<section class="product-studio">${productImage(item, "large")}<div><p class="eyebrow">Video Detail</p><h2>${escapeHtml(item.title)}</h2><p>${accountName(item.accountId)} · Posted ${formatBriefDateTime(item.date, item.time)}</p></div></section><section class="metric-grid compact">${metricCard("Views", number.format(item.views), "Video performance", "white")}${metricCard("Earnings", money.format(item.earnings), sourceNames, "selected")}${metricCard("Units Sold", number.format(item.units), linked?.name || "Linked product", "white")}${metricCard("Shares", number.format(item.shares), "Audience signal", "white")}</section><section class="section attribution-section">${heading("Sales Attribution", "Video earnings by origin", "Sales Attribution")}<div class="attribution-grid">${orderSummary.organic_video.orders ? attributionSummaryCard("organic_video", orderSummary.organic_video) : ""}${orderSummary.shop_ad.orders ? attributionSummaryCard("shop_ad", orderSummary.shop_ad) : ""}</div>${insightCard(insight)}</section>`;
   }
 
   function statusText() {
@@ -1409,7 +1428,7 @@
   }
 
   function videoRow(item) {
-    return `<button class="list-row" type="button" data-action="open-video" data-id="${item.id}">${productImage(item, "small")}<span><strong>${item.title}</strong><small>${formatBriefDateTime(item.date, item.time)} · ${number.format(item.views)} views</small></span><em>→</em></button>`;
+    return `<button class="list-row" type="button" data-action="open-video" data-id="${escapeAttr(item.id)}">${productImage(item, "small")}<span><strong>${escapeHtml(item.title)}</strong><small>${formatBriefDateTime(item.date, item.time)} · ${number.format(item.views)} views</small></span><em>→</em></button>`;
   }
 
   function sampleCard(item) {
@@ -1418,7 +1437,7 @@
 
   function videoTableRow(item) {
     const orderTypes = [...new Set(filteredOrders({ videoId: item.id }).map((entry) => entry.attributionType))];
-    return `<button class="video-row" type="button" data-action="open-video" data-id="${item.id}">${productImage(item, "small")}<strong title="${escapeAttr(item.title)}">${item.title}</strong><span>${accountName(item.accountId)}</span><span>${formatDate(item.date, { month: "short", day: "numeric" })}<b>${item.time}</b></span><span>${number.format(item.views)}</span><span>${number.format(item.units)}</span><span>${money.format(item.gmv)}</span><span>${money.format(item.earnings)}${orderTypes.length ? `<small class="badge-stack">${orderTypes.map(attributionBadge).join("")}</small>` : ""}</span></button>`;
+    return `<button class="video-row" type="button" data-action="open-video" data-id="${escapeAttr(item.id)}">${productImage(item, "small")}<strong title="${escapeAttr(item.title)}">${escapeHtml(item.title)}<small>${escapeHtml(item.freshnessLabel || "")}</small></strong><span>${accountName(item.accountId)}</span><span>${formatDate(item.date, { month: "short", day: "numeric" })}<b>${escapeHtml(item.time)}</b></span><span>${number.format(item.views)}</span><span>${number.format(item.units)}</span><span>${money.format(item.gmv)}</span><span>${money.format(item.earnings)}${orderTypes.length ? `<small class="badge-stack">${orderTypes.map(attributionBadge).join("")}</small>` : ""}</span></button>`;
   }
 
   function sortProducts(items) {
@@ -1622,10 +1641,16 @@
       return loadLiveTikTok({ preferSync: true });
     }
     if (action.dataset.action === "disconnect-tiktok") return disconnectLiveTikTok();
-    if (action.dataset.action === "account") { state.accountId = id; els.accountMenu.hidden = true; render(); }
+    if (action.dataset.action === "account") {
+      state.accountId = id;
+      els.accountMenu.hidden = true;
+      render();
+      if (state.live.sessionConnected && (id === "all" || isLiveAccountId(id))) loadLiveTikTok();
+    }
     if (action.dataset.action === "date-range") {
       if (id === "custom") { els.customPanel.hidden = false; return; }
       state.dateRange = id; els.customPanel.hidden = true; els.dateMenu.hidden = true; render();
+      if (state.live.sessionConnected) loadLiveTikTok();
     }
     if (action.dataset.action === "open-source") setPage("source-detail", id);
     if (action.dataset.action === "open-product") setPage("product-detail", id);
@@ -1693,6 +1718,7 @@
     els.customPanel.hidden = true;
     els.dateMenu.hidden = true;
     render();
+    if (state.live.sessionConnected) loadLiveTikTok();
   });
 
   render();

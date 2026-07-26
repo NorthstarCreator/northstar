@@ -11,6 +11,7 @@ async function testReadOnlyInitializationNeverPostsSync() {
   const requests = [];
   const context = {
     window: { NORTHSTAR_CONFIG: { apiOrigin: "https://sandbox-api.example.test" } },
+    URLSearchParams,
     fetch: async (url, options) => {
       requests.push({ url, method: options.method, credentials: options.credentials, cache: options.cache });
       return {
@@ -41,6 +42,7 @@ async function testExplicitSyncIsTheOnlyPostPath() {
   const requests = [];
   const context = {
     window: { NORTHSTAR_CONFIG: { apiOrigin: "https://sandbox-api.example.test" } },
+    URLSearchParams,
     fetch: async (url, options) => {
       requests.push({ url, method: options.method });
       return { ok: true, json: async () => ({ connected: true, csrfToken: "fixture-csrf", videos: [] }) };
@@ -67,10 +69,18 @@ function testSyncPendingControlsBothButtonsAndDoubleClicks() {
   assert.match(appSource, /if \(state\.live\.loading \|\| state\.live\.initializing\) return "Loading profile";/);
 }
 
+function testLatestReadSelectionIsQueuedWhileLoading() {
+  assert.match(appSource, /readRefreshQueued: false/);
+  assert.match(appSource, /if \(!preferSync && state\.live\.loading\) \{[\s\S]*state\.live\.readRefreshQueued = true;[\s\S]*return;/);
+  assert.match(appSource, /const refreshQueued = state\.live\.readRefreshQueued;[\s\S]*state\.live\.readRefreshQueued = false;/);
+  assert.match(appSource, /if \(refreshQueued\) Promise\.resolve\(\)\.then\(\(\) => loadLiveTikTok\(\)\);/);
+}
+
 (async () => {
   await testReadOnlyInitializationNeverPostsSync();
   await testExplicitSyncIsTheOnlyPostPath();
   testSyncPendingControlsBothButtonsAndDoubleClicks();
+  testLatestReadSelectionIsQueuedWhileLoading();
   console.log("Dashboard sync behavior tests passed.");
 })().catch((error) => {
   console.error(error);
