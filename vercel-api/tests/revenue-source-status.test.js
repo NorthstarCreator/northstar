@@ -23,6 +23,8 @@ function testDefaultsKeepDisplayCutoffIsolated() {
   assert.ok(sources.slice(1).every(({ cutoffStartAt }) => cutoffStartAt === null));
   assert.ok(sources.every(({ reportingTimezone }) => reportingTimezone === "America/New_York"));
   assert.ok(sources.every(({ policyConfigurationStatus }) => policyConfigurationStatus === "not_configured"));
+  assert.equal(sources[0].providerBlockers.length, 0);
+  assert.ok(sources.slice(1).every(({ providerBlockers }) => providerBlockers.length > 0));
   assert.equal(sources.some(({ sourceCode }) => /all/i.test(sourceCode)), false);
 }
 
@@ -43,12 +45,15 @@ async function testExactAccountIsolationAndOptionalPolicyRows() {
   const result = await readRevenueSourceStatus(sql, "exact-open-id");
   assert.deepEqual(result.account, { id: accountId, displayName: "Exact Creator" });
   const shop = result.sources.find(({ sourceCode }) => sourceCode === "tiktok_shop");
-  assert.equal(shop.approvalStatus, "approved");
+  assert.equal(shop.approvalStatus, "unconfirmed");
+  assert.equal(shop.policyApprovalStatus, "approved");
   assert.equal(shop.selectedRangeMode, "all_available");
   assert.equal(shop.reportingTimezone, "America/Los_Angeles");
   assert.equal(shop.firstImportStatus, "pending_review");
   assert.equal(shop.policyConfigurationStatus, "configured");
-  assert.equal(shop.blockingReason, null);
+  assert.equal(shop.blockingReason, "provider_documentation_required");
+  assert.equal(shop.providerConnectionState, "blocked");
+  assert.ok(shop.providerBlockers.includes("provider_endpoint_unconfirmed"));
   assert.equal(shop.cutoffStartAt, null);
 
   assert.match(sql.calls[0].text, /tiktok_open_id = \?/);

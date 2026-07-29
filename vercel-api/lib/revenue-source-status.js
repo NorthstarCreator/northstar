@@ -1,4 +1,5 @@
 const { LIVE_IMPORT_CUTOFF_ISO } = require("./live-import-policy");
+const { providerAdapter } = require("./providers");
 
 const DEFAULT_TIMEZONE = "America/New_York";
 const SOURCE_DEFINITIONS = Object.freeze([
@@ -15,18 +16,18 @@ const SOURCE_DEFINITIONS = Object.freeze([
   Object.freeze({
     code: "tiktok_shop",
     displayName: "TikTok Shop",
-    providerAvailability: "restricted",
-    approvalStatus: "not_approved",
+    providerAvailability: "unconfirmed",
+    approvalStatus: "unconfirmed",
     selectedRangeMode: null,
     firstImportStatus: "not_started",
-    blockingReason: "partner_center_approval_required",
+    blockingReason: "provider_documentation_required",
     cutoffStartAt: null
   }),
   Object.freeze({
     code: "creator_rewards",
     displayName: "Creator Rewards",
     providerAvailability: "unconfirmed",
-    approvalStatus: "not_available",
+    approvalStatus: "unconfirmed",
     selectedRangeMode: null,
     firstImportStatus: "not_started",
     blockingReason: "creator_api_not_confirmed",
@@ -36,7 +37,7 @@ const SOURCE_DEFINITIONS = Object.freeze([
     code: "tiktok_go",
     displayName: "TikTok GO",
     providerAvailability: "unconfirmed",
-    approvalStatus: "not_available",
+    approvalStatus: "unconfirmed",
     selectedRangeMode: null,
     firstImportStatus: "not_started",
     blockingReason: "creator_api_not_confirmed",
@@ -54,10 +55,12 @@ function policyBySource(rows = []) {
   return new Map(rows.map((row) => [String(row.source_code), row]));
 }
 
-function buildSourceStatuses({ policyRows = [], displayFirstImportStatus = "not_started" } = {}) {
+function buildSourceStatuses({ policyRows = [], displayFirstImportStatus = "not_started", accountId = null } = {}) {
   const policies = policyBySource(policyRows);
   return SOURCE_DEFINITIONS.map((definition) => {
     const policy = policies.get(definition.code);
+    const adapter = providerAdapter(definition.code);
+    const providerState = adapter && accountId ? adapter.getConnectionState({ accountId }) : null;
     const firstImportStatus = policy?.first_import_status
       || (definition.code === "tiktok_display_api" ? displayFirstImportStatus : definition.firstImportStatus);
     return {
@@ -65,7 +68,10 @@ function buildSourceStatuses({ policyRows = [], displayFirstImportStatus = "not_
       displayName: definition.displayName,
       policyConfigurationStatus: policy ? "configured" : "not_configured",
       providerAvailability: definition.providerAvailability,
-      approvalStatus: policy?.status || definition.approvalStatus,
+      providerConnectionState: providerState?.state || (adapter ? "blocked" : "ready"),
+      providerBlockers: providerState?.blockers || adapter?.blockers || [],
+      approvalStatus: adapter ? "unconfirmed" : policy?.status || definition.approvalStatus,
+      policyApprovalStatus: policy?.status || "not_configured",
       selectedRangeMode: policy?.import_range_mode || definition.selectedRangeMode,
       requestedStartAt: timestamp(policy?.requested_start_at),
       effectiveStartAt: timestamp(policy?.effective_start_at),
@@ -75,8 +81,8 @@ function buildSourceStatuses({ policyRows = [], displayFirstImportStatus = "not_
       firstImportStatus,
       blockingReason: policy?.status === "blocked"
         ? "source_policy_blocked"
-        : policy && ["approved", "active"].includes(policy.status)
-          ? null
+        : adapter
+          ? "provider_documentation_required"
           : definition.blockingReason,
       cutoffStartAt: definition.cutoffStartAt
     };
@@ -127,6 +133,7 @@ async function readRevenueSourceStatus(sql, openId) {
     policyTableAvailable: !!account.policy_table,
     sources: buildSourceStatuses({
       policyRows,
+      accountId: account.id,
       displayFirstImportStatus: firstImportRows[0]?.status || "not_started"
     })
   };

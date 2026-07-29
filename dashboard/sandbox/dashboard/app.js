@@ -1526,6 +1526,7 @@
     const labels = {
       partner_center_approval_required: "TikTok Shop Partner Center approval is required.",
       creator_api_not_confirmed: "No confirmed creator-facing API is available.",
+      provider_documentation_required: "Confirmed TikTok Partner/API documentation and approval are required.",
       source_policy_blocked: "The account-specific source policy is blocked."
     };
     return value ? labels[value] || "This source is blocked." : "No blocking reason.";
@@ -1542,6 +1543,7 @@
         ${connectionField("Provider availability", sourceStatusLabel(item.providerAvailability))}
         ${connectionField("Policy configuration", sourceStatusLabel(item.policyConfigurationStatus))}
         ${connectionField("Approval status", sourceStatusLabel(item.approvalStatus))}
+        ${connectionField("Policy approval", sourceStatusLabel(item.policyApprovalStatus))}
         ${connectionField("Selected range", sourceStatusLabel(item.selectedRangeMode))}
         ${connectionField("Reporting timezone", escapeHtml(item.reportingTimezone || "Not selected"))}
         ${connectionField("First import", sourceStatusLabel(item.firstImportStatus))}

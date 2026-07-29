@@ -484,10 +484,10 @@ async function runActualEntrypoint({
     account: { id: "00000000-0000-4000-8000-000000000001", displayName: "Fixture Creator" },
     policyTableAvailable: false,
     sources: [
-      { sourceCode: "tiktok_display_api", displayName: "TikTok Content", providerAvailability: "available", approvalStatus: "approved", selectedRangeMode: "specific_date", reportingTimezone: "America/New_York", firstImportStatus: "approved", blockingReason: null, cutoffStartAt: "2025-10-01T00:00:00.000Z" },
-      { sourceCode: "tiktok_shop", displayName: "TikTok Shop", providerAvailability: "restricted", approvalStatus: "not_approved", selectedRangeMode: null, reportingTimezone: "America/New_York", firstImportStatus: "not_started", blockingReason: "partner_center_approval_required", cutoffStartAt: null },
-      { sourceCode: "creator_rewards", displayName: "Creator Rewards", providerAvailability: "unconfirmed", approvalStatus: "not_available", selectedRangeMode: null, reportingTimezone: "America/New_York", firstImportStatus: "not_started", blockingReason: "creator_api_not_confirmed", cutoffStartAt: null },
-      { sourceCode: "tiktok_go", displayName: "TikTok GO", providerAvailability: "unconfirmed", approvalStatus: "not_available", selectedRangeMode: null, reportingTimezone: "America/New_York", firstImportStatus: "not_started", blockingReason: "creator_api_not_confirmed", cutoffStartAt: null }
+      { sourceCode: "tiktok_display_api", displayName: "TikTok Content", providerAvailability: "available", approvalStatus: "approved", policyApprovalStatus: "not_configured", selectedRangeMode: "specific_date", reportingTimezone: "America/New_York", firstImportStatus: "approved", blockingReason: null, cutoffStartAt: "2025-10-01T00:00:00.000Z" },
+      { sourceCode: "tiktok_shop", displayName: "TikTok Shop", providerAvailability: "unconfirmed", approvalStatus: "unconfirmed", policyApprovalStatus: "not_configured", selectedRangeMode: null, reportingTimezone: "America/New_York", firstImportStatus: "not_started", blockingReason: "provider_documentation_required", cutoffStartAt: null },
+      { sourceCode: "creator_rewards", displayName: "Creator Rewards", providerAvailability: "unconfirmed", approvalStatus: "unconfirmed", policyApprovalStatus: "not_configured", selectedRangeMode: null, reportingTimezone: "America/New_York", firstImportStatus: "not_started", blockingReason: "provider_documentation_required", cutoffStartAt: null },
+      { sourceCode: "tiktok_go", displayName: "TikTok GO", providerAvailability: "unconfirmed", approvalStatus: "unconfirmed", policyApprovalStatus: "not_configured", selectedRangeMode: null, reportingTimezone: "America/New_York", firstImportStatus: "not_started", blockingReason: "provider_documentation_required", cutoffStartAt: null }
     ]
   });
   const window = {
