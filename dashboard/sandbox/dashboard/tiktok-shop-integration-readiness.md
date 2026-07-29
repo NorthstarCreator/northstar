@@ -4,6 +4,36 @@ This note belongs only to the isolated Northstar TikTok sandbox dashboard. It do
 
 ## Integration Direction
 
+### Current application-path decision
+
+Northstar will preserve the existing **Northstar Creator Custom / Local Sellers**
+app for possible future seller-authorized integrations. Based on current
+official documentation and the app's available scope inventory, the current
+Local Sellers app appears optimized for seller APIs rather than
+creator-affiliate APIs. Northstar will pause creator-affiliate implementation
+against this app pending confirmation from TikTok Partner Support or an
+Account/Partner Manager. Its 24 currently available scopes remain inactive.
+
+The existing TikTok Shop callback and OAuth-start foundation is isolated,
+dormant infrastructure until TikTok confirms the correct application
+relationship. It must not be used to authorize an account, exchange a code,
+obtain a token, create a connection, run an import, or ingest TikTok Shop data.
+
+Northstar's current architectural recommendation is to evaluate a separate
+**Affiliate (custom)** app for creator testing and, if TikTok confirms it is
+appropriate or required for launch, a separate **Affiliate (public)** app for
+production. This is a recommendation pending TikTok confirmation, not an
+established requirement for this app. Creator and seller authorization must remain separate at
+every layer: app identity, route namespace, scope set, token type, connected
+identity, credential storage, database connection record, and audit trail. A
+creator token must never be accepted by a seller path, and a seller token must
+never be accepted by a creator path.
+
+No Affiliate app, scope request, authorization, token exchange, connection, or
+data import may proceed until TikTok confirms the Partner account category,
+application setup, US availability, test-account process, and approvable creator
+scopes.
+
 Northstar remains one unified creator dashboard. TikTok Content and TikTok Shop can connect separately behind the scenes, but their results should flow into the existing Morning Brief, Opportunity Center, Earnings, Products, Videos, Data Hub, and Settings pages.
 
 Phase 1 keeps the existing Display API sandbox work:
@@ -71,6 +101,28 @@ Official references checked:
 - TikTok Shop API Showcase Products: https://partner.tiktokshop.com/docv2/page/get-showcase-products
 - TikTok Shop API Open Collaboration Products: https://partner.tiktokshop.com/docv2/page/creator-search-open-collaboration-product
 - TikTok Shop creator authorization guide: https://partner.tiktokshop.com/docv2/page/creator-authorization-guide
+
+## TikTok Partner Manager Inquiry
+
+Northstar is a creator-facing analytics platform. Our current Northstar Creator
+Custom / Local Sellers app exposes seller scopes only, while Northstar needs the
+official creator-affiliate APIs for creator profile, orders, collaborations,
+showcase, commission, and video-performance reporting.
+
+Could you please confirm:
+
+1. Can our Partner account be categorized under **Customer Engagement → Affiliate**?
+2. How should we create or obtain an **Affiliate (custom)** app for creator testing?
+3. Are United States Creator Affiliate APIs currently beta or allowlist-controlled?
+4. Which creator scopes can be approved for Northstar's analytics use case?
+5. Do creator test accounts require coordination with an App Store Manager?
+6. Is a separate **Affiliate (public)** app required for production launch?
+7. Should the existing Custom / Local Sellers app remain separate as a Connector
+   or seller app for any future seller-authorized integrations?
+
+We are not requesting credentials or activation through this inquiry. We want to
+confirm the correct Partner Center architecture and approval path before resuming
+implementation.
 
 ## Field Capability Matrix
 

@@ -75,6 +75,38 @@ constraints require a separate review before any SQL is created or executed.
 The existing migration `003_source_import_policies.sql` remains unexecuted and
 unchanged. These planned tables are not part of migration 003.
 
+## TikTok Shop Application And Identity Separation
+
+The existing Northstar Creator Custom / Local Sellers app is reserved for
+possible future seller-authorized integrations. Based on current official
+documentation and the app's available scope inventory, the current Local Sellers
+app appears optimized for seller APIs rather than creator-affiliate APIs.
+Northstar will pause creator-affiliate implementation against this app pending
+confirmation from TikTok Partner Support or an Account/Partner Manager. Its
+seller scopes remain inactive. The existing TikTok Shop callback and OAuth-start
+foundation is isolated, dormant infrastructure and is not an approved connection
+or ingestion path.
+
+Northstar's current architectural recommendation is to evaluate a separate
+Affiliate (custom) app for creator testing and, if TikTok confirms it is
+appropriate or required, a separate Affiliate (public) app for production. This
+is not recorded as an established TikTok requirement. No schema or migration may
+assume either that the existing Local Sellers app can authorize a creator or that
+a separate Affiliate app is mandatory until TikTok confirms the app relationship.
+
+Any future credential and connection design must enforce distinct namespaces
+and identity constraints for:
+
+- Affiliate creator app identity, scopes, authorization routes, tokens, and
+  exact creator-account connections;
+- seller/Connector app identity, scopes, authorization routes, tokens, and
+  exact seller/shop connections.
+
+Creator and seller tokens must not share a connection row, provider identity,
+scope record, authorization route, idempotency domain, or database ownership
+key. No token exchange, account authorization, connection creation, migration,
+or TikTok Shop ingestion is approved by this planning decision.
+
 ## Shared Rules
 
 - Use exact platform IDs first.
