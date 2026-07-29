@@ -42,6 +42,9 @@
       error: "",
       session: null,
       snapshot: null,
+      sourceStatus: null,
+      sourceStatusLoading: false,
+      sourceStatusError: "",
       liveUpdatedAt: null,
       lastSavedSyncAt: null
     },
@@ -229,6 +232,9 @@
     state.live.phase = "demo";
     state.live.safeCode = "";
     state.live.snapshot = null;
+    state.live.sourceStatus = null;
+    state.live.sourceStatusLoading = false;
+    state.live.sourceStatusError = "";
     state.live.liveUpdatedAt = null;
     state.live.lastSavedSyncAt = null;
     state.live.error = "";
@@ -322,6 +328,27 @@
     }
   }
 
+  async function loadRevenueSourceStatus() {
+    const client = window.NORTHSTAR_TIKTOK_CLIENT;
+    if (!client?.revenueSourceStatus || !state.live.sessionConnected) return false;
+    state.live.sourceStatusLoading = true;
+    state.live.sourceStatusError = "";
+    render();
+    try {
+      const payload = await client.revenueSourceStatus();
+      if (!payload?.account?.id || !Array.isArray(payload.sources)) throw new Error("source_status_unavailable");
+      state.live.sourceStatus = payload;
+      return true;
+    } catch {
+      state.live.sourceStatus = null;
+      state.live.sourceStatusError = "Source readiness is temporarily unavailable.";
+      return false;
+    } finally {
+      state.live.sourceStatusLoading = false;
+      render();
+    }
+  }
+
   async function bootstrapLiveTikTok() {
     const client = window.NORTHSTAR_TIKTOK_CLIENT;
     const adapter = window.NORTHSTAR_LIVE_ADAPTER;
@@ -350,6 +377,7 @@
         state.live.connected = hasLiveSnapshot();
         state.live.phase = hasLiveSnapshot() ? "refreshing" : "loading";
         await loadLiveTikTok();
+        await loadRevenueSourceStatus();
       } else {
         enterExplicitDemoMode(session.session || null);
       }
@@ -383,6 +411,9 @@
       state.live.phase = "demo";
       state.live.safeCode = "";
       state.live.snapshot = null;
+      state.live.sourceStatus = null;
+      state.live.sourceStatusLoading = false;
+      state.live.sourceStatusError = "";
       state.live.liveUpdatedAt = null;
       state.live.lastSavedSyncAt = null;
       state.live.error = "TikTok Sandbox disconnected for this session.";
@@ -1468,6 +1499,10 @@
     return `${backButton()}<section class="product-studio">${productImage(item, "large")}<div><p class="eyebrow">Video Detail</p><h2>${escapeHtml(item.title)}</h2><p>${accountName(item.accountId)} · Posted ${formatBriefDateTime(item.date, item.time)}</p></div></section><section class="metric-grid compact">${metricCard("Views", number.format(item.views), "Video performance", "white")}${metricCard("Earnings", money.format(item.earnings), sourceNames, "selected")}${metricCard("Units Sold", number.format(item.units), linked?.name || "Linked product", "white")}${metricCard("Shares", number.format(item.shares), "Audience signal", "white")}</section><section class="section attribution-section">${heading("Sales Attribution", "Video earnings by origin", "Sales Attribution")}<div class="attribution-grid">${orderSummary.organic_video.orders ? attributionSummaryCard("organic_video", orderSummary.organic_video) : ""}${orderSummary.shop_ad.orders ? attributionSummaryCard("shop_ad", orderSummary.shop_ad) : ""}</div>${insightCard(insight)}</section>`;
   }
 
+  function connectionField(label, value) {
+    return `<div><strong>${label}</strong><p>${value || "Not available"}</p></div>`;
+  }
+
   function statusText() {
     if (state.live.syncPending) return "Syncing";
     if (state.live.loading || state.live.initializing) return "Loading profile";
@@ -1476,14 +1511,44 @@
     return "Not connected";
   }
 
-  function connectionField(label, value) {
-    return `<div><strong>${label}</strong><p>${value || "Not available"}</p></div>`;
-  }
-
   function connectionIdentity() {
     const active = state.live.snapshot?.account;
     if (!active) return "";
     return `<div class="connection-identity">${identity(active.id)}<span><strong>${escapeHtml(active.name)}</strong><small>${escapeHtml(active.handle || "TikTok creator")}</small></span></div>`;
+  }
+
+  function sourceStatusLabel(value) {
+    if (!value) return "Not selected";
+    return String(value).replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+  }
+
+  function blockingReasonLabel(value) {
+    const labels = {
+      partner_center_approval_required: "TikTok Shop Partner Center approval is required.",
+      creator_api_not_confirmed: "No confirmed creator-facing API is available.",
+      source_policy_blocked: "The account-specific source policy is blocked."
+    };
+    return value ? labels[value] || "This source is blocked." : "No blocking reason.";
+  }
+
+  function renderSourceStatusCard(item) {
+    const blocked = !!item.blockingReason;
+    const cutoff = item.sourceCode === "tiktok_display_api" && item.cutoffStartAt
+      ? "October 1, 2025 (TikTok Content Display API only)"
+      : "Source-specific";
+    return `<article class="section integration-card ${blocked ? "pending" : "connected"}">
+      ${heading(item.displayName, item.sourceCode.replaceAll("_", " "), "Data Hub")}
+      <div class="connection-grid compact">
+        ${connectionField("Provider availability", sourceStatusLabel(item.providerAvailability))}
+        ${connectionField("Policy configuration", sourceStatusLabel(item.policyConfigurationStatus))}
+        ${connectionField("Approval status", sourceStatusLabel(item.approvalStatus))}
+        ${connectionField("Selected range", sourceStatusLabel(item.selectedRangeMode))}
+        ${connectionField("Reporting timezone", escapeHtml(item.reportingTimezone || "Not selected"))}
+        ${connectionField("First import", sourceStatusLabel(item.firstImportStatus))}
+        ${connectionField("Historical boundary", cutoff)}
+      </div>
+      <p class="source-note ${blocked ? "warning-text" : ""}">${escapeHtml(blockingReasonLabel(item.blockingReason))}</p>
+    </article>`;
   }
 
   function renderDataHub() {
@@ -1493,6 +1558,15 @@
     const disconnected = isExplicitDemoMode();
     const liveUpdated = formatFreshnessTime(state.live.liveUpdatedAt, disconnected ? "Not connected" : "Not updated");
     const lastSavedSync = formatFreshnessTime(state.live.lastSavedSyncAt, disconnected ? "Not connected" : "Not synced");
+    const payload = state.live.sourceStatus;
+    const sourceAccount = payload?.account;
+    const statusBody = state.live.sourceStatusLoading
+      ? empty("Loading account-specific source readiness…")
+      : state.live.sourceStatusError
+        ? empty(state.live.sourceStatusError)
+        : Array.isArray(payload?.sources)
+          ? `<section class="integration-grid">${payload.sources.map(renderSourceStatusCard).join("")}</section>`
+          : empty("Connect an exact creator account to view source readiness.");
     return `<section class="page-intro"><div class="intro-heading" style="--section-accent:${sectionAccent["Data Hub"]}">${icon("Data Hub")}<div><p class="eyebrow">Data Hub</p><h2>Unified Northstar sources, separate technical connections.</h2><p>Content and Shop connect independently, then flow into the same Morning Brief, Earnings, Products, and Videos pages.</p></div></div></section>
       <section class="integration-grid">
         <article class="section integration-card ${isLiveConnected() ? "connected" : "not-connected"}">
@@ -1521,7 +1595,11 @@
         </article>
       </section>
       <section class="section provenance-panel">${heading("Unified Source Policy", "Real totals stay separate from demo records", "Data Hub")}<p>Total Earnings uses connected real revenue sources only. Demo Shop, Creator Rewards, and TikTok GO values remain available for sandbox design testing, but are labeled and excluded from real totals once live Content is connected.</p><div class="provenance-list"><span>tiktok_display_api</span><span>tiktok_shop_affiliate_api</span><span>official_tiktok_shop_report</span><span>creator_rewards_source</span><span>tiktok_go_source</span><span>demo</span></div></section>
-      <section class="section data-source-grid">${list("dataHubSources").map((item) => `<article><span class="status-dot ${(item.status || "unknown").toLowerCase().replaceAll(" ", "-")}"></span><strong>${item.name}</strong><small>${item.status}</small><dl><div><dt>Last updated</dt><dd>${item.lastUpdated || "Not available"}</dd></div><div><dt>Records</dt><dd>${number.format(item.records || 0)}</dd></div><div><dt>Source</dt><dd>${(item.dataSource || "sandbox").replaceAll("_", " ")}</dd></div></dl></article>`).join("") || empty("No source readiness records are available.")}</section>`;
+      <section class="section data-source-grid">${list("dataHubSources").map((item) => `<article><span class="status-dot ${(item.status || "unknown").toLowerCase().replaceAll(" ", "-")}"></span><strong>${item.name}</strong><small>${item.status}</small><dl><div><dt>Last updated</dt><dd>${item.lastUpdated || "Not available"}</dd></div><div><dt>Records</dt><dd>${number.format(item.records || 0)}</dd></div><div><dt>Source</dt><dd>${(item.dataSource || "sandbox").replaceAll("_", " ")}</dd></div></dl></article>`).join("") || empty("No source readiness records are available.")}</section>
+      <section class="page-intro revenue-compass-intro"><div class="intro-heading" style="--section-accent:${sectionAccent["Revenue Compass"]}">${icon("Revenue Compass")}<div><p class="eyebrow">Revenue Compass</p><h2>Source readiness for one exact creator account.</h2><p>Each provider keeps its own approval, historical range, timezone, and first-import state. All Accounts remains a calculated reporting view and never owns source status.</p></div></div></section>
+      ${sourceAccount ? `<section class="section source-account-banner"><strong>${escapeHtml(sourceAccount.displayName || "Creator account")}</strong><small>Exact account source status</small></section>` : ""}
+      ${payload && payload.policyTableAvailable === false ? `<p class="source-note warning-text">Source policy configuration is not installed. Connected Content status remains read-only; revenue sources remain blocked or not configured.</p>` : ""}
+      ${statusBody}`;
   }
 
   function renderSettings() {

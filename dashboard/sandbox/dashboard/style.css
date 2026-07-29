@@ -1384,6 +1384,23 @@ select, input {
   --section-accent: var(--gold);
 }
 
+.source-account-banner {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(47,124,122,.14);
+  border-radius: 18px;
+  background: rgba(47,124,122,.07);
+  color: var(--muted);
+}
+
+.source-account-banner strong {
+  color: var(--ink);
+}
+
+.warning-text {
+  color: #875f00;
+}
+
 .connection-identity {
   display: inline-flex;
   align-items: center;

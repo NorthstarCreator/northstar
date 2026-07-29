@@ -67,6 +67,10 @@
     return pending;
   }
 
+  async function revenueSourceStatus() {
+    return get("/revenue/source-status");
+  }
+
   async function sync() {
     if (!csrfToken) await bootstrapSession();
     return post("/tiktok/sync");
@@ -82,6 +86,7 @@
     startConnect,
     me,
     videos,
+    revenueSourceStatus,
     sync,
     disconnect
   };

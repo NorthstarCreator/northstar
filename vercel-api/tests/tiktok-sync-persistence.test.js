@@ -741,6 +741,7 @@ function testSafeSyncRunReportingAndDashboardPendingState() {
   assert.doesNotMatch(routeSource, /NORTHSTAR_FIRST_IMPORT_OPEN_ID/);
   assert.equal((dashboardSource.match(/state\.live\.syncPending \? "Syncing\.\.\." : "Sync Now"/g) || []).length, 2);
   assert.match(dashboardSource, /if \(state\.live\.syncPending\) return;/);
+  assert.match(dashboardSource, /await loadLiveTikTok\(\);\s*await loadRevenueSourceStatus\(\);/);
   assert.doesNotMatch(dashboardSource, /state\.live\.loading \? "Syncing\.\.\."/);
 }
 

@@ -480,6 +480,16 @@ async function runActualEntrypoint({
     lastSuccessfulSyncAt,
     overlay: { status: "live", readAt: "2026-07-26T14:00:00Z", requestCount: 4 }
   });
+  const sourceStatusPayload = () => ({
+    account: { id: "00000000-0000-4000-8000-000000000001", displayName: "Fixture Creator" },
+    policyTableAvailable: false,
+    sources: [
+      { sourceCode: "tiktok_display_api", displayName: "TikTok Content", providerAvailability: "available", approvalStatus: "approved", selectedRangeMode: "specific_date", reportingTimezone: "America/New_York", firstImportStatus: "approved", blockingReason: null, cutoffStartAt: "2025-10-01T00:00:00.000Z" },
+      { sourceCode: "tiktok_shop", displayName: "TikTok Shop", providerAvailability: "restricted", approvalStatus: "not_approved", selectedRangeMode: null, reportingTimezone: "America/New_York", firstImportStatus: "not_started", blockingReason: "partner_center_approval_required", cutoffStartAt: null },
+      { sourceCode: "creator_rewards", displayName: "Creator Rewards", providerAvailability: "unconfirmed", approvalStatus: "not_available", selectedRangeMode: null, reportingTimezone: "America/New_York", firstImportStatus: "not_started", blockingReason: "creator_api_not_confirmed", cutoffStartAt: null },
+      { sourceCode: "tiktok_go", displayName: "TikTok GO", providerAvailability: "unconfirmed", approvalStatus: "not_available", selectedRangeMode: null, reportingTimezone: "America/New_York", firstImportStatus: "not_started", blockingReason: "creator_api_not_confirmed", cutoffStartAt: null }
+    ]
+  });
   const window = {
     location: { search: "", href: "https://northstar-dashboard-sandbox.vercel.app/" }
   };
@@ -523,6 +533,7 @@ async function runActualEntrypoint({
           ? videoRequestHandler({ count: videoRequestCount, payload, url })
           : response(payload);
       }
+      if (new URL(url).pathname === "/revenue/source-status") return response(sourceStatusPayload());
       throw new Error(`Unexpected request: ${url}`);
     }
   });
@@ -563,7 +574,7 @@ async function runActualEntrypoint({
 async function testActualEntrypointUsesFreshPersistedData() {
   const { adapterCalls, documentListeners, elements, requests } = await runActualEntrypoint();
 
-  assert.deepEqual(requests.map(({ url }) => new URL(url).pathname), ["/session", "/tiktok/me", "/tiktok/videos"]);
+  assert.deepEqual(requests.map(({ url }) => new URL(url).pathname), ["/session", "/tiktok/me", "/tiktok/videos", "/revenue/source-status"]);
   assert.equal(new URL(requests[2].url).searchParams.get("start"), "2026-07-01");
   assert.equal(new URL(requests[2].url).searchParams.get("end"), "2026-07-26");
   assert.ok(requests.every(({ options }) => options.credentials === "include"));
@@ -592,6 +603,31 @@ async function testActualEntrypointUsesFreshPersistedData() {
   const newestIndex = elements.content.innerHTML.indexOf("July 25 persisted newest");
   const olderJulyIndex = elements.content.innerHTML.indexOf("Persisted July video 1");
   assert.ok(newestIndex >= 0 && olderJulyIndex >= 0 && newestIndex < olderJulyIndex);
+}
+
+async function testRevenueCompassRendersExactAccountReadinessOnly() {
+  const { documentListeners, elements } = await runActualEntrypoint();
+  documentListeners.click({
+    target: {
+      closest(selector) {
+        if (selector === "[data-page]") return { dataset: { page: "data" } };
+        return null;
+      }
+    }
+  });
+
+  assert.match(elements.content.innerHTML, /Revenue Compass/);
+  assert.match(elements.content.innerHTML, /Fixture Creator/);
+  assert.match(elements.content.innerHTML, /TikTok Content/);
+  assert.match(elements.content.innerHTML, /TikTok Shop/);
+  assert.match(elements.content.innerHTML, /Creator Rewards/);
+  assert.match(elements.content.innerHTML, /TikTok GO/);
+  assert.match(elements.content.innerHTML, /All Accounts remains a calculated reporting view and never owns source status/);
+  assert.match(elements.content.innerHTML, /October 1, 2025/);
+  assert.match(elements.content.innerHTML, /Source policy configuration is not installed/);
+  assert.equal((elements.content.innerHTML.match(/class="section integration-card (?:connected|pending)"/g) || []).length, 6);
+  assert.match(elements.content.innerHTML, /data-action="sync-tiktok"/);
+  assert.match(elements.content.innerHTML, /data-action="disconnect-tiktok"/);
 }
 
 async function testMissingPersistedSyncTimeStaysNotSynced() {
@@ -729,7 +765,7 @@ async function testSafariBlockedClientFailsVisiblyWithoutRequests() {
 
 async function testAuthenticatedBootstrapFailureIsNotShownAsLive() {
   const { elements, requests } = await runActualEntrypoint({ failProfile: true });
-  assert.deepEqual(requests.map(({ url }) => new URL(url).pathname), ["/session", "/tiktok/me"]);
+  assert.deepEqual(requests.map(({ url }) => new URL(url).pathname), ["/session", "/tiktok/me", "/revenue/source-status"]);
   assert.match(elements.syncStrip.innerHTML, /Live data unavailable/);
   assert.match(elements.syncStrip.innerHTML, /Account information is unavailable/);
   assert.doesNotMatch(elements.syncStrip.innerHTML, /TikTok Sandbox Connected/);
@@ -752,6 +788,7 @@ async function testAuthenticatedBootstrapFailureIsNotShownAsLive() {
   await testPersistedReadIsCompleteAndSuccessfulOnly();
   testAdapterPreservesAllPersistedRows();
   await testActualEntrypointUsesFreshPersistedData();
+  await testRevenueCompassRendersExactAccountReadinessOnly();
   await testMissingPersistedSyncTimeStaysNotSynced();
   await testFirefoxDisconnectedSessionStaysInDemoMode();
   await testStartupDoesNotRenderDemoBeforeSessionResolves();

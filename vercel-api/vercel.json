@@ -7,6 +7,7 @@
     { "source": "/auth/tiktok/disconnect", "destination": "/api/auth/tiktok/disconnect" },
     { "source": "/tiktok/me", "destination": "/api/tiktok/me" },
     { "source": "/tiktok/videos", "destination": "/api/tiktok/videos" },
+    { "source": "/revenue/source-status", "destination": "/api/revenue/source-status" },
     { "source": "/tiktok/sync", "destination": "/api/tiktok/sync" }
   ]
 }

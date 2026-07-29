@@ -27,15 +27,18 @@ async function testReadOnlyInitializationNeverPostsSync() {
   await context.window.NORTHSTAR_TIKTOK_CLIENT.bootstrapSession();
   await context.window.NORTHSTAR_TIKTOK_CLIENT.me();
   await context.window.NORTHSTAR_TIKTOK_CLIENT.videos();
+  await context.window.NORTHSTAR_TIKTOK_CLIENT.revenueSourceStatus();
 
   assert.deepEqual(requests.map(({ url, method }) => ({ url, method })), [
     { url: "https://sandbox-api.example.test/session", method: "GET" },
     { url: "https://sandbox-api.example.test/tiktok/me", method: "GET" },
-    { url: "https://sandbox-api.example.test/tiktok/videos", method: "GET" }
+    { url: "https://sandbox-api.example.test/tiktok/videos", method: "GET" },
+    { url: "https://sandbox-api.example.test/revenue/source-status", method: "GET" }
   ]);
   assert.ok(requests.every((request) => request.credentials === "include"));
   assert.ok(requests.every((request) => request.cache === "no-store"));
   assert.equal(requests.some((request) => request.url.endsWith("/tiktok/sync")), false);
+  assert.equal(requests.some((request) => request.method !== "GET"), false);
 }
 
 async function testExplicitSyncIsTheOnlyPostPath() {
