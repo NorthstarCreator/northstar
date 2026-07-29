@@ -419,6 +419,16 @@ function deferred() {
   return { promise, reject, resolve };
 }
 
+class FixtureDate extends Date {
+  constructor(value) {
+    super(value === undefined ? "2026-07-26T14:00:00Z" : value);
+  }
+
+  static now() {
+    return Date.parse("2026-07-26T14:00:00Z");
+  }
+}
+
 async function runActualEntrypoint({
   sessionConnected = true,
   omitClient = false,
@@ -479,7 +489,7 @@ async function runActualEntrypoint({
     document,
     console,
     Intl,
-    Date,
+    Date: FixtureDate,
     URL,
     URLSearchParams,
     navigator: {},

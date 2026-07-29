@@ -10,6 +10,10 @@ const firstImportMigration = fs.readFileSync(
   path.join(__dirname, "../db/migrations/002_first_import_control.sql"),
   "utf8"
 );
+const sourcePolicyMigration = fs.readFileSync(
+  path.join(__dirname, "../db/migrations/003_source_import_policies.sql"),
+  "utf8"
+);
 
 function clearModule(modulePath) {
   delete require.cache[require.resolve(modulePath)];
@@ -32,6 +36,11 @@ function loadPolicy() {
 function loadRepository() {
   clearModule("../lib/sync-repository");
   return require("../lib/sync-repository");
+}
+
+function loadSourcePolicy() {
+  clearModule("../lib/source-import-policy");
+  return require("../lib/source-import-policy");
 }
 
 function testSchemaTablesExist() {
@@ -101,6 +110,65 @@ function testFirstImportApprovalFunction() {
   assert.match(sql, /fic.status = 'pending_review'/);
   assert.match(sql, /sr.status in \('succeeded', 'partial'\)/);
   assert.match(sql, /raise exception 'first_import_not_pending_or_reviewable'/);
+}
+
+function testSourceImportPolicySchema() {
+  const sql = compactSql(sourcePolicyMigration);
+  assert.match(sql, /create table source_import_policies/);
+  assert.match(sql, /account_id uuid not null references creator_accounts\(id\) on delete cascade/);
+  assert.match(sql, /source_code text not null check \(source_code in \( 'tiktok_display_api', 'tiktok_shop', 'creator_rewards', 'tiktok_go' \)\)/);
+  assert.match(sql, /constraint source_import_policies_account_source_unique unique \(account_id, source_code\)/);
+  assert.match(sql, /import_range_mode <> 'specific_date' or requested_start_at is not null/);
+  assert.match(sql, /status not in \('approved', 'active'\) or approved_at is not null/);
+  assert.match(sql, /first_import_status <> 'approved' or first_import_completed_at is not null/);
+  assert.doesNotMatch(sql, /\b(insert into|update|delete from)\b/);
+  assert.doesNotMatch(sql, /2025-10-01/);
+}
+
+function testSourceImportPolicyValidation() {
+  const policy = loadSourcePolicy();
+  const normalized = policy.normalizeSourceImportPolicy({
+    accountId: "00000000-0000-4000-8000-000000000001",
+    sourceCode: "tiktok_display_api",
+    importRangeMode: "specific_date",
+    requestedStartAt: "2025-10-01T00:00:00-04:00",
+    effectiveStartAt: "2025-10-01T04:00:00Z",
+    reportingTimezone: "America/New_York",
+    status: "approved",
+    approvedAt: "2026-07-23T12:00:00Z",
+    firstImportStatus: "approved",
+    firstImportCompletedAt: "2026-07-23T12:30:00Z"
+  });
+  assert.equal(normalized.sourceCode, "tiktok_display_api");
+  assert.equal(normalized.requestedStartAt, "2025-10-01T04:00:00.000Z");
+  assert.equal(normalized.reportingTimezone, "America/New_York");
+  assert.throws(
+    () => policy.normalizeSourceImportPolicy({
+      accountId: "00000000-0000-4000-8000-000000000001",
+      sourceCode: "tiktok_shop",
+      importRangeMode: "specific_date",
+      reportingTimezone: "America/New_York"
+    }),
+    /requires requested_start_at/
+  );
+  assert.throws(
+    () => policy.normalizeSourceImportPolicy({
+      accountId: "00000000-0000-4000-8000-000000000001",
+      sourceCode: "demo",
+      importRangeMode: "all_available",
+      reportingTimezone: "America/New_York"
+    }),
+    /Invalid source_code/
+  );
+  assert.throws(
+    () => policy.normalizeSourceImportPolicy({
+      accountId: "all-accounts",
+      sourceCode: "tiktok_shop",
+      importRangeMode: "all_available",
+      reportingTimezone: "America\/New_York"
+    }),
+    /exact creator account/
+  );
 }
 
 function testEnvironmentMappingAndMismatchProtection() {
@@ -274,6 +342,8 @@ function testRepositoryProvenanceAndCutoff() {
     testSyncProvenanceColumns,
     testFirstImportRollbackFunction,
     testFirstImportApprovalFunction,
+    testSourceImportPolicySchema,
+    testSourceImportPolicyValidation,
     testEnvironmentMappingAndMismatchProtection,
     testDatabaseUrlIsolationAndAmbiguity,
     testHistoricalCutoffServiceLayer,
