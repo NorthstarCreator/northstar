@@ -77,35 +77,59 @@ unchanged. These planned tables are not part of migration 003.
 
 ## TikTok Shop Application And Identity Separation
 
-The existing Northstar Creator Custom / Local Sellers app is reserved for
-possible future seller-authorized integrations. Based on current official
-documentation and the app's available scope inventory, the current Local Sellers
-app appears optimized for seller APIs rather than creator-affiliate APIs.
-Northstar will pause creator-affiliate implementation against this app pending
-confirmation from TikTok Partner Support or an Account/Partner Manager. Its
-seller scopes remain inactive. The existing TikTok Shop callback and OAuth-start
-foundation is isolated, dormant infrastructure and is not an approved connection
-or ingestion path.
+TikTok Shop Partner Support has confirmed that the existing Northstar Creator
+Custom / Local Sellers app is seller-facing and cannot provide Northstar's
+creator-affiliate integration. It is reserved unchanged for a possible future
+seller-authorized integration; its seller scopes remain inactive.
 
-Northstar's current architectural recommendation is to evaluate a separate
-Affiliate (custom) app for creator testing and, if TikTok confirms it is
-appropriate or required, a separate Affiliate (public) app for production. This
-is not recorded as an established TikTok requirement. No schema or migration may
-assume either that the existing Local Sellers app can authorize a creator or that
-a separate Affiliate app is mandatory until TikTok confirms the app relationship.
+Northstar's primary creator integration requires a separate Affiliate app in the
+Affiliate service category and United States market, beginning with a custom app
+for development/testing. It must use the app's approved Affiliate Creator API
+scopes and TikTok Shop Creator Authorization, which is separate from both TikTok
+for Developers Login Kit and TikTok for Business authorization.
 
-Any future credential and connection design must enforce distinct namespaces
-and identity constraints for:
+Future connection storage must distinguish these provider identities:
 
-- Affiliate creator app identity, scopes, authorization routes, tokens, and
-  exact creator-account connections;
-- seller/Connector app identity, scopes, authorization routes, tokens, and
-  exact seller/shop connections.
+| Provider code (proposed) | Authorization family | Provider identity | Internal owner |
+| --- | --- | --- | --- |
+| `tiktok_content` | TikTok for Developers Login Kit | Display API Open ID | exact `creator_accounts.id` |
+| `tiktok_shop_affiliate_creator` | TikTok Shop Creator Authorization | confirmed Affiliate creator ID/Open ID | exact `creator_accounts.id` |
+| `tiktok_shop_seller` | Local Sellers seller authorization | confirmed seller/shop identity | a separately verified seller/shop owner linked to an exact account only when appropriate |
 
-Creator and seller tokens must not share a connection row, provider identity,
-scope record, authorization route, idempotency domain, or database ownership
-key. No token exchange, account authorization, connection creation, migration,
-or TikTok Shop ingestion is approved by this planning decision.
+Each provider requires separate app credentials, authorization routes, scope
+records, token records, refresh lifecycle, connected identity, connection row,
+revocation/disconnect behavior, idempotency domain, and audit trail. An
+Affiliate creator identity must never be inferred from a Display API Open ID or
+a seller/shop identity. Provider records may be related only through the exact
+Northstar creator-account UUID after provider-specific ownership verification.
+
+The current generic `tiktok_shop` source code may remain a dashboard aggregation
+label temporarily, but it is not sufficient as a credential or connection
+identity. Before persistence is implemented, schema design must use explicit
+Affiliate Creator and Seller provider codes or an equally strict provider-type
+column and uniqueness boundary.
+
+The committed OAuth state foundation remains disabled and planning-only. Its
+opaque state, digest-only key, TTL, atomic consumption, replay protection,
+session binding, exact-account validation, and fail-closed environment guard are
+reusable. Its `tiktok_shop` provider constant, `creator_authorization` purpose,
+authorization URL, parameter names, credential environment name, callback
+fields, and Display API Open-ID ownership query must be revalidated or replaced
+against the official Affiliate Creator Authorization documentation before use.
+
+No schema or migration may yet assume the Affiliate creator ID format, token
+fields, scope names, refresh model, token retention rules, seller-to-creator
+mapping, or connection cardinality. No token exchange, account authorization,
+connection creation, migration, or TikTok Shop ingestion is approved by this
+planning decision.
+
+Proposed environment namespaces are
+`TIKTOK_SHOP_AFFILIATE_CREATOR_*` for the Affiliate creator app and
+`TIKTOK_SHOP_SELLER_*` for the preserved Local Sellers app. Exact suffixes such
+as `APP_KEY`, `CLIENT_KEY`, `APP_SECRET`, or `CLIENT_SECRET` must follow the
+official documentation and may not be chosen until confirmed. The legacy
+`TIKTOK_SHOP_CREATOR_AUTH_ENABLED` and `TIKTOK_SHOP_APP_KEY_SANDBOX` variables
+remain unset and must not activate or supply the future Affiliate path.
 
 ## Shared Rules
 

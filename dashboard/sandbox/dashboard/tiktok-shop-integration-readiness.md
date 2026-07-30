@@ -6,33 +6,39 @@ This note belongs only to the isolated Northstar TikTok sandbox dashboard. It do
 
 ### Current application-path decision
 
-Northstar will preserve the existing **Northstar Creator Custom / Local Sellers**
-app for possible future seller-authorized integrations. Based on current
-official documentation and the app's available scope inventory, the current
-Local Sellers app appears optimized for seller APIs rather than
-creator-affiliate APIs. Northstar will pause creator-affiliate implementation
-against this app pending confirmation from TikTok Partner Support or an
-Account/Partner Manager. Its 24 currently available scopes remain inactive.
+TikTok Shop Partner Support has confirmed that the existing **Northstar Creator
+Custom / Local Sellers** app is seller-facing and cannot provide Northstar's
+creator-affiliate integration. Northstar will preserve that app unchanged as an
+optional dormant seller-side integration. Its seller scopes remain inactive,
+and it must not be deleted, repurposed, or used by a creator-affiliate route.
 
-The existing TikTok Shop callback and OAuth-start foundation is isolated,
-dormant infrastructure until TikTok confirms the correct application
-relationship. It must not be used to authorize an account, exchange a code,
-obtain a token, create a connection, run an import, or ingest TikTok Shop data.
+Northstar's primary TikTok Shop creator integration will use a separate
+**Affiliate** app registered for the Affiliate service category and United
+States market. The initial development and testing app will be an Affiliate
+custom app using approved Affiliate Creator API scopes and TikTok Shop Creator
+Authorization. A later production/public app decision remains subject to
+TikTok's approval and launch requirements.
 
-Northstar's current architectural recommendation is to evaluate a separate
-**Affiliate (custom)** app for creator testing and, if TikTok confirms it is
-appropriate or required for launch, a separate **Affiliate (public)** app for
-production. This is a recommendation pending TikTok confirmation, not an
-established requirement for this app. Creator and seller authorization must remain separate at
-every layer: app identity, route namespace, scope set, token type, connected
-identity, credential storage, database connection record, and audit trail. A
-creator token must never be accepted by a seller path, and a seller token must
-never be accepted by a creator path.
+TikTok Shop Creator Authorization is separate from TikTok for Developers Login
+Kit and from TikTok for Business authorization. Northstar must therefore keep
+three independent provider connections:
 
-No Affiliate app, scope request, authorization, token exchange, connection, or
-data import may proceed until TikTok confirms the Partner account category,
-application setup, US availability, test-account process, and approvable creator
-scopes.
+1. **TikTok Content API** — TikTok for Developers Login Kit and Display API;
+2. **TikTok Shop Affiliate Creator** — Affiliate app, Creator Authorization,
+   creator-affiliate scopes, identity, tokens, and data;
+3. **TikTok Shop Seller** — the preserved Local Sellers app and any future
+   seller-authorized scopes, shop identity, tokens, and data.
+
+These providers must not share app credentials, authorization routes, provider
+identity fields, scope records, token records, connection rows, refresh jobs,
+or audit namespaces. They may link only through Northstar's exact internal
+creator-account UUID after provider-specific ownership has been verified.
+
+The committed TikTok Shop OAuth foundation remains disabled and dormant. It
+must not authorize an account, exchange a code, obtain or refresh a token,
+create a connection, run an import, or ingest TikTok Shop data until every
+Affiliate Creator Authorization detail listed below has been verified against
+the official documentation available to Northstar's Affiliate app.
 
 Northstar remains one unified creator dashboard. TikTok Content and TikTok Shop can connect separately behind the scenes, but their results should flow into the existing Morning Brief, Opportunity Center, Earnings, Products, Videos, Data Hub, and Settings pages.
 
@@ -44,7 +50,9 @@ Phase 1 keeps the existing Display API sandbox work:
 - `video.list`
 - profile identity, account stats, public video metadata, views, likes, comments, and shares
 
-Phase 2 adds TikTok Shop when approved, or uses an official TikTok Shop report import while API approval is pending.
+Phase 2 adds a separately authorized TikTok Shop Affiliate Creator connection
+after the Affiliate app, exact scope inventory, and official authorization
+contract are available. Any seller connection remains optional and separate.
 
 ## Data Provenance
 
@@ -87,7 +95,7 @@ Important documented signals:
 - Some seller analytics/product-video performance APIs require seller-side authorization and TikTok Shop Analytics scopes, so they should not be assumed available to Jennifer's creator account until Partner Center access confirms it.
 - Open collaboration setup in Seller Center supports standard commission and Shop Ads commission settings, but seeing those values in UI does not automatically prove creator-side API availability.
 
-Unknown until Partner Center access:
+Unknown until the Affiliate app and its exact official documentation are available:
 
 - Whether Jennifer's real creator account can connect through the creator authorization flow for this app.
 - Exact creator-side historical limits for orders, products, commission, settlements, and attribution.
@@ -102,27 +110,113 @@ Official references checked:
 - TikTok Shop API Open Collaboration Products: https://partner.tiktokshop.com/docv2/page/creator-search-open-collaboration-product
 - TikTok Shop creator authorization guide: https://partner.tiktokshop.com/docv2/page/creator-authorization-guide
 
-## TikTok Partner Manager Inquiry
+## Resolved Application-Path Inquiry
 
-Northstar is a creator-facing analytics platform. Our current Northstar Creator
-Custom / Local Sellers app exposes seller scopes only, while Northstar needs the
-official creator-affiliate APIs for creator profile, orders, collaborations,
-showcase, commission, and video-performance reporting.
+Partner Support confirmed the application path: the Local Sellers app is
+seller-facing, while Northstar's primary creator integration requires a separate
+Affiliate app, Affiliate service category, United States market, Affiliate
+Creator API scopes, and TikTok Shop Creator Authorization. The Local Sellers app
+remains unchanged as optional dormant seller infrastructure.
 
-Could you please confirm:
+Still pending are the exact scope inventory granted to the Affiliate custom app,
+the official Creator Authorization contract for that app, test-account rules,
+United States availability constraints, and the production/public-app approval
+path.
 
-1. Can our Partner account be categorized under **Customer Engagement → Affiliate**?
-2. How should we create or obtain an **Affiliate (custom)** app for creator testing?
-3. Are United States Creator Affiliate APIs currently beta or allowlist-controlled?
-4. Which creator scopes can be approved for Northstar's analytics use case?
-5. Do creator test accounts require coordination with an App Store Manager?
-6. Is a separate **Affiliate (public)** app required for production launch?
-7. Should the existing Custom / Local Sellers app remain separate as a Connector
-   or seller app for any future seller-authorized integrations?
+## Committed OAuth Foundation Audit
 
-We are not requesting credentials or activation through this inquiry. We want to
-confirm the correct Partner Center architecture and approval path before resuming
-implementation.
+### Provider-neutral components to retain
+
+- cryptographically secure opaque state generation;
+- SHA-256 state-keying so raw state is not stored server-side;
+- a 600-second TTL and collision-safe `SET ... NX` issuance;
+- atomic read-and-delete consumption for one-time use across serverless instances;
+- replay, expiration, malformed-record, environment, purpose, and session checks;
+- exact Northstar creator-account UUID validation and rejection of calculated
+  All Accounts identities;
+- fail-closed feature and sandbox-environment guards;
+- GET-only method restrictions, controlled error responses, no-store headers,
+  and redaction of state/provider values;
+- dependency-injected tests for storage, routing, disabled behavior, failures,
+  and the terminal no-token-exchange callback.
+
+The state record's provider and purpose constants must be renamed to an explicit
+Affiliate Creator namespace before activation. The security mechanics can be
+retained.
+
+### Affiliate assumptions requiring official revalidation
+
+The following committed details are not approved Affiliate contracts and must
+not be activated as-is:
+
+- authorization URL, including its host and path;
+- every required authorization parameter and its exact name, encoding,
+  cardinality, and signing rule;
+- whether TikTok calls the public app identifier `app_key`, `client_key`, or
+  another documented name, and which credential class is required;
+- callback method, required and optional query parameters, denial/error fields,
+  authorization-code field, duplicate-parameter behavior, and redirect-URI
+  matching rules;
+- token-exchange endpoint, HTTP method, authentication method, request and
+  response fields, expiry semantics, and safe error model;
+- Affiliate creator identity, including the meaning and stability of Creator
+  Open ID and whether it is distinct from the Display API Open ID;
+- exact Affiliate Creator scope names and which endpoints each scope authorizes;
+- refresh-token availability, rotation, reuse/revocation behavior, lifetime,
+  and recovery requirements;
+- token encryption, storage, access-control, retention, deletion, and audit
+  requirements;
+- the official method for proving that the authorized Affiliate creator belongs
+  to the exact Northstar creator account;
+- market, custom-app, test-account, allowlist, review, and approval constraints.
+
+The current start route incorrectly uses the existing TikTok Content connection's
+Display API Open ID as its ownership prerequisite. That is safe while disabled
+but is not a valid Affiliate identity design. Future code must bind the
+Northstar session and exact account first, then verify and attach the returned
+Affiliate creator identity without assuming equality with any Display API or
+seller identity.
+
+### Planned implementation impact
+
+After the Affiliate app and exact scope inventory are available, Northstar
+should selectively revise the dormant foundation rather than extend the seller
+app path:
+
+- rename routes, constants, state keys, source/status values, and tests to an
+  explicit `tiktok_shop_affiliate_creator` provider namespace;
+- replace the authorization URL builder and callback parser only with confirmed
+  official Affiliate Creator Authorization values;
+- remove the Display API Open-ID prerequisite and add an independently verified
+  Affiliate creator ownership/identity binding;
+- design a separate encrypted token store and connection record for Affiliate
+  creator credentials only after storage and refresh requirements are confirmed;
+- add token exchange and refresh behavior only under separate approval, with no
+  ingestion implied by successful authorization;
+- reserve a different route, credential, identity, token, scope, and connection
+  namespace for any future Local Sellers integration;
+- keep the existing TikTok Content Login Kit routes and connection records
+  unchanged.
+
+Until then, retain the committed code dormant because its state, replay, and
+fail-closed controls are reusable. Revise the provider-specific URL, parameter,
+identity, and naming portions before any enablement. Remove the dormant routes
+only if official Affiliate documentation proves that their transport or state
+model is incompatible; no removal is currently required.
+
+Proposed future environment-variable names, with no values committed or set:
+
+- `TIKTOK_SHOP_AFFILIATE_CREATOR_AUTH_ENABLED`
+- `TIKTOK_SHOP_AFFILIATE_CREATOR_APP_KEY_SANDBOX` or the exact credential term
+  used by official Affiliate documentation
+- `TIKTOK_SHOP_AFFILIATE_CREATOR_APP_SECRET_SANDBOX` only if the official token
+  exchange requires it
+- `TIKTOK_SHOP_AFFILIATE_CREATOR_REDIRECT_URI_SANDBOX`
+- separate `TIKTOK_SHOP_SELLER_*` names for any future Local Sellers path
+
+The current `TIKTOK_SHOP_CREATOR_AUTH_ENABLED` and
+`TIKTOK_SHOP_APP_KEY_SANDBOX` names should remain unset and be deprecated or
+replaced during the reviewed Affiliate implementation, never silently reused.
 
 ## Field Capability Matrix
 
