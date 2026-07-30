@@ -28,6 +28,46 @@ rollup because policies require a real `creator_accounts.id` foreign key.
 - `tiktok_go_rewards_daily`: daily TikTok GO earnings by account, campaign, and content when available.
 - `external_revenue_events`: non-TikTok revenue sources for future unified earnings reporting.
 
+## Dormant LIVE Shopping Foundation
+
+Northstar now has a provider-neutral, non-persistent LIVE Shopping domain model
+for future TikTok Shop Affiliate Creator access. It defines exact-account LIVE
+sessions, replay information, product-to-LIVE relationships, hourly affiliate
+metric buckets, orders, units, GMV, estimated and final commission, refunds, and
+sales/GMV per hour. No database table, migration, route, writer, import handler,
+queue, token exchange, or TikTok request implements this model.
+
+The accepted provenance values are `manual`, `imported`, and `tiktok_api`.
+Manual and Imported records can be validated by the domain model after a future
+reviewed entry/import workflow exists. `tiktok_api` is fail-closed and cannot
+construct a record until Affiliate Creator API access is authorized and a
+provider implementation is separately approved. The Data Portability Full
+Archive is not an allowed source.
+
+If persistence is later approved, use new tables rather than extending Display
+API video tables:
+
+- `live_shopping_sessions`: exact `creator_accounts.id`, explicit Affiliate
+  Creator provider, source, provider-neutral title, start/end, replay
+  availability/reference/publication/expiration, and safe provenance ID;
+- `live_shopping_products`: exact account/session/product relationship,
+  featured/removed timestamps, source, and safe provenance ID;
+- `live_shopping_affiliate_metrics`: exact account/session and optional linked
+  product, bounded time bucket, orders, units, GMV minor units, estimated/final
+  commission minor units, refund count/GMV/commission, source, and safe
+  provenance ID.
+
+Uniqueness and foreign keys must prevent account, session, product, or source
+identity changes. All Accounts must remain calculated. LIVE gifts require a
+different revenue source and table/connection boundary; gift values must never
+enter LIVE Shopping GMV, order, unit, commission, refund, or sales-per-hour
+calculations.
+
+The model intentionally has no fields for direct messages, phone numbers, email
+addresses, physical addresses, login IPs, payment details, searches, watch
+history, customer-service conversations, or shopper activity. Future schema
+review must preserve that exclusion.
+
 ## Implemented Provider-Neutral Domain Foundation
 
 The application now defines separate, fail-closed provider adapters for TikTok

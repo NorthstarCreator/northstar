@@ -1034,6 +1034,7 @@ select, input {
 .heading-icon[data-icon="View Performance"] { --icon-accent: var(--blue); }
 .heading-icon[data-icon="Opportunity Center"] { --icon-accent: var(--violet); }
 .heading-icon[data-icon="Sales Attribution"] { --icon-accent: #36b9b4; }
+.heading-icon[data-icon="LIVE Shopping"] { --icon-accent: #e45a6b; }
 .heading-icon[data-icon="Data Hub"] { --icon-accent: #3ea7d8; }
 .heading-icon[data-icon="Settings"] { --icon-accent: #c6a85b; }
 
@@ -2538,6 +2539,38 @@ select, input {
 
 .muted-grid span { display: block; color: var(--muted); margin-top: 5px; }
 
+.live-shopping-intro {
+  background:
+    radial-gradient(circle at 90% 12%, rgba(228,90,107,.13), transparent 18rem),
+    linear-gradient(135deg, rgba(255,255,255,.96), rgba(255,248,244,.9));
+}
+
+.live-shopping-boundary,
+.live-gifts-boundary { --section-accent: #e45a6b; }
+
+.live-shopping-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.live-shopping-metric { cursor: default; }
+.live-shopping-metric:hover { transform: none; }
+.live-shopping-metric .metric-value { color: var(--muted); }
+
+.live-shopping-source {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-height: 180px;
+}
+
+.live-shopping-source h3,
+.live-shopping-source p { margin: 0; }
+.live-shopping-source.ready { --section-accent: var(--teal); }
+.live-shopping-source.unavailable { --section-accent: var(--coral); }
+.live-shopping-source .status-pill { width: fit-content; }
+
+.live-gifts-boundary {
+  border-style: dashed;
+  background: linear-gradient(135deg, rgba(255,255,255,.95), rgba(245,248,252,.9));
+}
+
 .primary-button,
 .secondary-button,
 .back-button {
@@ -2577,6 +2610,7 @@ select, input {
   .app-shell { grid-template-columns: 240px minmax(0, 1fr); }
   .brand-lockup .brand-message { font-size: .62rem; letter-spacing: .1em; }
   .metric-grid, .source-grid, .settings-grid, .product-grid, .sample-grid, .opportunity-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .live-shopping-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .toolbar-card { grid-template-columns: minmax(0, 1fr) minmax(150px, .5fr); }
   .connection-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .integration-grid { grid-template-columns: 1fr; }
@@ -2647,6 +2681,7 @@ select, input {
   .brief-hero { grid-template-columns: 1fr; }
   .hero-mark { display: none; }
   .metric-grid, .source-grid, .settings-grid, .product-grid, .sample-grid, .opportunity-grid, .muted-grid, .integration-grid { grid-template-columns: 1fr; }
+  .live-shopping-metrics { grid-template-columns: 1fr; }
   .brief-lower-layout,
   .brief-split-row { grid-template-columns: 1fr; }
   .audience-glance {

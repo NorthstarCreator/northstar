@@ -67,6 +67,36 @@ Every real or demo metric should keep a source value:
 
 The UI can stay friendly, but Northstar must know whether a value is real, demo, estimated, settled, account-specific, and when it was synchronized.
 
+## Dormant LIVE Shopping Boundary
+
+The sandbox dashboard includes a LIVE section for future Creator
+Collaborations/Affiliate reporting. It currently displays no fabricated creator
+or sales records. The provider-neutral foundation can represent:
+
+- exact-account LIVE sessions with start/end and replay availability;
+- product-to-LIVE featured relationships;
+- creator affiliate orders, units, and GMV;
+- estimated and final commissions;
+- refund count, refunded GMV, and refunded commission;
+- sales and GMV per hour using the LIVE session duration;
+- source labels for Manual, Imported, and TikTok API provenance.
+
+Manual and Imported are model-level provenance options only. No manual-entry
+form, file upload, import endpoint, writer, or persistence path exists. TikTok
+API is clearly unavailable and rejected by the domain model until Northstar has
+authorized Affiliate Creator API access and a separately reviewed provider
+implementation. The Data Portability Full Archive is excluded.
+
+LIVE gifts remain a separate revenue category. Gifts are not included in LIVE
+Shopping affiliate GMV, orders, units, estimated/final commission, refunds, or
+sales-per-hour totals.
+
+This foundation does not collect direct messages, phone numbers, email
+addresses, physical addresses, login IPs, payment details, searches, watch
+history, customer-service conversations, or shopper activity. It changes no
+TikTok Content API behavior, Local Sellers app behavior, OAuth flow, production
+data, database schema, or migration.
+
 ## Total Earnings Recommendation
 
 Default Total Earnings should be Estimated Earnings for the selected period, from connected real revenue sources only:

@@ -72,6 +72,7 @@
     ["brief", "Morning Brief"],
     ["opportunities", "Opportunity Center"],
     ["earnings", "Earnings"],
+    ["live-shopping", "LIVE"],
     ["products", "Products"],
     ["videos", "Videos"],
     ["data", "Data Hub"],
@@ -81,6 +82,7 @@
     brief: `<svg viewBox="0 0 24 24"><path d="m12 3 1.7 6.3L20 12l-6.3 2.7L12 21l-2.7-6.3L3 12l6.3-2.7z"></path><path class="muted-stroke" d="M12 7.6v8.8M7.6 12h8.8"></path></svg>`,
     opportunities: `<svg viewBox="0 0 24 24"><circle class="muted-stroke" cx="12" cy="12" r="7"></circle><path d="M5 17c5.5-1.1 9.2-4.5 11-10.2"></path><path d="m14.5 5.6 4-.7-1.1 4"></path></svg>`,
     earnings: `<svg viewBox="0 0 24 24"><path class="muted-stroke" d="M4 19h16"></path><path d="M6 16v-4M11 16V8M16 16v-6"></path><path d="m14 6 4-2 1.5 4.2"></path></svg>`,
+    "live-shopping": `<svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="12" rx="3"></rect><path d="m9 9 6 3-6 3z"></path><path class="muted-stroke" d="M8 20h8M12 17v3"></path></svg>`,
     products: `<svg viewBox="0 0 24 24"><path d="M6 8.5h12l-1 11H7z"></path><path class="muted-stroke" d="M9 8.5a3 3 0 0 1 6 0M8.5 12h7"></path></svg>`,
     videos: `<svg viewBox="0 0 24 24"><rect x="4" y="7" width="12" height="10" rx="2"></rect><path d="m16 10 4-2.2v8.4L16 14z"></path><path class="muted-stroke" d="M7 5.2 9 7M12 5.2 14 7"></path></svg>`,
     data: `<svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="6" ry="2.7"></ellipse><path d="M6 6v8c0 1.5 2.7 2.7 6 2.7s6-1.2 6-2.7V6"></path><path class="muted-stroke" d="M6 10c0 1.5 2.7 2.7 6 2.7s6-1.2 6-2.7"></path></svg>`,
@@ -107,6 +109,7 @@
     "view-performance": "View Performance",
     opportunities: "Opportunity Center",
     earnings: "Earnings",
+    "live-shopping": "LIVE",
     products: "Products",
     videos: "Videos",
     data: "Data Hub",
@@ -437,6 +440,7 @@
     "Audience": "#42c9c4",
     "View Performance": "#3d7edb",
     "Sales Attribution": "#36b9b4",
+    "LIVE Shopping": "#e45a6b",
     "Data Hub": "#3ea7d8",
     "Settings": "#c6a85b"
   };
@@ -451,6 +455,7 @@
     "Audience": `<svg viewBox="0 0 24 24"><circle class="fill-soft" cx="12" cy="9" r="6.5"></circle><path d="M12 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 20c1-3.4 3-5.1 6-5.1s5 1.7 6 5.1"></path><path class="muted-stroke" d="M5.2 11a2.2 2.2 0 1 0 0-4.4M18.8 11a2.2 2.2 0 1 0 0-4.4M3.5 18.5c.6-1.7 1.6-2.8 3.2-3.2M20.5 18.5c-.6-1.7-1.6-2.8-3.2-3.2"></path><path d="m18.7 3.5.5 1.2 1.3.5-1.3.5-.5 1.3-.5-1.3-1.2-.5 1.2-.5z"></path></svg>`,
     "View Performance": `<svg viewBox="0 0 24 24"><path class="fill-soft" d="M3 12s3.5-5.5 9-5.5 9 5.5 9 5.5-3.5 5.5-9 5.5S3 12 3 12z"></path><path d="M3 12s3.5-5.5 9-5.5 9 5.5 9 5.5-3.5 5.5-9 5.5S3 12 3 12z"></path><path d="m12 8.6.8 2.6 2.6.8-2.6.8-.8 2.6-.8-2.6-2.6-.8 2.6-.8z"></path><path class="muted-stroke" d="M16.2 5.6c1.1-.9 2.4-1.5 3.8-1.8M18.4 7.4 20.6 4"></path></svg>`,
     "Sales Attribution": `<svg viewBox="0 0 24 24"><circle class="fill-soft" cx="12" cy="12" r="4.3"></circle><path d="M12 8.2v7.6M8.2 12h7.6"></path><path class="muted-stroke" d="M4 7c4.7 0 6 2.8 8 5M20 7c-4.7 0-6 2.8-8 5M4 17c4.7 0 6-2.8 8-5M20 17c-4.7 0-6-2.8-8-5"></path><path d="m4 7 2-1.5M20 7l-2-1.5M4 17l2 1.5M20 17l-2 1.5"></path></svg>`,
+    "LIVE Shopping": `<svg viewBox="0 0 24 24"><rect class="fill-soft" x="4" y="5" width="16" height="12" rx="3"></rect><rect x="4" y="5" width="16" height="12" rx="3"></rect><path d="m9 9 6 3-6 3z"></path><path class="muted-stroke" d="M8 20h8M12 17v3"></path></svg>`,
     "Data Hub": `<svg viewBox="0 0 24 24"><circle class="fill-soft" cx="12" cy="12" r="4"></circle><path d="M12 8.5v7M8.5 12h7"></path><circle cx="5" cy="6" r="2"></circle><circle cx="19" cy="6" r="2"></circle><circle cx="5" cy="18" r="2"></circle><circle cx="19" cy="18" r="2"></circle><path class="muted-stroke" d="M7 7.3 10 10M17 7.3 14 10M7 16.7 10 14M17 16.7 14 14"></path></svg>`,
     "Settings": `<svg viewBox="0 0 24 24"><circle class="fill-soft" cx="12" cy="12" r="5.5"></circle><path d="M12 8.5v7M8.5 12h7"></path><path class="muted-stroke" d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6"></path></svg>`
   };
@@ -1604,6 +1609,60 @@
       ${statusBody}`;
   }
 
+  function liveShoppingMetric(label, support) {
+    return `<article class="metric-card live-shopping-metric"><span class="metric-label">${escapeHtml(label)}</span><strong class="metric-value">—</strong><small class="metric-support">${escapeHtml(support)}</small></article>`;
+  }
+
+  function liveShoppingSource(label, status, detail, unavailable = false) {
+    return `<article class="section live-shopping-source ${unavailable ? "unavailable" : "ready"}">
+      <span class="status-pill ${unavailable ? "demo" : "connected"}">${escapeHtml(status)}</span>
+      <h3>${escapeHtml(label)}</h3>
+      <p>${escapeHtml(detail)}</p>
+    </article>`;
+  }
+
+  function renderLiveShopping() {
+    const calculated = state.accountId === "all";
+    return `<section class="page-intro live-shopping-intro"><div class="intro-heading" style="--section-accent:${sectionAccent["LIVE Shopping"]}">${icon("LIVE Shopping")}<div><p class="eyebrow">LIVE Shopping</p><h2>Affiliate performance for creator LIVE sessions.</h2><p>${calculated ? "All Accounts is a calculated view only. LIVE records remain owned by exact creator accounts." : `Prepared for ${escapeHtml(accountName())}; no LIVE Shopping records have been added.`}</p></div></div></section>
+      <section class="section live-shopping-boundary">
+        ${heading("Dormant Foundation", "No LIVE Shopping data is being collected", "LIVE Shopping")}
+        <p>Session timing, replay references, featured products, orders, units, GMV, estimated and final commissions, refunds, and sales per hour are modeled without enabling an ingestion or write path.</p>
+        <p class="source-note warning-text">TikTok Creator Collaborations/Affiliate API ingestion is unavailable until Northstar receives official access and separately enables a reviewed provider integration.</p>
+      </section>
+      <section class="metric-grid live-shopping-metrics">
+        ${liveShoppingMetric("LIVE sessions", "Session start/end and replay status")}
+        ${liveShoppingMetric("GMV", "Gross merchandise value before refunds")}
+        ${liveShoppingMetric("Orders", "Creator affiliate orders only")}
+        ${liveShoppingMetric("Units", "Affiliate units attributed to LIVE")}
+        ${liveShoppingMetric("Estimated commission", "Pending creator affiliate commission")}
+        ${liveShoppingMetric("Final commission", "Finalized creator affiliate commission")}
+        ${liveShoppingMetric("Refunds", "Refund count, GMV, and commission impact")}
+        ${liveShoppingMetric("Sales per hour", "Units divided by LIVE duration")}
+      </section>
+      <section class="split-grid">
+        <article class="section">
+          ${heading("Sessions & Replays", "LIVE session timeline", "LIVE Shopping")}
+          ${empty("No LIVE sessions are available for this selection.")}
+          <p class="source-note">Replay availability, HTTPS replay reference, publication time, and expiration can be recorded when supplied by an approved source.</p>
+        </article>
+        <article class="section">
+          ${heading("Featured Products", "Product-to-LIVE relationships", "Product Compass")}
+          ${empty("No products are linked to a LIVE session.")}
+          <p class="source-note">Each relationship remains bound to one exact creator account, LIVE session, product, and source.</p>
+        </article>
+      </section>
+      <section class="page-intro"><div class="intro-heading" style="--section-accent:${sectionAccent["Data Hub"]}">${icon("Data Hub")}<div><p class="eyebrow">Source Status</p><h2>Supported provenance, separate activation.</h2><p>Source labels describe provenance only; they do not create an import, sync, or connection action.</p></div></div></section>
+      <section class="integration-grid live-shopping-sources">
+        ${liveShoppingSource("Manual", "Foundation ready", "Validated provider-neutral records can be represented after a separately reviewed manual-entry workflow exists.")}
+        ${liveShoppingSource("Imported", "Foundation ready", "Validated records can preserve import provenance after a separately reviewed file adapter exists. The Data Portability Full Archive is excluded.")}
+        ${liveShoppingSource("TikTok API", "Unavailable", "Affiliate Creator API authorization, scopes, payloads, and access are not yet approved. No API call or ingestion path exists.", true)}
+      </section>
+      <section class="section live-gifts-boundary">
+        ${heading("LIVE Gifts", "Kept separate from LIVE Shopping", "Revenue Compass")}
+        <p>LIVE gifts are a distinct revenue category. Gift values are not included in affiliate GMV, orders, units, estimated commission, final commission, refunds, or sales-per-hour calculations.</p>
+      </section>`;
+  }
+
   function renderSettings() {
     return `<section class="page-intro"><div class="intro-heading" style="--section-accent:${sectionAccent.Settings}">${icon("Settings")}<div><p class="eyebrow">Settings</p><h2>Useful preferences only.</h2></div></div></section><div class="settings-grid"><section class="section"><h3>Accounts</h3>${list("accounts").map((item) => `<p>${identity(item.id)} ${item.name} <span class="muted">${item.handle}</span></p>`).join("") || empty("No account settings are available.")}</section><section class="section revenue-settings"><h3>Data Sources</h3>${list("revenueSources").map((item) => `<p><span class="source-dot ${item.accent || ""}"></span><strong>${item.name}</strong><small>${item.shortName || item.type || "Source"}</small></p>`).join("") || empty("No revenue sources are available.")}<p class="source-note">Live TikTok Sandbox data is session-scoped and separate from Jennifer's private local app data.</p></section><section class="section"><h3>Appearance</h3><label class="mini-control">Dashboard View<select><option>Comfortable</option><option>Compact</option></select></label><label class="mini-control">Theme<select><option>System</option><option>Light</option><option>Dark</option></select></label></section></div>`;
   }
@@ -1802,8 +1861,8 @@
 
   function render() {
     renderChrome();
-    const titles = { brief: "Morning Brief", audience: "Audience", "view-performance": "View Performance", opportunities: "Opportunity Center", earnings: "Earnings", products: "Products", videos: "Videos", data: "Data Hub", settings: "Settings", "product-detail": "Product Studio", "video-detail": "Video Detail", "source-detail": source()?.name || "Revenue Source", "opportunity-detail": "Opportunity Detail", "order-detail": "Order Detail" };
-    const pages = { brief: renderBrief, audience: renderAudience, "view-performance": renderViewPerformance, opportunities: renderOpportunities, earnings: renderEarnings, products: renderProducts, videos: renderVideos, data: renderDataHub, settings: renderSettings, "product-detail": renderProductDetail, "video-detail": renderVideoDetail, "source-detail": renderSourceDetail, "opportunity-detail": renderOpportunityDetail, "order-detail": renderOrderDetail };
+    const titles = { brief: "Morning Brief", audience: "Audience", "view-performance": "View Performance", opportunities: "Opportunity Center", earnings: "Earnings", "live-shopping": "LIVE", products: "Products", videos: "Videos", data: "Data Hub", settings: "Settings", "product-detail": "Product Studio", "video-detail": "Video Detail", "source-detail": source()?.name || "Revenue Source", "opportunity-detail": "Opportunity Detail", "order-detail": "Order Detail" };
+    const pages = { brief: renderBrief, audience: renderAudience, "view-performance": renderViewPerformance, opportunities: renderOpportunities, earnings: renderEarnings, "live-shopping": renderLiveShopping, products: renderProducts, videos: renderVideos, data: renderDataHub, settings: renderSettings, "product-detail": renderProductDetail, "video-detail": renderVideoDetail, "source-detail": renderSourceDetail, "opportunity-detail": renderOpportunityDetail, "order-detail": renderOrderDetail };
     els.title.textContent = titles[state.page] || "Morning Brief";
     if (shouldHideDataUntilConnectionResolves()) {
       const checking = state.live.phase === "checking" || state.live.initializing;
