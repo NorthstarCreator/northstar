@@ -54,7 +54,11 @@ async function testRouteAndSuccessfulStart() {
   const config = JSON.parse(fs.readFileSync(path.join(__dirname, "../vercel.json"), "utf8"));
   assert.deepEqual(config.rewrites.filter((route) => route.source.includes("tiktok-shop")), [
     { source: "/auth/tiktok-shop/start", destination: "/api/auth/tiktok-shop/start" },
-    { source: "/auth/tiktok-shop/callback", destination: "/api/auth/tiktok-shop/callback" }
+    { source: "/auth/tiktok-shop/callback", destination: "/api/auth/tiktok-shop/callback" },
+    {
+      source: "/auth/tiktok-shop/affiliate-creator/callback",
+      destination: "/api/auth/tiktok-shop/affiliate-creator/callback"
+    }
   ]);
   const { res } = await call(validHandler());
   assert.equal(res.statusCode, 302);
