@@ -16,6 +16,68 @@ Supported source codes are deliberately limited to `tiktok_display_api`,
 reference spreadsheets are not import sources. All Accounts remains a calculated
 rollup because policies require a real `creator_accounts.id` foreign key.
 
+## Affiliate Creator Import Control (Migration 004, Not Executed)
+
+Migration `004_affiliate_creator_import_control.sql` is the proposed first Phase
+3 persistence checkpoint. It depends on migration 003 and fails before making
+changes when `source_import_policies` is absent. Neither migration has been
+executed. Migration 004 does not modify migrations 001-003 and contains no seed
+or provider data.
+
+The migration extends the policy vocabulary with the explicit
+`tiktok_shop_affiliate_creator` source and the creator-facing `start_date` mode.
+It stores the selected local date separately from the calculated UTC boundary.
+An Affiliate Creator `start_date` policy requires a local date and an effective
+UTC start; `all_available` requires both to remain null. No date is a schema
+default. Jennifer's October 1, 2025 choice is therefore one future creator-
+account policy and cannot restrict another creator or become the Display API
+cutoff for Affiliate data.
+
+The migration defines only four control-plane tables:
+
+- `affiliate_creator_connections`: exact account/provider identity metadata,
+  authorization state, allowlisted granted-scope names, and expiration metadata.
+  It has no credential, authorization-code, access-token, refresh-token, signed-
+  URL, or secret column and defaults to `disabled`.
+- `affiliate_creator_import_runs`: an exact account, connection, approved policy,
+  deterministic idempotency key, creator-local policy choice, immutable half-open
+  UTC window, first-import review state, sanitized failure codes, and
+  reconciliation totals.
+- `affiliate_creator_import_pages`: account/run-scoped operation and page-number
+  progress, SHA-256 request/cursor hashes, safe status, and per-page totals. Raw
+  cursors, request identifiers, response bodies, and provider payloads are not
+  stored.
+- `affiliate_creator_import_run_events`: bounded, append-only lifecycle events
+  with exact account/run identity and sanitized machine status codes.
+
+Composite foreign keys carry `account_id` through policy, connection, run, page,
+and event relationships so records from two creator accounts cannot be joined.
+The existing `creator_accounts` UUID foreign key and alias constraint keep All
+Accounts calculated only. Run identity, account, policy, connection, range,
+timezone, first-import designation, idempotency key, and UTC boundaries are
+immutable after insertion.
+
+Migration 004 adds no route, repository, writer, queue, HTTP client, OAuth/token
+behavior, commerce entity, revenue ledger, environment variable, feature
+activation, or migration runner. It does not import data and must remain
+unexecuted until migrations 003 and 004 receive separate application approval.
+
+The next planned migrations remain separate:
+
+1. typed Affiliate Creator products, collaborations, samples, orders, and order
+   items;
+2. the canonical immutable revenue-event ledger only after money and event
+   semantics are confirmed;
+3. controlled first-import approval, visibility, rollback, and account-erasure
+   functions after the complete entity graph is reviewable.
+
+Future financial columns are designed as nullable signed `bigint` minor units
+paired with an ISO currency code and initially constrained to USD for the U.S.
+integration. No provider money string will be converted or persisted in those
+columns until TikTok documents its amount format, currency guarantees, minor-
+unit rules, commission finality, refund/reversal identity, and settlement
+semantics. Missing or unconfirmed amounts remain null and never become zero.
+
 ## Future Commerce Tables
 
 - `products`: TikTok product IDs, account ownership, seller/brand, category, product image, price, status, and first/last sync provenance.
