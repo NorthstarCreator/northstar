@@ -57,6 +57,55 @@ const ENDPOINTS = Object.freeze({
   })
 });
 
+const CONFIRMED_RESPONSE_FIELDS = Object.freeze({
+  get_creator_profile: Object.freeze([
+    "avatar", "username", "selection_region", "register_region", "seller_type",
+    "permissions", "user_type", "creator_user_open_id"
+  ]),
+  search_creator_affiliate_orders: Object.freeze([
+    "orders[].id", "orders[].create_time", "orders[].delivery_time", "orders[].status",
+    "orders[].skus[].id", "orders[].skus[].campaign_id",
+    "orders[].skus[].open_collaboration_id", "orders[].skus[].target_collaboration_id",
+    "orders[].skus[].product_name", "orders[].skus[].product_id",
+    "orders[].skus[].price.amount", "orders[].skus[].price.currency",
+    "orders[].skus[].shop_name", "next_page_token", "total_count"
+  ]),
+  search_creator_target_collaborations: Object.freeze([
+    "target_collaborations[].id", "target_collaborations[].name",
+    "target_collaborations[].status", "target_collaborations[].products[].id",
+    "target_collaborations[].products[].title",
+    "target_collaborations[].products[].main_image_url",
+    "target_collaborations[].products[].commission.rate",
+    "target_collaborations[].products[].commission.amount",
+    "target_collaborations[].products[].commission.currency",
+    "next_page_token", "total_count"
+  ]),
+  get_sample_application_detail: Object.freeze([
+    "sample_application.id", "sample_application.create_time",
+    "sample_application.sample_product.id", "sample_application.sample_product.sku_id",
+    "sample_application.sample_product.sku_sale_property_value_names",
+    "sample_application.main_order_id", "sample_application.activity_id",
+    "sample_application.type", "sample_application.status",
+    "sample_application.creator_fulfillment.id",
+    "sample_application.creator_fulfillment.expiration_time",
+    "sample_application.creator_fulfillment.total_suspend_duration",
+    "sample_application.creator_fulfillment.status"
+  ]),
+  get_live_core_stats: Object.freeze([
+    "sales", "local_gmv", "created_order_count", "current_visitor_count",
+    "paid_order_count", "local_unit_price", "product_reach_count", "watch_pv",
+    "click_through_rate", "accumulated_new_follower_count", "buyer_count",
+    "accumulated_comment_count", "product_view_count", "click_order_rate",
+    "avg_watching_duration", "accumulated_sharing_count",
+    "peak_concurrent_user_count"
+  ]),
+  get_live_view_trends: Object.freeze([
+    "view_trend_performances[].stats_type",
+    "view_trend_performances[].data_points[].value",
+    "view_trend_performances[].data_points[].timestamp"
+  ])
+});
+
 class AffiliateCreatorProviderError extends Error {
   constructor(code) {
     super(code);
@@ -91,6 +140,7 @@ const adapter = Object.freeze({
   interfaceVersion: 1,
   selectedScopes: SELECTED_SCOPES,
   endpoints: ENDPOINTS,
+  confirmedResponseFields: CONFIRMED_RESPONSE_FIELDS,
   supportsNetwork: false,
   supportsAuthorization: false,
   supportsTokenExchange: false,
@@ -105,6 +155,7 @@ module.exports = {
   ENABLE_ENV_NAME,
   SELECTED_SCOPES,
   ENDPOINTS,
+  CONFIRMED_RESPONSE_FIELDS,
   AffiliateCreatorProviderError,
   featureEnabled,
   endpointContract,

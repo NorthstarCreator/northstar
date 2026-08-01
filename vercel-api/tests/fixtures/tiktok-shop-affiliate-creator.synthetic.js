@@ -60,5 +60,89 @@ module.exports = Object.freeze({
     orderProviderId: "synthetic-order-1",
     attributionType: null,
     contentProviderId: null
+  }),
+  mappingContext: Object.freeze({
+    creatorAccountId: ACCOUNT_A,
+    boundProviderCreatorId: "synthetic-creator-a",
+    tokenProviderCreatorId: "synthetic-creator-a"
+  }),
+  creatorProfileResponse: Object.freeze({
+    creator_user_open_id: "synthetic-creator-a",
+    username: "synthetic_creator",
+    selection_region: "US",
+    register_region: "US",
+    seller_type: null,
+    permissions: Object.freeze(["synthetic-read-permission"]),
+    user_type: 1,
+    avatar: null
+  }),
+  affiliateOrderResponse: Object.freeze({
+    id: "synthetic-order-2",
+    create_time: 1706810400,
+    delivery_time: null,
+    status: "SYNTHETIC_STATUS",
+    skus: Object.freeze([Object.freeze({
+      id: "synthetic-sku-2",
+      campaign_id: null,
+      open_collaboration_id: null,
+      target_collaboration_id: "synthetic-collaboration-2",
+      product_name: "Synthetic mapped product",
+      product_id: "synthetic-product-2",
+      price: Object.freeze({ amount: "synthetic-unparsed-amount", currency: "USD" }),
+      shop_name: "Synthetic shop"
+    })])
+  }),
+  targetCollaborationResponse: Object.freeze({
+    id: "synthetic-collaboration-2",
+    name: "Synthetic target collaboration",
+    status: null,
+    products: Object.freeze([Object.freeze({
+      id: "synthetic-product-2",
+      title: "Synthetic mapped product",
+      main_image_url: null,
+      commission: Object.freeze({ rate: 1000, amount: "synthetic-unparsed-amount", currency: "USD" })
+    })])
+  }),
+  sampleApplicationResponse: Object.freeze({
+    id: "synthetic-sample-2",
+    create_time: 1706810400,
+    sample_product: Object.freeze({
+      id: "synthetic-product-2",
+      sku_id: "synthetic-sku-2",
+      sku_sale_property_value_names: null
+    }),
+    main_order_id: null,
+    activity_id: null,
+    type: null,
+    status: null,
+    creator_fulfillment: null
+  }),
+  liveCoreStatsResponse: Object.freeze({
+    sales: 7,
+    local_gmv: Object.freeze({ amount: "synthetic-unparsed-amount", currency: "USD" }),
+    created_order_count: 5,
+    current_visitor_count: null,
+    paid_order_count: 4,
+    local_unit_price: Object.freeze({ amount: "synthetic-unparsed-amount", currency: "USD" }),
+    product_reach_count: 20,
+    watch_pv: 100,
+    click_through_rate: 0.12,
+    accumulated_new_follower_count: null,
+    buyer_count: 3,
+    accumulated_comment_count: 9,
+    product_view_count: 30,
+    click_order_rate: null,
+    avg_watching_duration: 42.5,
+    accumulated_sharing_count: 2,
+    peak_concurrent_user_count: 11
+  }),
+  liveViewTrendResponse: Object.freeze({
+    view_trend_performances: Object.freeze([Object.freeze({
+      stats_type: "SYNTHETIC_VIEW_COUNT",
+      data_points: Object.freeze([
+        Object.freeze({ value: 10, timestamp: 1706810400 }),
+        Object.freeze({ value: null, timestamp: 1706810460 })
+      ])
+    })])
   })
 });
