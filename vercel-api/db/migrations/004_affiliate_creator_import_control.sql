@@ -23,6 +23,19 @@ BEGIN
   ) THEN
     RAISE EXCEPTION 'migration_003_constraints_required';
   END IF;
+  IF EXISTS (
+    SELECT 1
+    FROM creator_accounts
+    WHERE lower(btrim(slug)) IN (
+      'all',
+      'all-accounts',
+      'all_accounts',
+      'all accounts',
+      'allaccounts'
+    )
+  ) THEN
+    RAISE EXCEPTION 'migration_004_legacy_all_accounts_aliases_present';
+  END IF;
 END;
 $$;
 
@@ -445,11 +458,111 @@ BEFORE UPDATE ON affiliate_creator_import_runs
 FOR EACH ROW
 EXECUTE FUNCTION prevent_affiliate_creator_import_identity_update();
 
+CREATE OR REPLACE FUNCTION validate_affiliate_creator_import_run_transition()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF NEW.status IS DISTINCT FROM OLD.status
+    AND NOT (
+      (OLD.status = 'planned' AND NEW.status IN (
+        'blocked', 'awaiting_approval', 'ready', 'cancelled'
+      ))
+      OR (OLD.status = 'awaiting_approval' AND NEW.status IN (
+        'blocked', 'ready', 'cancelled'
+      ))
+      OR (OLD.status = 'ready' AND NEW.status IN (
+        'blocked', 'running', 'cancelled'
+      ))
+      OR (OLD.status = 'running' AND NEW.status IN (
+        'succeeded', 'partial', 'failed', 'cancelled'
+      ))
+      OR (OLD.status IN ('succeeded', 'partial') AND NEW.status = 'rolled_back')
+    )
+  THEN
+    RAISE EXCEPTION 'affiliate_creator_import_run_transition_invalid';
+  END IF;
+
+  IF NEW.first_import_status IS DISTINCT FROM OLD.first_import_status
+    AND NOT (
+      (OLD.first_import_status = 'pending_review'
+        AND NEW.first_import_status IN ('approved', 'blocked', 'rolled_back'))
+      OR (OLD.first_import_status = 'approved'
+        AND NEW.first_import_status = 'rolled_back')
+    )
+  THEN
+    RAISE EXCEPTION 'affiliate_creator_first_import_transition_invalid';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER affiliate_creator_import_runs_lifecycle_forward_only
+BEFORE UPDATE ON affiliate_creator_import_runs
+FOR EACH ROW
+EXECUTE FUNCTION validate_affiliate_creator_import_run_transition();
+
+CREATE OR REPLACE FUNCTION validate_affiliate_creator_import_page_transition()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF NEW.status IS DISTINCT FROM OLD.status
+    AND NOT (
+      (OLD.status = 'planned' AND NEW.status IN ('running', 'failed'))
+      OR (OLD.status = 'running' AND NEW.status IN ('completed', 'failed'))
+    )
+  THEN
+    RAISE EXCEPTION 'affiliate_creator_import_page_transition_invalid';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER affiliate_creator_import_pages_lifecycle_forward_only
+BEFORE UPDATE ON affiliate_creator_import_pages
+FOR EACH ROW
+EXECUTE FUNCTION validate_affiliate_creator_import_page_transition();
+
+CREATE TABLE affiliate_creator_account_erasure_authorizations (
+  transaction_id bigint NOT NULL,
+  account_id uuid NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT affiliate_creator_account_erasure_authorizations_pk
+    PRIMARY KEY (transaction_id, account_id)
+);
+
+REVOKE ALL ON TABLE affiliate_creator_account_erasure_authorizations FROM PUBLIC;
+
+CREATE TABLE affiliate_creator_account_erasure_receipts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  safe_reason_code text NOT NULL CHECK (
+    safe_reason_code ~ '^[a-z][a-z0-9_]{0,99}$'
+  ),
+  run_events_deleted bigint NOT NULL CHECK (run_events_deleted >= 0),
+  pages_deleted bigint NOT NULL CHECK (pages_deleted >= 0),
+  runs_deleted bigint NOT NULL CHECK (runs_deleted >= 0),
+  connections_deleted bigint NOT NULL CHECK (connections_deleted >= 0),
+  policies_deleted bigint NOT NULL CHECK (policies_deleted >= 0),
+  occurred_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE OR REPLACE FUNCTION prevent_affiliate_creator_import_event_change()
 RETURNS trigger
 LANGUAGE plpgsql
 AS $$
 BEGIN
+  IF TG_OP = 'DELETE'
+    AND EXISTS (
+      SELECT 1
+      FROM affiliate_creator_account_erasure_authorizations erasure_gate
+      WHERE erasure_gate.transaction_id = txid_current()
+        AND erasure_gate.account_id = OLD.account_id
+    )
+  THEN
+    RETURN OLD;
+  END IF;
   RAISE EXCEPTION 'affiliate_creator_import_event_immutable';
 END;
 $$;
@@ -458,5 +571,137 @@ CREATE TRIGGER affiliate_creator_import_run_events_append_only
 BEFORE UPDATE OR DELETE ON affiliate_creator_import_run_events
 FOR EACH ROW
 EXECUTE FUNCTION prevent_affiliate_creator_import_event_change();
+
+CREATE OR REPLACE FUNCTION prevent_affiliate_creator_erasure_receipt_change()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RAISE EXCEPTION 'affiliate_creator_erasure_receipt_immutable';
+END;
+$$;
+
+CREATE TRIGGER affiliate_creator_account_erasure_receipts_append_only
+BEFORE UPDATE OR DELETE ON affiliate_creator_account_erasure_receipts
+FOR EACH ROW
+EXECUTE FUNCTION prevent_affiliate_creator_erasure_receipt_change();
+
+CREATE OR REPLACE FUNCTION erase_affiliate_creator_control_data(
+  p_account_id uuid,
+  p_expected_slug text,
+  p_safe_reason_code text
+)
+RETURNS TABLE (
+  erasure_receipt_id uuid,
+  run_events_deleted bigint,
+  pages_deleted bigint,
+  runs_deleted bigint,
+  connections_deleted bigint,
+  policies_deleted bigint
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $$
+DECLARE
+  actual_slug text;
+  receipt_id uuid := gen_random_uuid();
+  deleted_run_events bigint := 0;
+  deleted_pages bigint := 0;
+  deleted_runs bigint := 0;
+  deleted_connections bigint := 0;
+  deleted_policies bigint := 0;
+BEGIN
+  IF p_account_id IS NULL
+    OR p_expected_slug IS NULL
+    OR p_expected_slug = ''
+    OR p_safe_reason_code IS NULL
+    OR p_safe_reason_code !~ '^[a-z][a-z0-9_]{0,99}$'
+  THEN
+    RAISE EXCEPTION 'affiliate_creator_erasure_request_invalid';
+  END IF;
+
+  SELECT account.slug
+  INTO actual_slug
+  FROM public.creator_accounts account
+  WHERE account.id = p_account_id
+  FOR UPDATE;
+
+  IF actual_slug IS NULL OR actual_slug <> p_expected_slug THEN
+    RAISE EXCEPTION 'affiliate_creator_erasure_account_mismatch';
+  END IF;
+
+  IF lower(btrim(actual_slug)) IN (
+    'all', 'all-accounts', 'all_accounts', 'all accounts', 'allaccounts'
+  ) THEN
+    RAISE EXCEPTION 'affiliate_creator_erasure_exact_account_required';
+  END IF;
+
+  INSERT INTO public.affiliate_creator_account_erasure_authorizations (
+    transaction_id,
+    account_id
+  ) VALUES (
+    txid_current(),
+    p_account_id
+  );
+
+  DELETE FROM public.affiliate_creator_import_run_events
+  WHERE account_id = p_account_id;
+  GET DIAGNOSTICS deleted_run_events = ROW_COUNT;
+
+  DELETE FROM public.affiliate_creator_import_pages
+  WHERE account_id = p_account_id;
+  GET DIAGNOSTICS deleted_pages = ROW_COUNT;
+
+  DELETE FROM public.affiliate_creator_import_runs
+  WHERE account_id = p_account_id;
+  GET DIAGNOSTICS deleted_runs = ROW_COUNT;
+
+  DELETE FROM public.affiliate_creator_connections
+  WHERE account_id = p_account_id;
+  GET DIAGNOSTICS deleted_connections = ROW_COUNT;
+
+  DELETE FROM public.source_import_policies
+  WHERE account_id = p_account_id
+    AND source_code = 'tiktok_shop_affiliate_creator';
+  GET DIAGNOSTICS deleted_policies = ROW_COUNT;
+
+  DELETE FROM public.affiliate_creator_account_erasure_authorizations
+  WHERE transaction_id = txid_current()
+    AND account_id = p_account_id;
+
+  INSERT INTO public.affiliate_creator_account_erasure_receipts (
+    id,
+    safe_reason_code,
+    run_events_deleted,
+    pages_deleted,
+    runs_deleted,
+    connections_deleted,
+    policies_deleted
+  ) VALUES (
+    receipt_id,
+    p_safe_reason_code,
+    deleted_run_events,
+    deleted_pages,
+    deleted_runs,
+    deleted_connections,
+    deleted_policies
+  );
+
+  RETURN QUERY SELECT
+    receipt_id,
+    deleted_run_events,
+    deleted_pages,
+    deleted_runs,
+    deleted_connections,
+    deleted_policies;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION erase_affiliate_creator_control_data(
+  uuid,
+  text,
+  text
+) FROM PUBLIC;
 
 COMMIT;
