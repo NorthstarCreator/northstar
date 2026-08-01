@@ -148,10 +148,47 @@ Affiliate app, Affiliate service category, United States market, Affiliate
 Creator API scopes, and TikTok Shop Creator Authorization. The Local Sellers app
 remains unchanged as optional dormant seller infrastructure.
 
-Still pending are the exact scope inventory granted to the Affiliate custom app,
-the official Creator Authorization contract for that app, test-account rules,
-United States availability constraints, and the production/public-app approval
-path.
+### United States category approval - July 31, 2026
+
+Partner Center now records both requested United States service categories as
+**Approved**:
+
+- Creator collaborations;
+- Analytics & Reporting.
+
+This is non-secret application-path evidence supplied by the owner from Partner
+Center. It resolves the category-approval blocker only. It does not establish
+final custom-app approval, data-security approval, API-scope approval, Creator
+Authorization readiness, credential configuration, or permission to exchange
+tokens or ingest TikTok Shop data.
+
+The five selected scopes remain active in the draft Partner Center
+configuration and remain subject to applicable TikTok app, privacy, and API
+approval. The separate questionnaire questions that use the term `published`
+remain **Pending TikTok clarification**; the category approval notice does not
+resolve whether an adopted internal standard supplied as an attachment meets
+that wording.
+
+The production legal-page evidence is already live and must not be released
+again:
+
+- production commit: `e1580051ed3ed8281232d85e8daf681e6a31e217`;
+- source sandbox commit: `21e5496`;
+- published files: `docs/privacy.html` and `docs/delete-data.html`;
+- live pages: `https://northstar-creator.com/privacy.html` and
+  `https://northstar-creator.com/delete-data.html`.
+
+The isolated release used a clean worktree from the latest GitHub `main`,
+cherry-picked only the reviewed two-file source commit, verified the exact
+production diff, and completed the GitHub Pages workflow successfully. The
+recorded rollback is a normal `git revert` of the isolated production commit on
+`main`, followed by Pages verification; no force push or full sandbox merge is
+required.
+
+Still pending are final custom-app and data-security approval, written
+clarification of the two `published` questionnaire questions, the exact
+Creator Authorization contract, test-account rules, endpoint-level access for
+the selected scopes, and the production/public-app approval path.
 
 ## Committed OAuth Foundation Audit
 
