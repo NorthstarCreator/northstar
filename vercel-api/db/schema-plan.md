@@ -19,12 +19,15 @@ Migration 003 was applied to the NorthStar sandbox and passed its separately
 approved read-only post-migration validation. It remains schema-only and contains
 no policy rows.
 
-## Affiliate Creator Import Control (Migration 004, Not Executed)
+## Affiliate Creator Import Control (Migration 004, Applied and Validated in Sandbox)
 
 Migration `004_affiliate_creator_import_control.sql` is the proposed first Phase
 3 persistence checkpoint. It depends on migration 003 and fails before making
-changes when `source_import_policies` is absent. Migration 004 remains unexecuted.
-It does not modify migrations 001-003 and contains no seed or provider data.
+changes when `source_import_policies` is absent. Migrations 003 and 004 were
+applied to the NorthStar sandbox through separately approved operations and each
+passed its independently approved read-only validation. The migration 004
+post-application result reported `validation_passed = true`. It does not modify
+migrations 001-003 and contains no seed or provider data.
 
 The migration extends the policy vocabulary with the explicit
 `tiktok_shop_affiliate_creator` source and the creator-facing `start_date` mode.
@@ -66,15 +69,20 @@ immutable after insertion.
 
 Migration 004 adds no route, repository, writer, queue, HTTP client, OAuth/token
 behavior, commerce entity, revenue ledger, environment variable, feature
-activation, or migration runner. It does not import data and must remain
-unexecuted until migration 004 receives separate application approval.
+activation, or migration runner. All six Affiliate Creator control-plane tables
+were empty at validation. The integration remains inactive, no application role
+has been granted access, and no token exchange, token storage, authorization,
+import, or TikTok action has occurred through this foundation. Affiliate Creator
+authorization remains disabled and separate from the existing TikTok Content
+authorization flow.
 
 All seven migration functions use the fixed function-level search path
 `pg_catalog, public, pg_temp`, and migration-owned relation references are schema
 qualified. PUBLIC execution is explicitly revoked from every function. The six
 trigger functions are callable only through their table triggers. The controlled
 erasure function is `SECURITY DEFINER` and remains ungranted to every application
-role pending a separate destructive-operation approval.
+role pending a separate destructive-operation approval. It was not invoked
+during migration execution or validation.
 
 ### Migration 004 role and grant matrix
 
@@ -201,8 +209,9 @@ constraints require a separate review before any SQL is created or executed.
 - `revenue_provider_checkpoints`: provider cursor or watermark only after its
   meaning, account binding, replay behavior, and confidentiality are documented.
 
-The existing migration `003_source_import_policies.sql` remains unexecuted and
-unchanged. These planned tables are not part of migration 003.
+The applied and validated migration `003_source_import_policies.sql` remains
+unchanged and contains no policy rows. These planned tables are not part of
+migration 003 and have not been migrated.
 
 ## TikTok Shop Application And Identity Separation
 
