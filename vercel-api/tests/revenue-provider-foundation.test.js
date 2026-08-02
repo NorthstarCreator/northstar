@@ -188,7 +188,11 @@ function testFoundationHasNoRoutePersistenceOrProviderAssumptions() {
   assert.equal(fs.existsSync(path.join(root, "api/revenue/jobs.js")), false);
   const schemaPlan = fs.readFileSync(path.join(root, "db/schema-plan.md"), "utf8");
   assert.match(schemaPlan, /Planned Provider-Neutral Persistence \(Not Migrated\)/);
-  assert.match(schemaPlan, /migration `003_source_import_policies\.sql` remains unexecuted and\s+unchanged/);
+  assert.match(schemaPlan, /Migrations 003 and 004 were\s+applied to the NorthStar sandbox.*each\s+passed its independently approved read-only validation/s);
+  assert.match(schemaPlan, /All six Affiliate Creator control-plane tables\s+were empty at validation/);
+  assert.match(schemaPlan, /integration remains inactive, no application role\s+has been granted access/);
+  assert.match(schemaPlan, /no token exchange, token storage, authorization,\s+import, or TikTok action has occurred/);
+  assert.match(schemaPlan, /Affiliate Creator\s+authorization remains disabled/);
   assert.match(schemaPlan, /must not inherit the Display API\s+cutoff/);
   assert.match(schemaPlan, /All Accounts is always calculated/);
 }
