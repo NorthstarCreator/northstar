@@ -16,13 +16,14 @@ const compactDdl = migration
 
 function testMigrationDependencyAndTransactionBoundary() {
   assert.match(compact, /^-- .* begin;/);
-  assert.match(compact, /to_regclass\('source_import_policies'\) is null/);
+  assert.match(compact, /to_regclass\('public\.source_import_policies'\) is null/);
   assert.match(compact, /migration_003_source_import_policies_required/);
   assert.match(compact, /migration_003_constraints_required/);
   assert.match(compact, /migration_004_legacy_all_accounts_aliases_present/);
-  assert.match(compact, /select 1 from creator_accounts where lower\(btrim\(slug\)\) in/);
+  assert.match(compact, /select 1 from public\.creator_accounts where lower\(btrim\(slug\)\) in/);
   assert.match(compact, /source_import_policies_source_code_check/);
   assert.match(compact, /source_import_policies_import_range_mode_check/);
+  assert.equal((compact.match(/and contype = 'c'/g) || []).length, 2);
   assert.match(compact, /commit;$/);
 }
 
@@ -44,7 +45,7 @@ function testControlPlaneTablesOnly() {
     "affiliate_creator_import_run_events",
     "affiliate_creator_account_erasure_authorizations",
     "affiliate_creator_account_erasure_receipts"
-  ]) assert.match(migration, new RegExp(`CREATE TABLE ${table}`, "i"));
+  ]) assert.match(migration, new RegExp(`CREATE TABLE public\\.${table}`, "i"));
   for (const table of [
     "affiliate_creator_products",
     "affiliate_creator_collaborations",
@@ -52,11 +53,11 @@ function testControlPlaneTablesOnly() {
     "affiliate_creator_orders",
     "affiliate_creator_order_items",
     "affiliate_creator_revenue_events"
-  ]) assert.doesNotMatch(migration, new RegExp(`CREATE TABLE ${table}`, "i"));
+  ]) assert.doesNotMatch(migration, new RegExp(`CREATE TABLE (?:public\\.)?${table}`, "i"));
 }
 
 function testExactAccountAndCrossAccountConstraints() {
-  assert.match(compact, /account_id uuid not null references creator_accounts\(id\)/);
+  assert.match(compact, /account_id uuid not null references public\.creator_accounts\(id\)/);
   assert.match(compact, /unique \(account_id, provider_code\)/);
   assert.match(compact, /foreign key \(connection_id, account_id, provider_code\)/);
   assert.match(compact, /foreign key \(policy_id, account_id, provider_code\)/);
@@ -102,7 +103,7 @@ function testHashOnlyPageProgressAndReconciliation() {
 
 function testSanitizedAppendOnlyEvents() {
   assert.match(compact, /affiliate_creator_import_run_events_append_only/);
-  assert.match(compact, /before update or delete on affiliate_creator_import_run_events/);
+  assert.match(compact, /before update or delete on public\.affiliate_creator_import_run_events/);
   assert.match(compact, /safe_status_code.*\^\[a-z\]\[a-z0-9_\]\{0,99\}\$/s);
   assert.doesNotMatch(compactDdl, /safe_error_message|provider_message|payload|response_body/);
 }
@@ -122,23 +123,60 @@ function testForwardOnlyLifecycleTransitions() {
 
 function testControlledAccountErasure() {
   const receiptDefinition = compact.match(
-    /create table affiliate_creator_account_erasure_receipts \((.*?)\);/s
+    /create table public\.affiliate_creator_account_erasure_receipts \((.*?)\);/s
   );
   assert.ok(receiptDefinition);
-  assert.match(compact, /create table affiliate_creator_account_erasure_authorizations/);
-  assert.match(compact, /revoke all on table affiliate_creator_account_erasure_authorizations from public/);
-  assert.match(compact, /create table affiliate_creator_account_erasure_receipts/);
+  assert.match(compact, /create table public\.affiliate_creator_account_erasure_authorizations/);
+  assert.match(compact, /revoke all on table public\.affiliate_creator_account_erasure_authorizations from public/);
+  assert.match(compact, /create table public\.affiliate_creator_account_erasure_receipts/);
   assert.match(compact, /prevent_affiliate_creator_erasure_receipt_change/);
   assert.match(compact, /affiliate_creator_account_erasure_receipts_append_only/);
-  assert.match(compact, /create or replace function erase_affiliate_creator_control_data/);
-  assert.match(compact, /security definer set search_path = pg_catalog, public/);
+  assert.match(compact, /create or replace function public\.erase_affiliate_creator_control_data/);
+  assert.match(compact, /security definer set search_path = pg_catalog, public, pg_temp/);
   assert.match(compact, /affiliate_creator_erasure_account_mismatch/);
   assert.match(compact, /affiliate_creator_erasure_exact_account_required/);
   assert.match(compact, /erasure_gate\.transaction_id = txid_current\(\)/);
   assert.match(compact, /delete from public\.affiliate_creator_import_run_events where account_id = p_account_id/);
   assert.match(compact, /source_code = 'tiktok_shop_affiliate_creator'/);
-  assert.match(compact, /revoke all on function erase_affiliate_creator_control_data/);
+  assert.match(compact, /revoke all on function public\.erase_affiliate_creator_control_data/);
   assert.doesNotMatch(receiptDefinition[1], /account_id|slug|open_id/);
+}
+
+function testFunctionSearchPathsQualificationAndPrivileges() {
+  const functions = [
+    "validate_affiliate_creator_import_run_policy",
+    "prevent_affiliate_creator_import_identity_update",
+    "validate_affiliate_creator_import_run_transition",
+    "validate_affiliate_creator_import_page_transition",
+    "prevent_affiliate_creator_import_event_change",
+    "prevent_affiliate_creator_erasure_receipt_change",
+    "erase_affiliate_creator_control_data"
+  ];
+
+  assert.equal((compact.match(/set search_path = pg_catalog, public, pg_temp/g) || []).length, 7);
+  assert.equal((compact.match(/revoke all on function public\./g) || []).length, 7);
+  assert.doesNotMatch(compact, /\bgrant\b/);
+
+  for (const name of functions) {
+    assert.match(compact, new RegExp(`create or replace function public\\.${name}\\(`));
+    assert.match(compact, new RegExp(`revoke all on function public\\.${name}\\(`));
+  }
+
+  for (const relation of [
+    "creator_accounts",
+    "source_import_policies",
+    "affiliate_creator_connections",
+    "affiliate_creator_import_runs",
+    "affiliate_creator_import_pages",
+    "affiliate_creator_import_run_events",
+    "affiliate_creator_account_erasure_authorizations",
+    "affiliate_creator_account_erasure_receipts"
+  ]) {
+    assert.doesNotMatch(
+      compactDdl,
+      new RegExp(`(?:from|into|update|delete from|alter table|create table|references|on) ${relation}\\b`)
+    );
+  }
 }
 
 function testNoSecretsPersonalDataOrActions() {
@@ -161,6 +199,7 @@ function testNoSecretsPersonalDataOrActions() {
   testSanitizedAppendOnlyEvents,
   testForwardOnlyLifecycleTransitions,
   testControlledAccountErasure,
+  testFunctionSearchPathsQualificationAndPrivileges,
   testNoSecretsPersonalDataOrActions
 ].forEach((test) => test());
 

@@ -9,23 +9,25 @@ BEGIN;
 
 DO $$
 BEGIN
-  IF to_regclass('source_import_policies') IS NULL THEN
+  IF to_regclass('public.source_import_policies') IS NULL THEN
     RAISE EXCEPTION 'migration_003_source_import_policies_required';
   END IF;
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint
     WHERE conname = 'source_import_policies_source_code_check'
-      AND conrelid = 'source_import_policies'::regclass
+      AND conrelid = 'public.source_import_policies'::regclass
+      AND contype = 'c'
   ) OR NOT EXISTS (
     SELECT 1 FROM pg_constraint
     WHERE conname = 'source_import_policies_import_range_mode_check'
-      AND conrelid = 'source_import_policies'::regclass
+      AND conrelid = 'public.source_import_policies'::regclass
+      AND contype = 'c'
   ) THEN
     RAISE EXCEPTION 'migration_003_constraints_required';
   END IF;
   IF EXISTS (
     SELECT 1
-    FROM creator_accounts
+    FROM public.creator_accounts
     WHERE lower(btrim(slug)) IN (
       'all',
       'all-accounts',
@@ -39,7 +41,7 @@ BEGIN
 END;
 $$;
 
-ALTER TABLE creator_accounts
+ALTER TABLE public.creator_accounts
   ADD CONSTRAINT creator_accounts_no_affiliate_calculated_aliases CHECK (
     lower(btrim(slug)) NOT IN (
       'all',
@@ -50,11 +52,11 @@ ALTER TABLE creator_accounts
     )
   );
 
-ALTER TABLE source_import_policies
+ALTER TABLE public.source_import_policies
   DROP CONSTRAINT source_import_policies_source_code_check,
   DROP CONSTRAINT source_import_policies_import_range_mode_check;
 
-ALTER TABLE source_import_policies
+ALTER TABLE public.source_import_policies
   ADD COLUMN requested_start_date date,
   ADD CONSTRAINT source_import_policies_source_code_check CHECK (source_code IN (
     'tiktok_display_api',
@@ -98,9 +100,9 @@ ALTER TABLE source_import_policies
   ADD CONSTRAINT source_import_policies_id_account_source_unique
     UNIQUE (id, account_id, source_code);
 
-CREATE TABLE affiliate_creator_connections (
+CREATE TABLE public.affiliate_creator_connections (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  account_id uuid NOT NULL REFERENCES creator_accounts(id) ON DELETE CASCADE,
+  account_id uuid NOT NULL REFERENCES public.creator_accounts(id) ON DELETE CASCADE,
   provider_code text NOT NULL DEFAULT 'tiktok_shop_affiliate_creator'
     CHECK (provider_code = 'tiktok_shop_affiliate_creator'),
   provider_creator_open_id text,
@@ -159,15 +161,15 @@ CREATE TABLE affiliate_creator_connections (
 );
 
 CREATE UNIQUE INDEX affiliate_creator_connections_provider_identity_unique
-  ON affiliate_creator_connections (provider_code, provider_creator_open_id)
+  ON public.affiliate_creator_connections (provider_code, provider_creator_open_id)
   WHERE provider_creator_open_id IS NOT NULL;
 
 CREATE INDEX affiliate_creator_connections_account_state_idx
-  ON affiliate_creator_connections (account_id, state);
+  ON public.affiliate_creator_connections (account_id, state);
 
-CREATE TABLE affiliate_creator_import_runs (
+CREATE TABLE public.affiliate_creator_import_runs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  account_id uuid NOT NULL REFERENCES creator_accounts(id) ON DELETE CASCADE,
+  account_id uuid NOT NULL REFERENCES public.creator_accounts(id) ON DELETE CASCADE,
   connection_id uuid NOT NULL,
   policy_id uuid NOT NULL,
   provider_code text NOT NULL DEFAULT 'tiktok_shop_affiliate_creator'
@@ -218,11 +220,11 @@ CREATE TABLE affiliate_creator_import_runs (
   updated_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT affiliate_creator_import_runs_connection_fk
     FOREIGN KEY (connection_id, account_id, provider_code)
-    REFERENCES affiliate_creator_connections (id, account_id, provider_code)
+    REFERENCES public.affiliate_creator_connections (id, account_id, provider_code)
     ON DELETE RESTRICT,
   CONSTRAINT affiliate_creator_import_runs_policy_fk
     FOREIGN KEY (policy_id, account_id, provider_code)
-    REFERENCES source_import_policies (id, account_id, source_code)
+    REFERENCES public.source_import_policies (id, account_id, source_code)
     ON DELETE RESTRICT,
   CONSTRAINT affiliate_creator_import_runs_id_account_unique
     UNIQUE (id, account_id),
@@ -281,17 +283,17 @@ CREATE TABLE affiliate_creator_import_runs (
 );
 
 CREATE INDEX affiliate_creator_import_runs_account_created_idx
-  ON affiliate_creator_import_runs (account_id, created_at DESC);
+  ON public.affiliate_creator_import_runs (account_id, created_at DESC);
 
 CREATE INDEX affiliate_creator_import_runs_account_status_idx
-  ON affiliate_creator_import_runs (account_id, status, created_at DESC);
+  ON public.affiliate_creator_import_runs (account_id, status, created_at DESC);
 
 CREATE INDEX affiliate_creator_import_runs_policy_idx
-  ON affiliate_creator_import_runs (policy_id, created_at DESC);
+  ON public.affiliate_creator_import_runs (policy_id, created_at DESC);
 
-CREATE TABLE affiliate_creator_import_pages (
+CREATE TABLE public.affiliate_creator_import_pages (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  account_id uuid NOT NULL REFERENCES creator_accounts(id) ON DELETE CASCADE,
+  account_id uuid NOT NULL REFERENCES public.creator_accounts(id) ON DELETE CASCADE,
   import_run_id uuid NOT NULL,
   operation text NOT NULL CHECK (operation IN (
     'get_creator_profile',
@@ -324,7 +326,7 @@ CREATE TABLE affiliate_creator_import_pages (
   created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT affiliate_creator_import_pages_run_fk
     FOREIGN KEY (import_run_id, account_id)
-    REFERENCES affiliate_creator_import_runs (id, account_id)
+    REFERENCES public.affiliate_creator_import_runs (id, account_id)
     ON DELETE CASCADE,
   CONSTRAINT affiliate_creator_import_pages_run_operation_page_unique
     UNIQUE (import_run_id, operation, page_number),
@@ -354,19 +356,19 @@ CREATE TABLE affiliate_creator_import_pages (
 );
 
 CREATE UNIQUE INDEX affiliate_creator_import_pages_input_token_unique
-  ON affiliate_creator_import_pages (import_run_id, operation, input_page_token_hash)
+  ON public.affiliate_creator_import_pages (import_run_id, operation, input_page_token_hash)
   WHERE input_page_token_hash IS NOT NULL;
 
 CREATE UNIQUE INDEX affiliate_creator_import_pages_next_token_unique
-  ON affiliate_creator_import_pages (import_run_id, operation, next_page_token_hash)
+  ON public.affiliate_creator_import_pages (import_run_id, operation, next_page_token_hash)
   WHERE next_page_token_hash IS NOT NULL;
 
 CREATE INDEX affiliate_creator_import_pages_run_status_idx
-  ON affiliate_creator_import_pages (import_run_id, status, page_number);
+  ON public.affiliate_creator_import_pages (import_run_id, status, page_number);
 
-CREATE TABLE affiliate_creator_import_run_events (
+CREATE TABLE public.affiliate_creator_import_run_events (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  account_id uuid NOT NULL REFERENCES creator_accounts(id) ON DELETE CASCADE,
+  account_id uuid NOT NULL REFERENCES public.creator_accounts(id) ON DELETE CASCADE,
   import_run_id uuid NOT NULL,
   sequence_number integer NOT NULL CHECK (sequence_number >= 1),
   event_type text NOT NULL CHECK (event_type IN (
@@ -388,7 +390,7 @@ CREATE TABLE affiliate_creator_import_run_events (
   created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT affiliate_creator_import_run_events_run_fk
     FOREIGN KEY (import_run_id, account_id)
-    REFERENCES affiliate_creator_import_runs (id, account_id)
+    REFERENCES public.affiliate_creator_import_runs (id, account_id)
     ON DELETE CASCADE,
   CONSTRAINT affiliate_creator_import_run_events_sequence_unique
     UNIQUE (import_run_id, sequence_number),
@@ -398,16 +400,17 @@ CREATE TABLE affiliate_creator_import_run_events (
 );
 
 CREATE INDEX affiliate_creator_import_run_events_run_time_idx
-  ON affiliate_creator_import_run_events (import_run_id, occurred_at);
+  ON public.affiliate_creator_import_run_events (import_run_id, occurred_at);
 
-CREATE OR REPLACE FUNCTION validate_affiliate_creator_import_run_policy()
+CREATE OR REPLACE FUNCTION public.validate_affiliate_creator_import_run_policy()
 RETURNS trigger
 LANGUAGE plpgsql
+SET search_path = pg_catalog, public, pg_temp
 AS $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1
-    FROM source_import_policies policy
+    FROM public.source_import_policies policy
     WHERE policy.id = NEW.policy_id
       AND policy.account_id = NEW.account_id
       AND policy.source_code = NEW.provider_code
@@ -424,13 +427,14 @@ END;
 $$;
 
 CREATE TRIGGER affiliate_creator_import_runs_policy_match
-BEFORE INSERT OR UPDATE ON affiliate_creator_import_runs
+BEFORE INSERT OR UPDATE ON public.affiliate_creator_import_runs
 FOR EACH ROW
-EXECUTE FUNCTION validate_affiliate_creator_import_run_policy();
+EXECUTE FUNCTION public.validate_affiliate_creator_import_run_policy();
 
-CREATE OR REPLACE FUNCTION prevent_affiliate_creator_import_identity_update()
+CREATE OR REPLACE FUNCTION public.prevent_affiliate_creator_import_identity_update()
 RETURNS trigger
 LANGUAGE plpgsql
+SET search_path = pg_catalog, public, pg_temp
 AS $$
 BEGIN
   IF NEW.id <> OLD.id
@@ -454,13 +458,14 @@ END;
 $$;
 
 CREATE TRIGGER affiliate_creator_import_runs_identity_immutable
-BEFORE UPDATE ON affiliate_creator_import_runs
+BEFORE UPDATE ON public.affiliate_creator_import_runs
 FOR EACH ROW
-EXECUTE FUNCTION prevent_affiliate_creator_import_identity_update();
+EXECUTE FUNCTION public.prevent_affiliate_creator_import_identity_update();
 
-CREATE OR REPLACE FUNCTION validate_affiliate_creator_import_run_transition()
+CREATE OR REPLACE FUNCTION public.validate_affiliate_creator_import_run_transition()
 RETURNS trigger
 LANGUAGE plpgsql
+SET search_path = pg_catalog, public, pg_temp
 AS $$
 BEGIN
   IF NEW.status IS DISTINCT FROM OLD.status
@@ -499,13 +504,14 @@ END;
 $$;
 
 CREATE TRIGGER affiliate_creator_import_runs_lifecycle_forward_only
-BEFORE UPDATE ON affiliate_creator_import_runs
+BEFORE UPDATE ON public.affiliate_creator_import_runs
 FOR EACH ROW
-EXECUTE FUNCTION validate_affiliate_creator_import_run_transition();
+EXECUTE FUNCTION public.validate_affiliate_creator_import_run_transition();
 
-CREATE OR REPLACE FUNCTION validate_affiliate_creator_import_page_transition()
+CREATE OR REPLACE FUNCTION public.validate_affiliate_creator_import_page_transition()
 RETURNS trigger
 LANGUAGE plpgsql
+SET search_path = pg_catalog, public, pg_temp
 AS $$
 BEGIN
   IF NEW.status IS DISTINCT FROM OLD.status
@@ -521,11 +527,11 @@ END;
 $$;
 
 CREATE TRIGGER affiliate_creator_import_pages_lifecycle_forward_only
-BEFORE UPDATE ON affiliate_creator_import_pages
+BEFORE UPDATE ON public.affiliate_creator_import_pages
 FOR EACH ROW
-EXECUTE FUNCTION validate_affiliate_creator_import_page_transition();
+EXECUTE FUNCTION public.validate_affiliate_creator_import_page_transition();
 
-CREATE TABLE affiliate_creator_account_erasure_authorizations (
+CREATE TABLE public.affiliate_creator_account_erasure_authorizations (
   transaction_id bigint NOT NULL,
   account_id uuid NOT NULL,
   created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -533,9 +539,9 @@ CREATE TABLE affiliate_creator_account_erasure_authorizations (
     PRIMARY KEY (transaction_id, account_id)
 );
 
-REVOKE ALL ON TABLE affiliate_creator_account_erasure_authorizations FROM PUBLIC;
+REVOKE ALL ON TABLE public.affiliate_creator_account_erasure_authorizations FROM PUBLIC;
 
-CREATE TABLE affiliate_creator_account_erasure_receipts (
+CREATE TABLE public.affiliate_creator_account_erasure_receipts (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   safe_reason_code text NOT NULL CHECK (
     safe_reason_code ~ '^[a-z][a-z0-9_]{0,99}$'
@@ -548,15 +554,16 @@ CREATE TABLE affiliate_creator_account_erasure_receipts (
   occurred_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE OR REPLACE FUNCTION prevent_affiliate_creator_import_event_change()
+CREATE OR REPLACE FUNCTION public.prevent_affiliate_creator_import_event_change()
 RETURNS trigger
 LANGUAGE plpgsql
+SET search_path = pg_catalog, public, pg_temp
 AS $$
 BEGIN
   IF TG_OP = 'DELETE'
     AND EXISTS (
       SELECT 1
-      FROM affiliate_creator_account_erasure_authorizations erasure_gate
+      FROM public.affiliate_creator_account_erasure_authorizations erasure_gate
       WHERE erasure_gate.transaction_id = txid_current()
         AND erasure_gate.account_id = OLD.account_id
     )
@@ -568,13 +575,14 @@ END;
 $$;
 
 CREATE TRIGGER affiliate_creator_import_run_events_append_only
-BEFORE UPDATE OR DELETE ON affiliate_creator_import_run_events
+BEFORE UPDATE OR DELETE ON public.affiliate_creator_import_run_events
 FOR EACH ROW
-EXECUTE FUNCTION prevent_affiliate_creator_import_event_change();
+EXECUTE FUNCTION public.prevent_affiliate_creator_import_event_change();
 
-CREATE OR REPLACE FUNCTION prevent_affiliate_creator_erasure_receipt_change()
+CREATE OR REPLACE FUNCTION public.prevent_affiliate_creator_erasure_receipt_change()
 RETURNS trigger
 LANGUAGE plpgsql
+SET search_path = pg_catalog, public, pg_temp
 AS $$
 BEGIN
   RAISE EXCEPTION 'affiliate_creator_erasure_receipt_immutable';
@@ -582,11 +590,11 @@ END;
 $$;
 
 CREATE TRIGGER affiliate_creator_account_erasure_receipts_append_only
-BEFORE UPDATE OR DELETE ON affiliate_creator_account_erasure_receipts
+BEFORE UPDATE OR DELETE ON public.affiliate_creator_account_erasure_receipts
 FOR EACH ROW
-EXECUTE FUNCTION prevent_affiliate_creator_erasure_receipt_change();
+EXECUTE FUNCTION public.prevent_affiliate_creator_erasure_receipt_change();
 
-CREATE OR REPLACE FUNCTION erase_affiliate_creator_control_data(
+CREATE OR REPLACE FUNCTION public.erase_affiliate_creator_control_data(
   p_account_id uuid,
   p_expected_slug text,
   p_safe_reason_code text
@@ -601,7 +609,7 @@ RETURNS TABLE (
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = pg_catalog, public
+SET search_path = pg_catalog, public, pg_temp
 AS $$
 DECLARE
   actual_slug text;
@@ -698,7 +706,13 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION erase_affiliate_creator_control_data(
+REVOKE ALL ON FUNCTION public.validate_affiliate_creator_import_run_policy() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.prevent_affiliate_creator_import_identity_update() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.validate_affiliate_creator_import_run_transition() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.validate_affiliate_creator_import_page_transition() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.prevent_affiliate_creator_import_event_change() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.prevent_affiliate_creator_erasure_receipt_change() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.erase_affiliate_creator_control_data(
   uuid,
   text,
   text

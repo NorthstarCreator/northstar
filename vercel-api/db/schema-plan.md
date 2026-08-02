@@ -15,14 +15,16 @@ Supported source codes are deliberately limited to `tiktok_display_api`,
 `tiktok_shop`, `creator_rewards`, and `tiktok_go`. Demo data, screenshots, and
 reference spreadsheets are not import sources. All Accounts remains a calculated
 rollup because policies require a real `creator_accounts.id` foreign key.
+Migration 003 was applied to the NorthStar sandbox and passed its separately
+approved read-only post-migration validation. It remains schema-only and contains
+no policy rows.
 
 ## Affiliate Creator Import Control (Migration 004, Not Executed)
 
 Migration `004_affiliate_creator_import_control.sql` is the proposed first Phase
 3 persistence checkpoint. It depends on migration 003 and fails before making
-changes when `source_import_policies` is absent. Neither migration has been
-executed. Migration 004 does not modify migrations 001-003 and contains no seed
-or provider data.
+changes when `source_import_policies` is absent. Migration 004 remains unexecuted.
+It does not modify migrations 001-003 and contains no seed or provider data.
 
 The migration extends the policy vocabulary with the explicit
 `tiktok_shop_affiliate_creator` source and the creator-facing `start_date` mode.
@@ -33,7 +35,7 @@ default. Jennifer's October 1, 2025 choice is therefore one future creator-
 account policy and cannot restrict another creator or become the Display API
 cutoff for Affiliate data.
 
-The migration defines only four control-plane tables:
+The migration defines six control-plane tables:
 
 - `affiliate_creator_connections`: exact account/provider identity metadata,
   authorization state, allowlisted granted-scope names, and expiration metadata.
@@ -49,6 +51,11 @@ The migration defines only four control-plane tables:
   stored.
 - `affiliate_creator_import_run_events`: bounded, append-only lifecycle events
   with exact account/run identity and sanitized machine status codes.
+- `affiliate_creator_account_erasure_authorizations`: transaction-local control
+  records used only by the controlled account-erasure function. PUBLIC receives
+  no table privileges.
+- `affiliate_creator_account_erasure_receipts`: immutable, non-identifying
+  deletion-count receipts without creator-account identity.
 
 Composite foreign keys carry `account_id` through policy, connection, run, page,
 and event relationships so records from two creator accounts cannot be joined.
@@ -60,7 +67,27 @@ immutable after insertion.
 Migration 004 adds no route, repository, writer, queue, HTTP client, OAuth/token
 behavior, commerce entity, revenue ledger, environment variable, feature
 activation, or migration runner. It does not import data and must remain
-unexecuted until migrations 003 and 004 receive separate application approval.
+unexecuted until migration 004 receives separate application approval.
+
+All seven migration functions use the fixed function-level search path
+`pg_catalog, public, pg_temp`, and migration-owned relation references are schema
+qualified. PUBLIC execution is explicitly revoked from every function. The six
+trigger functions are callable only through their table triggers. The controlled
+erasure function is `SECURITY DEFINER` and remains ungranted to every application
+role pending a separate destructive-operation approval.
+
+### Migration 004 role and grant matrix
+
+| Object class | Owner/executor requirement | PUBLIC | Application roles |
+| --- | --- | --- | --- |
+| Six control tables | Migration owner retains ownership | No new privileges; erasure authorization table explicitly revoked | None granted by migration 004 |
+| Six trigger functions | Migration owner creates functions and triggers | `EXECUTE` explicitly revoked | No direct grant; trigger invocation only |
+| `erase_affiliate_creator_control_data(uuid,text,text)` | Migration owner only pending a separately approved erasure role | `EXECUTE` explicitly revoked | **No grant** |
+
+PostgreSQL 18 represents table `NOT NULL` constraints in `pg_constraint` with
+`contype = 'n'`. Migration validation must count primary, unique, foreign-key,
+and check constraints with `contype IN ('p','u','f','c')` and audit `n`
+constraints separately; it must not compare an unfiltered total constraint count.
 
 The next planned migrations remain separate:
 
