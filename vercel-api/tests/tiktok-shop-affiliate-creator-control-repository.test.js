@@ -53,12 +53,16 @@ async function testParameterizedExactAccountRead() {
   assert.equal(calls.length, 1);
   assert.equal(calls[0].values.filter((value) => value === ACCOUNT_ID).length, 1);
   assert.equal(calls[0].values.filter((value) => value === "tiktok_shop_affiliate_creator").length, 3);
-  assert.ok(calls[0].values.some((value) => Array.isArray(value) && value.includes("all-accounts")));
+  assert.equal(calls[0].values.some(Array.isArray), false);
   assert.match(calls[0].text, /^\s*SELECT\b/i);
   assert.match(calls[0].text, /WHERE ca\.id = \?::uuid/);
   assert.match(calls[0].text, /connection\.account_id = ca\.id/);
   assert.match(calls[0].text, /policy\.account_id = ca\.id/);
   assert.match(calls[0].text, /run\.account_id = ca\.id/);
+  assert.match(
+    calls[0].text,
+    /lower\(btrim\(ca\.slug\)\) NOT IN \(\s*'all',\s*'all-accounts',\s*'all_accounts',\s*'all accounts',\s*'allaccounts'\s*\)/i
+  );
 }
 
 async function testControlledConfiguredAndUnknownStates() {

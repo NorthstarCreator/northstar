@@ -130,7 +130,13 @@ async function readAffiliateCreatorControlStatus(sql, creatorAccountValue) {
       LIMIT 1
     ) latest_run ON true
     WHERE ca.id = ${accountId}::uuid
-      AND lower(btrim(ca.slug)) <> ALL(${CALCULATED_ACCOUNT_ALIASES}::text[])
+      AND lower(btrim(ca.slug)) NOT IN (
+        'all',
+        'all-accounts',
+        'all_accounts',
+        'all accounts',
+        'allaccounts'
+      )
     LIMIT 2
   `;
   if (!Array.isArray(rows)) {
