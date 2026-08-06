@@ -170,7 +170,7 @@ function testStaticBoundariesAndDormancy() {
     }
   };
   [path.join(root, "api"), path.join(root, "lib"), path.join(root, "../dashboard")].forEach(visit);
-  assert.deepEqual(imports, []);
+  assert.deepEqual(imports, [path.join(root, "lib/session-display-account-authorization-service.js")]);
 }
 
 (async () => {
