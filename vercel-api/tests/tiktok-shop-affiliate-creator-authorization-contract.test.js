@@ -132,15 +132,18 @@ function testRegistryAndStaticDormancy() {
   assert.doesNotMatch(source, /fetch\s*\(|axios|https?\.request|WebSocket|process\.env|withDatabase|cache|logger|console\.|retry|\bsql`/i);
   assert.doesNotMatch(source, /\b(?:INSERT\s+INTO|UPDATE\s+[\w."]+\s+SET|DELETE\s+FROM|ALTER\s+TABLE|DROP\s+TABLE|GRANT\s+\w+\s+ON|REVOKE\s+\w+\s+ON|CALL\s+[\w."]+)\b/i);
   assert.doesNotMatch(source, /2025-10-01|sync_runs|videos|connected_tiktok_accounts/i);
+  const permittedDormantConsumers = new Set([
+    "lib/tiktok-shop-affiliate-creator-authorization-persistence-contract.js"
+  ]);
   const consumers = [];
   for (const directory of [path.join(root, "api"), path.join(root, "lib")]) {
     for (const item of fs.readdirSync(directory, { withFileTypes: true })) {
       if (!item.name.endsWith(".js")) continue;
       const candidate = path.join(directory, item.name);
-      if (candidate !== target && fs.readFileSync(candidate, "utf8").includes(name)) consumers.push(candidate);
+      if (candidate !== target && fs.readFileSync(candidate, "utf8").includes(name)) consumers.push(path.relative(root, candidate));
     }
   }
-  assert.deepEqual(consumers, []);
+  assert.deepEqual(consumers, [...permittedDormantConsumers]);
 }
 
 [testStaticContract, testAuthorizationRequestAndCallback, testTokenNormalizationAndPrivacy, testRegistryAndStaticDormancy].forEach((test) => test());

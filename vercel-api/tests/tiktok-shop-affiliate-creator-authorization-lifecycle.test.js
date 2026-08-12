@@ -132,7 +132,8 @@ function testDormancyAndCompatibility() {
   assert.doesNotMatch(source, /fetch\s*\(|axios|https?\.request|WebSocket|process\.env|withDatabase|cache|logger|console\.|retry|setTimeout|setInterval|\bsql`/i);
   assert.doesNotMatch(source, /\b(?:INSERT\s+INTO|UPDATE\s+[\w."]+\s+SET|DELETE\s+FROM|ALTER\s+TABLE|DROP\s+TABLE|GRANT\s+|REVOKE\s+|CALL\s+)\b/i);
   assert.doesNotMatch(source, /2025-10-01|sync_runs|videos|connected_tiktok_accounts|seller|partner|local_sellers|tiktok_display_api|tiktok_for_developers/i);
-  const consumers = []; for (const dir of [path.join(root, "api"), path.join(root, "lib")]) for (const item of fs.readdirSync(dir, { withFileTypes: true })) { const candidate = path.join(dir, item.name); if (item.name.endsWith(".js") && candidate !== target && fs.readFileSync(candidate, "utf8").includes(name)) consumers.push(candidate); } assert.deepEqual(consumers, []);
+  const permittedDormantConsumers = new Set(["lib/tiktok-shop-affiliate-creator-authorization-persistence-contract.js"]);
+  const consumers = []; for (const dir of [path.join(root, "api"), path.join(root, "lib")]) for (const item of fs.readdirSync(dir, { withFileTypes: true })) { const candidate = path.join(dir, item.name); if (item.name.endsWith(".js") && candidate !== target && fs.readFileSync(candidate, "utf8").includes(name)) consumers.push(path.relative(root, candidate)); } assert.deepEqual(consumers, [...permittedDormantConsumers]);
 }
 
 [testStaticCollectionsAndInitialState, testEveryAllowedTransition, testUnlistedTransitionMatrixRejects, testFactsAndPrivacy, testDormancyAndCompatibility].forEach(test => test());

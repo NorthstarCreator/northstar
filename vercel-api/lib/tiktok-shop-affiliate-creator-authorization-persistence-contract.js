@@ -1,0 +1,264 @@
+"use strict";
+
+const {
+  CREATOR_AUTHORIZATION_CONTRACT
+} = require("./tiktok-shop-affiliate-creator-authorization-contract");
+const {
+  AFFILIATE_CREATOR_AUTHORIZATION_STATES,
+  assessAffiliateCreatorTokenFacts
+} = require("./tiktok-shop-affiliate-creator-authorization-lifecycle");
+const {
+  getAuthorizedCreatorAccountId
+} = require("./session-creator-account-authorization");
+const {
+  CAPABILITY_REGISTRY
+} = require("./tiktok-shop-affiliate-creator-capability-registry");
+
+const AUTHORIZED_STATES = Object.freeze(["authorized_limited", "authorized_ready"]);
+const REQUIRED_SCOPE = CREATOR_AUTHORIZATION_CONTRACT.requiredScope;
+const APPROVED_CREATOR_SCOPES = Object.freeze(CAPABILITY_REGISTRY.map((item) => item.key).sort());
+const MAX_CIPHERTEXT_LENGTH = 16 * 1024;
+const MAX_METADATA_LENGTH = 128;
+const commands = new WeakMap();
+
+class AffiliateCreatorAuthorizationPersistenceContractError extends Error {
+  constructor(code) {
+    super(code);
+    this.name = "AffiliateCreatorAuthorizationPersistenceContractError";
+    this.code = code;
+  }
+}
+
+function fail(code) {
+  throw new AffiliateCreatorAuthorizationPersistenceContractError(code);
+}
+
+function isRecord(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+function exactKeys(value, keys) {
+  return isRecord(value) && Object.keys(value).every((key) => keys.includes(key));
+}
+
+function safeText(value, maximum = MAX_METADATA_LENGTH) {
+  return typeof value === "string"
+    && value.length > 0
+    && value.length <= maximum
+    && value === value.trim()
+    && !/[\u0000-\u001f\u007f]/.test(value);
+}
+
+function validUnixSeconds(value) {
+  return Number.isSafeInteger(value) && value > 0;
+}
+
+function revision(value) {
+  if (!Number.isSafeInteger(value) || value < 0) fail("invalid_authorization_revision");
+  return value;
+}
+
+function validateRevisionPair(expectedRevision, nextRevision) {
+  const expected = revision(expectedRevision);
+  const next = revision(nextRevision);
+  if (next !== expected + 1) fail("invalid_authorization_revision");
+  return Object.freeze({ expected, next });
+}
+
+function trustedAccountId(context) {
+  try {
+    return getAuthorizedCreatorAccountId(context);
+  } catch {
+    fail("authorization_context_required");
+  }
+}
+
+function normalizeScopes(value) {
+  if (!Array.isArray(value) || value.length === 0) fail("invalid_authorization_scopes");
+  const scopes = new Set();
+  for (const scope of value) {
+    if (typeof scope !== "string" || !APPROVED_CREATOR_SCOPES.includes(scope)) {
+      fail("invalid_authorization_scopes");
+    }
+    scopes.add(scope);
+  }
+  if (!scopes.has(REQUIRED_SCOPE)) fail("invalid_authorization_scopes");
+  return Object.freeze([...scopes].sort());
+}
+
+function ciphertext(value) {
+  // Ciphertext is deliberately opaque here: reject only values that cannot be
+  // safely carried as bounded, non-empty text; do not impose a crypto format.
+  if (!safeText(value, MAX_CIPHERTEXT_LENGTH)) {
+    fail("encrypted_credentials_required");
+  }
+  return value;
+}
+
+function encryptionMetadata(format, keyReference) {
+  if (!safeText(format) || !safeText(keyReference)) fail("invalid_encryption_metadata");
+  return Object.freeze({ format, keyReference });
+}
+
+function supportedProviderProvenance(value) {
+  if (value !== undefined) fail("unsupported_provider_provenance");
+}
+
+function authorizedAssessment({ state, grantedScopes, accessTokenExpiresAt, refreshTokenExpiresAt, validatedAt, optionalCapabilitiesComplete }) {
+  if (!AUTHORIZED_STATES.includes(state)
+    || !AFFILIATE_CREATOR_AUTHORIZATION_STATES.includes(state)) {
+    fail("invalid_authorization_state");
+  }
+  if (optionalCapabilitiesComplete !== undefined && typeof optionalCapabilitiesComplete !== "boolean") {
+    fail("invalid_authorization_state");
+  }
+  if (!validUnixSeconds(validatedAt)
+    || !validUnixSeconds(accessTokenExpiresAt)
+    || accessTokenExpiresAt <= validatedAt
+    || (refreshTokenExpiresAt !== undefined
+      && (!validUnixSeconds(refreshTokenExpiresAt)
+        || refreshTokenExpiresAt <= accessTokenExpiresAt))) {
+    fail("invalid_credential_expiration");
+  }
+  const expectedState = optionalCapabilitiesComplete === false ? "authorized_limited" : "authorized_ready";
+  if (state !== expectedState) fail("invalid_authorization_state");
+  // The reviewed lifecycle assessor requires a known refresh expiration. Use it
+  // whenever that fact exists; a missing refresh expiration remains unknown,
+  // rather than being fabricated by this persistence-only contract.
+  if (refreshTokenExpiresAt !== undefined) {
+    try {
+      assessAffiliateCreatorTokenFacts({
+        userType: CREATOR_AUTHORIZATION_CONTRACT.creatorUserType,
+        now: validatedAt,
+        accessTokenExpiresAt,
+        refreshTokenExpiresAt,
+        grantedScopes,
+        requiredScopes: [REQUIRED_SCOPE],
+        optionalCapabilitiesComplete
+      });
+    } catch {
+      fail("invalid_authorization_scopes");
+    }
+  }
+  return Object.freeze({ accessTokenExpiresAt, refreshTokenExpiresAt });
+}
+
+function command(publicFields, privateFields) {
+  const normalized = Object.freeze(Object.assign(Object.create(null), publicFields));
+  commands.set(normalized, Object.freeze(Object.assign(Object.create(null), privateFields)));
+  return normalized;
+}
+
+function credentialsFor(input) {
+  return Object.freeze({
+    accessTokenCiphertext: ciphertext(input.accessTokenCiphertext),
+    refreshTokenCiphertext: ciphertext(input.refreshTokenCiphertext),
+    encryption: encryptionMetadata(input.encryptionFormat, input.encryptionKeyReference)
+  });
+}
+
+function normalizeInitialAuthorizationPersistenceCommand(input) {
+  const keys = ["authorizationContext", "expectedRevision", "nextRevision", "state", "grantedScopes", "accessTokenCiphertext", "refreshTokenCiphertext", "accessTokenExpiresAt", "refreshTokenExpiresAt", "authorizedAt", "validatedAt", "optionalCapabilitiesComplete", "encryptionFormat", "encryptionKeyReference", "providerApiVersion"];
+  if (!exactKeys(input, keys) || !validUnixSeconds(input.authorizedAt) || !validUnixSeconds(input.validatedAt) || input.authorizedAt > input.validatedAt) {
+    fail("invalid_persistence_input");
+  }
+  supportedProviderProvenance(input.providerApiVersion);
+  const accountId = trustedAccountId(input.authorizationContext);
+  const revisions = validateRevisionPair(input.expectedRevision, input.nextRevision);
+  const scopes = normalizeScopes(input.grantedScopes);
+  const assessment = authorizedAssessment({ ...input, grantedScopes: scopes });
+  const credentials = credentialsFor(input);
+  return command({ operation: "initial_authorization", state: input.state, expectedRevision: revisions.expected, nextRevision: revisions.next }, {
+    accountId, scopes, credentials, authorizedAt: input.authorizedAt, validatedAt: input.validatedAt,
+    accessTokenExpiresAt: assessment.accessTokenExpiresAt, refreshTokenExpiresAt: assessment.refreshTokenExpiresAt ?? null
+  });
+}
+
+function normalizeRefreshRotationPersistenceCommand(input) {
+  const keys = ["authorizationContext", "expectedRevision", "nextRevision", "state", "grantedScopes", "accessTokenCiphertext", "refreshTokenCiphertext", "accessTokenExpiresAt", "refreshTokenExpiresAt", "validatedAt", "refreshedAt", "optionalCapabilitiesComplete", "encryptionFormat", "encryptionKeyReference", "providerApiVersion"];
+  if (!exactKeys(input, keys) || !validUnixSeconds(input.validatedAt) || !validUnixSeconds(input.refreshedAt) || input.validatedAt > input.refreshedAt) {
+    fail("invalid_persistence_input");
+  }
+  supportedProviderProvenance(input.providerApiVersion);
+  const accountId = trustedAccountId(input.authorizationContext);
+  const revisions = validateRevisionPair(input.expectedRevision, input.nextRevision);
+  const scopes = normalizeScopes(input.grantedScopes);
+  const assessment = authorizedAssessment({ ...input, grantedScopes: scopes, validatedAt: input.refreshedAt });
+  const credentials = credentialsFor(input);
+  return command({ operation: "refresh_rotation", state: input.state, expectedRevision: revisions.expected, nextRevision: revisions.next }, {
+    accountId, scopes, credentials, validatedAt: input.validatedAt, refreshedAt: input.refreshedAt,
+    accessTokenExpiresAt: assessment.accessTokenExpiresAt, refreshTokenExpiresAt: assessment.refreshTokenExpiresAt ?? null
+  });
+}
+
+function normalizeScopeLifecycleStateUpdateCommand(input) {
+  const keys = ["authorizationContext", "expectedRevision", "nextRevision", "state", "previousGrantedScopes", "grantedScopes", "accessTokenExpiresAt", "refreshTokenExpiresAt", "validatedAt", "optionalCapabilitiesComplete", "providerApiVersion"];
+  if (!exactKeys(input, keys)) fail("invalid_persistence_input");
+  supportedProviderProvenance(input.providerApiVersion);
+  const accountId = trustedAccountId(input.authorizationContext);
+  const revisions = validateRevisionPair(input.expectedRevision, input.nextRevision);
+  const priorScopes = normalizeScopes(input.previousGrantedScopes);
+  const scopes = normalizeScopes(input.grantedScopes);
+  if (scopes.length >= priorScopes.length || scopes.some((scope) => !priorScopes.includes(scope))) {
+    fail("invalid_authorization_scopes");
+  }
+  const assessment = authorizedAssessment({ ...input, grantedScopes: scopes });
+  return command({ operation: "scope_reduction", state: input.state, expectedRevision: revisions.expected, nextRevision: revisions.next }, {
+    accountId, scopes, validatedAt: input.validatedAt,
+    accessTokenExpiresAt: assessment.accessTokenExpiresAt, refreshTokenExpiresAt: assessment.refreshTokenExpiresAt
+  });
+}
+
+function normalizeCredentialRemovalCommand(input, operation, state, timestampName) {
+  const keys = ["authorizationContext", "expectedRevision", "nextRevision", "state", timestampName, "providerApiVersion"];
+  if (!exactKeys(input, keys) || input.state !== state || !validUnixSeconds(input[timestampName])) {
+    fail("invalid_persistence_input");
+  }
+  supportedProviderProvenance(input.providerApiVersion);
+  const accountId = trustedAccountId(input.authorizationContext);
+  const revisions = validateRevisionPair(input.expectedRevision, input.nextRevision);
+  return command({ operation, state, expectedRevision: revisions.expected, nextRevision: revisions.next }, {
+    accountId, [timestampName]: input[timestampName], removeCredentials: true
+  });
+}
+
+function normalizeInvalidRefreshPersistenceCommand(input) {
+  return normalizeCredentialRemovalCommand(input, "invalid_refresh", "reauthorization_required", "occurredAt");
+}
+
+function normalizeDeauthorizationPersistenceCommand(input) {
+  return normalizeCredentialRemovalCommand(input, "deauthorization", "deauthorized", "revokedAt");
+}
+
+function privateCommand(commandValue) {
+  if (!commandValue || typeof commandValue !== "object" || !commands.has(commandValue)) {
+    fail("authorization_context_required");
+  }
+  return commands.get(commandValue);
+}
+
+function getAuthorizedCreatorAccountIdFromPersistenceCommand(commandValue) {
+  return privateCommand(commandValue).accountId;
+}
+
+function getEncryptedCredentialPersistenceMaterial(commandValue) {
+  const material = privateCommand(commandValue);
+  if (!material.credentials) fail("encrypted_credentials_not_allowed");
+  return material.credentials;
+}
+
+module.exports = {
+  AffiliateCreatorAuthorizationPersistenceContractError,
+  APPROVED_CREATOR_SCOPES,
+  REQUIRED_SCOPE,
+  MAX_CIPHERTEXT_LENGTH,
+  normalizeInitialAuthorizationPersistenceCommand,
+  normalizeRefreshRotationPersistenceCommand,
+  normalizeScopeLifecycleStateUpdateCommand,
+  normalizeInvalidRefreshPersistenceCommand,
+  normalizeDeauthorizationPersistenceCommand,
+  getAuthorizedCreatorAccountIdFromPersistenceCommand,
+  getEncryptedCredentialPersistenceMaterial
+};

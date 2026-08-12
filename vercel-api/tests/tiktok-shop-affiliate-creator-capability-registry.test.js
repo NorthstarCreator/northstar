@@ -120,16 +120,21 @@ function testStaticSafetyAndDormancy() {
   assert.doesNotMatch(source, /2025-10-01|sync_runs|videos|connected_tiktok_accounts/i);
 
   const runtimeRoots = [path.join(root, "api"), path.join(root, "lib")];
+  const permittedDormantConsumers = new Set([
+    "lib/tiktok-shop-affiliate-creator-authorization-persistence-contract.js"
+  ]);
   const consumers = [];
   const visit = (directory) => {
     for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
       const target = path.join(directory, entry.name);
       if (entry.isDirectory()) visit(target);
-      else if (entry.name.endsWith(".js") && target !== modulePath && fs.readFileSync(target, "utf8").includes(moduleName)) consumers.push(target);
+      else if (entry.name.endsWith(".js") && target !== modulePath && fs.readFileSync(target, "utf8").includes(moduleName)) {
+        consumers.push(path.relative(root, target));
+      }
     }
   };
   runtimeRoots.forEach(visit);
-  assert.deepEqual(consumers, []);
+  assert.deepEqual(consumers, [...permittedDormantConsumers]);
 }
 
 testRegistryContentsAndImmutability();
