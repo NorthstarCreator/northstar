@@ -25,7 +25,10 @@ const CAPABILITY_REGISTRY = Object.freeze([
   scope("creator.affiliate.info", [
     endpoint("check-anchor-content", "Check Anchor Content", "validation_only", "contract_not_reviewed"),
     endpoint("check-anchor-prerequisites", "Check Anchor Prerequisites", "validation_only", "contract_not_reviewed"),
-    endpoint("get-creator-profile", "Get Creator Profile", "future_read_only_candidate", "ui_doc_available"),
+    Object.freeze({
+      ...endpoint("get-creator-profile", "Get Creator Profile", "future_read_only_candidate", "contract_reviewed_official_markdown"),
+      contractVersion: "202405"
+    }),
     endpoint("get-creator-profile-old", "Get Creator Profile (old)", "legacy", "contract_not_reviewed", "old"),
     endpoint("get-live-account-info-legacy", "Get Live Account Info", "legacy", "legacy", "legacy"),
     endpoint("get-live-room-info", "Get Live Room Info", "future_read_only_candidate", "contract_not_reviewed"),

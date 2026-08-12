@@ -76,8 +76,9 @@ function testEndpointPlacementAndVariants() {
   assert.deepEqual(namesByScope["creator.showcase.read"], ["Get Showcase Products", "Get Showcase Products (old)"]);
 
   const affiliateInfo = getScopeEndpoints("creator.affiliate.info");
-  assert.equal(affiliateInfo.filter((item) => item.documentationState === "ui_doc_available").length, 1);
-  assert.equal(getEndpoint("creator.affiliate.info", "get-creator-profile").documentationState, "ui_doc_available");
+  assert.equal(affiliateInfo.filter((item) => item.documentationState === "contract_reviewed_official_markdown").length, 1);
+  assert.equal(getEndpoint("creator.affiliate.info", "get-creator-profile").documentationState, "contract_reviewed_official_markdown");
+  assert.equal(getEndpoint("creator.affiliate.info", "get-creator-profile").contractVersion, "202405");
   assert.deepEqual(affiliateInfo.filter((item) => item.name === "Get Live Room Info").map((item) => item.variant), ["current", "legacy"]);
   assert.equal(getEndpoint("creator.showcase.read", "get-showcase-products-old").variant, "old");
 
