@@ -97,6 +97,49 @@ PostgreSQL 18 represents table `NOT NULL` constraints in `pg_constraint` with
 and check constraints with `contype IN ('p','u','f','c')` and audit `n`
 constraints separately; it must not compare an unfiltered total constraint count.
 
+## Affiliate Creator Authorization Credentials (Migration 005, Local and Unexecuted)
+
+Migration `005_affiliate_creator_authorization_credentials.sql` is a local-only,
+unexecuted persistence checkpoint that depends on the validated Migration 004
+control plane. It fails closed if Migration 004 control relations are absent, a
+calculated All Accounts alias is present, a pre-existing connection would need
+legacy interpretation, or its own relations already exist. It creates no rows,
+grants, routes, flags, writers, encryption implementation, credentials, or
+provider activity.
+
+It adds a separate eight-state Affiliate Creator authorization lifecycle to
+`affiliate_creator_connections`: `not_authorized`, `authorization_pending`,
+`callback_received`, `authorized_limited`, `authorized_ready`,
+`refresh_required`, `reauthorization_required`, and `deauthorized`. The legacy
+connection `state` remains untouched. Authorization and credential revisions
+start at zero; a forward-only trigger rejects regressive lifecycle and revision
+updates. Authorized states require the validated creator identity facts already
+modeled by Migration 004, a creator user type, validation and expiry timestamps,
+and the required `creator.affiliate.info` scope.
+
+The proposed credential relation stores only a bounded AES-256-GCM envelope:
+version, algorithm, key reference, AAD version, initialization vector,
+ciphertext, and authentication tag. It contains no plaintext credential,
+authorization code, token column, provider response, or raw request data. Its
+composite foreign key carries the exact connection, account, and Affiliate
+Creator provider identity. Encryption, key management, authorization exchange,
+and storage writers are deliberately outside this migration and remain disabled.
+
+The proposed authorization-event relation is account-scoped, append-only, and
+limited to lifecycle event names, state, revision, timestamp, and a sanitized
+machine status code. A controlled account erasure updates the existing erasure
+function without granting it: it deletes authorization events and ciphertext
+envelopes only after its exact-account/transaction gate, and records only
+non-identifying deletion counts in the existing immutable receipt. PUBLIC is
+explicitly revoked from the new tables and functions; the replacement
+`erase_affiliate_creator_control_data(uuid,text,text)` remains ungranted to
+application roles and uninvoked.
+
+Migration 005 must not be applied until a separately approved database preflight,
+role/grant plan, execution plan, and post-migration validation are complete. It
+does not change Display API routes, existing Content authorization, or the
+October 1, 2025 Display API cutoff.
+
 The next planned migrations remain separate:
 
 1. typed Affiliate Creator products, collaborations, samples, orders, and order
