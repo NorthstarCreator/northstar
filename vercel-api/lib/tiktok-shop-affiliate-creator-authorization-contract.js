@@ -72,6 +72,13 @@ const CREATOR_AUTHORIZATION_CONTRACT = deepFreeze({
   runtimeAllowed: false
 });
 
+// These facts originate only in a successful Creator token response.  They
+// intentionally remain outside the public normalized result so a future
+// persistence boundary must opt into a narrow, trusted accessor.
+const authorizationResults = new WeakMap();
+const authorizationCredentials = new WeakMap();
+const MAX_CREATOR_OPEN_ID_LENGTH = 1024;
+
 function fail(code) {
   throw new CreatorAuthorizationContractError(code);
 }
@@ -84,6 +91,10 @@ function plainObject(value) {
 
 function safeText(value) {
   return typeof value === "string" && value.length > 0 && value === value.trim() && !/[\u0000-\u001f\u007f]/.test(value);
+}
+
+function safeCreatorOpenId(value) {
+  return safeText(value) && value.length <= MAX_CREATOR_OPEN_ID_LENGTH;
 }
 
 function exactKeys(value, keys) {
@@ -142,26 +153,46 @@ function normalizeGrantedScopes(value) {
 }
 
 function normalizeCreatorTokenResponse(response, { now = Date.now() } = {}) {
-  if (!plainObject(response) || !Number.isSafeInteger(response.code)) fail("invalid_creator_token_response");
+  if (!exactKeys(response, ["code", "message", "request_id", "data"]) || !Number.isSafeInteger(response.code)) fail("invalid_creator_token_response");
   if (response.code !== 0) fail("creator_token_api_error");
-  if (!plainObject(response.data)) fail("invalid_creator_token_response");
+  if (!exactKeys(response.data, ["access_token", "refresh_token", "open_id", "user_type", "access_token_expire_in", "refresh_token_expire_in", "granted_scopes"])) fail("invalid_creator_token_response");
   const data = response.data;
   if (data.user_type !== CREATOR_AUTHORIZATION_CONTRACT.creatorUserType) fail("invalid_creator_token_response");
   if (!safeText(data.access_token) || !safeText(data.refresh_token)) fail("invalid_creator_token_response");
-  if (!safeText(data.open_id)) fail("creator_identity_required");
+  if (!safeCreatorOpenId(data.open_id)) fail("creator_identity_required");
   const nowSeconds = Math.floor(Number(now) / 1000);
   if (!Number.isSafeInteger(nowSeconds) || !validUnixExpiration(data.access_token_expire_in, nowSeconds) || !validUnixExpiration(data.refresh_token_expire_in, nowSeconds)) {
     fail("invalid_creator_token_response");
   }
-  return frozenContext({
-    accessToken: data.access_token,
-    accessTokenExpiresAt: data.access_token_expire_in,
-    refreshToken: data.refresh_token,
-    refreshTokenExpiresAt: data.refresh_token_expire_in,
+  const result = frozenContext({});
+  authorizationResults.set(result, frozenContext({
     openId: data.open_id,
     userType: data.user_type,
-    grantedScopes: normalizeGrantedScopes(data.granted_scopes)
-  });
+    grantedScopes: normalizeGrantedScopes(data.granted_scopes),
+    accessTokenExpiresAt: data.access_token_expire_in,
+    refreshTokenExpiresAt: data.refresh_token_expire_in
+  }));
+  // Keep credential material in a distinct private store.  A trusted future
+  // encryption boundary can obtain it without also receiving Creator identity.
+  authorizationCredentials.set(result, frozenContext({
+    accessToken: data.access_token,
+    refreshToken: data.refresh_token
+  }));
+  return result;
+}
+
+function getValidatedCreatorAuthorizationIdentity(result) {
+  if (!result || typeof result !== "object" || !authorizationResults.has(result)) {
+    fail("creator_authorization_result_required");
+  }
+  return authorizationResults.get(result);
+}
+
+function getValidatedCreatorAuthorizationCredentialMaterial(result) {
+  if (!result || typeof result !== "object" || !authorizationCredentials.has(result)) {
+    fail("creator_authorization_result_required");
+  }
+  return authorizationCredentials.get(result);
 }
 
 module.exports = {
@@ -169,5 +200,8 @@ module.exports = {
   CREATOR_AUTHORIZATION_CONTRACT,
   validateCreatorAuthorizationRequest,
   normalizeCreatorAuthorizationCallback,
-  normalizeCreatorTokenResponse
+  normalizeCreatorTokenResponse,
+  getValidatedCreatorAuthorizationIdentity,
+  getValidatedCreatorAuthorizationCredentialMaterial,
+  MAX_CREATOR_OPEN_ID_LENGTH
 };

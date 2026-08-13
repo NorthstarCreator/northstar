@@ -1,7 +1,8 @@
 "use strict";
 
 const {
-  CREATOR_AUTHORIZATION_CONTRACT
+  CREATOR_AUTHORIZATION_CONTRACT,
+  getValidatedCreatorAuthorizationIdentity
 } = require("./tiktok-shop-affiliate-creator-authorization-contract");
 const {
   AFFILIATE_CREATOR_AUTHORIZATION_STATES,
@@ -159,21 +160,46 @@ function credentialsFor(input) {
   });
 }
 
-function normalizeInitialAuthorizationPersistenceCommand(input) {
-  const keys = ["authorizationContext", "expectedRevision", "nextRevision", "state", "grantedScopes", "accessTokenCiphertext", "refreshTokenCiphertext", "accessTokenExpiresAt", "refreshTokenExpiresAt", "authorizedAt", "validatedAt", "optionalCapabilitiesComplete", "encryptionFormat", "encryptionKeyReference", "providerApiVersion"];
-  if (!exactKeys(input, keys) || !validUnixSeconds(input.authorizedAt) || !validUnixSeconds(input.validatedAt) || input.authorizedAt > input.validatedAt) {
+function trustedAuthorizationFacts(result) {
+  try {
+    const facts = getValidatedCreatorAuthorizationIdentity(result);
+    return Object.freeze({
+      identity: Object.freeze(Object.assign(Object.create(null), {
+        providerCreatorOpenId: facts.openId,
+        userType: facts.userType
+      })),
+      scopes: normalizeScopes(facts.grantedScopes),
+      accessTokenExpiresAt: facts.accessTokenExpiresAt,
+      refreshTokenExpiresAt: facts.refreshTokenExpiresAt
+    });
+  } catch {
+    fail("creator_authorization_result_required");
+  }
+}
+
+function normalizeAuthorizationPersistenceCommand(input, { operation, timestampName }) {
+  const keys = ["authorizationContext", "authorizationResult", "expectedRevision", "nextRevision", "state", "accessTokenCiphertext", "refreshTokenCiphertext", timestampName, "validatedAt", "optionalCapabilitiesComplete", "encryptionFormat", "encryptionKeyReference", "providerApiVersion"];
+  if (!exactKeys(input, keys) || !validUnixSeconds(input[timestampName]) || !validUnixSeconds(input.validatedAt) || input[timestampName] > input.validatedAt) {
     fail("invalid_persistence_input");
   }
   supportedProviderProvenance(input.providerApiVersion);
   const accountId = trustedAccountId(input.authorizationContext);
   const revisions = validateRevisionPair(input.expectedRevision, input.nextRevision);
-  const scopes = normalizeScopes(input.grantedScopes);
-  const assessment = authorizedAssessment({ ...input, grantedScopes: scopes });
+  const facts = trustedAuthorizationFacts(input.authorizationResult);
+  const assessment = authorizedAssessment({ ...input, grantedScopes: facts.scopes, accessTokenExpiresAt: facts.accessTokenExpiresAt, refreshTokenExpiresAt: facts.refreshTokenExpiresAt });
   const credentials = credentialsFor(input);
-  return command({ operation: "initial_authorization", state: input.state, expectedRevision: revisions.expected, nextRevision: revisions.next }, {
-    accountId, scopes, credentials, authorizedAt: input.authorizedAt, validatedAt: input.validatedAt,
+  return command({ operation, state: input.state, expectedRevision: revisions.expected, nextRevision: revisions.next }, {
+    accountId, identity: facts.identity, scopes: facts.scopes, credentials, [timestampName]: input[timestampName], validatedAt: input.validatedAt,
     accessTokenExpiresAt: assessment.accessTokenExpiresAt, refreshTokenExpiresAt: assessment.refreshTokenExpiresAt ?? null
   });
+}
+
+function normalizeInitialAuthorizationPersistenceCommand(input) {
+  return normalizeAuthorizationPersistenceCommand(input, { operation: "initial_authorization", timestampName: "authorizedAt" });
+}
+
+function normalizeReauthorizationPersistenceCommand(input) {
+  return normalizeAuthorizationPersistenceCommand(input, { operation: "reauthorization", timestampName: "reauthorizedAt" });
 }
 
 function normalizeRefreshRotationPersistenceCommand(input) {
@@ -249,16 +275,24 @@ function getEncryptedCredentialPersistenceMaterial(commandValue) {
   return material.credentials;
 }
 
+function getAffiliateCreatorIdentityFromPersistenceCommand(commandValue) {
+  const material = privateCommand(commandValue);
+  if (!material.identity) fail("creator_authorization_result_required");
+  return material.identity;
+}
+
 module.exports = {
   AffiliateCreatorAuthorizationPersistenceContractError,
   APPROVED_CREATOR_SCOPES,
   REQUIRED_SCOPE,
   MAX_CIPHERTEXT_LENGTH,
   normalizeInitialAuthorizationPersistenceCommand,
+  normalizeReauthorizationPersistenceCommand,
   normalizeRefreshRotationPersistenceCommand,
   normalizeScopeLifecycleStateUpdateCommand,
   normalizeInvalidRefreshPersistenceCommand,
   normalizeDeauthorizationPersistenceCommand,
   getAuthorizedCreatorAccountIdFromPersistenceCommand,
-  getEncryptedCredentialPersistenceMaterial
+  getEncryptedCredentialPersistenceMaterial,
+  getAffiliateCreatorIdentityFromPersistenceCommand
 };

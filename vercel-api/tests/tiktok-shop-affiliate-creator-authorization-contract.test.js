@@ -8,7 +8,10 @@ const {
   CREATOR_AUTHORIZATION_CONTRACT,
   validateCreatorAuthorizationRequest,
   normalizeCreatorAuthorizationCallback,
-  normalizeCreatorTokenResponse
+  normalizeCreatorTokenResponse,
+  getValidatedCreatorAuthorizationIdentity,
+  getValidatedCreatorAuthorizationCredentialMaterial,
+  MAX_CREATOR_OPEN_ID_LENGTH
 } = require("../lib/tiktok-shop-affiliate-creator-authorization-contract");
 const { CAPABILITY_REGISTRY } = require("../lib/tiktok-shop-affiliate-creator-capability-registry");
 
@@ -99,28 +102,41 @@ function testAuthorizationRequestAndCallback() {
 }
 
 function testTokenNormalizationAndPrivacy() {
-  const normalized = normalizeCreatorTokenResponse(tokenResponse({
-    seller_name: TEXT, seller_base_region: TEXT, unknown_field: TEXT,
-    granted_scopes: ["creator.affiliate.info", "creator.showcase.read"]
-  }), { now: NOW });
+  const openId = "private-creator-open-id";
+  const normalized = normalizeCreatorTokenResponse(tokenResponse({ open_id: openId, granted_scopes: ["creator.affiliate.info", "creator.showcase.read"] }), { now: NOW });
   assert.equal(Object.getPrototypeOf(normalized), null);
-  assert.deepEqual(Object.keys(normalized), ["accessToken", "accessTokenExpiresAt", "refreshToken", "refreshTokenExpiresAt", "openId", "userType", "grantedScopes"]);
-  assert.equal("sellerName" in normalized, false);
-  assert.equal("requestId" in normalized, false);
-  assert.equal("message" in normalized, false);
+  assert.deepEqual(Object.keys(normalized), []);
+  assert.equal(JSON.stringify(normalized), "{}");
   assert.ok(Object.isFrozen(normalized));
-  assert.ok(Object.isFrozen(normalized.grantedScopes));
-  assert.throws(() => normalized.grantedScopes.push("creator.affiliate.info"));
-  for (const userType of [0, 2, 3, 4, 5]) assertCode(() => normalizeCreatorTokenResponse(tokenResponse({ user_type: userType }), { now: NOW }), "invalid_creator_token_response");
+  const facts = getValidatedCreatorAuthorizationIdentity(normalized);
+  assert.equal(Object.getPrototypeOf(facts), null);
+  assert.deepEqual(Object.keys(facts), ["openId", "userType", "grantedScopes", "accessTokenExpiresAt", "refreshTokenExpiresAt"]);
+  assert.equal(facts.openId, openId); assert.equal(facts.userType, 1); assert.ok(Object.isFrozen(facts)); assert.ok(Object.isFrozen(facts.grantedScopes));
+  const credentials = getValidatedCreatorAuthorizationCredentialMaterial(normalized);
+  assert.deepEqual(Object.keys(credentials), ["accessToken", "refreshToken"]);
+  assert.equal(credentials.accessToken, TEXT); assert.equal(credentials.refreshToken, TEXT);
+  assert.equal(JSON.stringify(normalized).includes(openId), false);
+  assert.equal(JSON.stringify(normalized).includes(TEXT), false);
+  assert.equal(JSON.stringify(credentials).includes(openId), false);
+  assert.throws(() => facts.grantedScopes.push("creator.affiliate.info"));
+  for (const userType of [0, 2, 3, 4, 5, "1", null, undefined]) assertCode(() => normalizeCreatorTokenResponse(tokenResponse({ user_type: userType }), { now: NOW }), "invalid_creator_token_response");
   assertCode(() => normalizeCreatorTokenResponse(tokenResponse({}, { code: 1 }), { now: NOW }), "creator_token_api_error");
   assertCode(() => normalizeCreatorTokenResponse(tokenResponse({ open_id: "" }), { now: NOW }), "creator_identity_required");
+  for (const value of [" ", "\u0000id", "line\nbreak", "x".repeat(MAX_CREATOR_OPEN_ID_LENGTH + 1), 1, null, undefined]) assertCode(() => normalizeCreatorTokenResponse(tokenResponse({ open_id: value }), { now: NOW }), "creator_identity_required");
   assertCode(() => normalizeCreatorTokenResponse(tokenResponse({ granted_scopes: [] }), { now: NOW }), "creator_scope_required");
   for (const scopes of [["creator.affiliate.info", "creator.affiliate.info"], [TEXT], ["seller.order.info"], ["creator.affiliate.info", " "]]) {
     assertCode(() => normalizeCreatorTokenResponse(tokenResponse({ granted_scopes: scopes }), { now: NOW }), "invalid_creator_token_response");
   }
-  for (const data of [{ access_token: "" }, { refresh_token: "" }, { access_token_expire_in: Math.floor(NOW / 1000) }, { refresh_token_expire_in: TEXT }, { granted_scopes: TEXT }]) {
+  for (const data of [{ access_token: "" }, { refresh_token: "" }, { access_token_expire_in: Math.floor(NOW / 1000) }, { refresh_token_expire_in: TEXT }, { granted_scopes: TEXT }, { creator_user_id: "not-an-identity" }, { username: "not-an-identity" }]) {
     assertCode(() => normalizeCreatorTokenResponse(tokenResponse(data), { now: NOW }), "invalid_creator_token_response");
   }
+  for (const foreign of [{}, { ...normalized }, JSON.parse(JSON.stringify(normalized)), Object.freeze(Object.create(null))]) {
+    assertCode(() => getValidatedCreatorAuthorizationIdentity(foreign), "creator_authorization_result_required");
+    assertCode(() => getValidatedCreatorAuthorizationCredentialMaterial(foreign), "creator_authorization_result_required");
+  }
+  const sentinel = "sensitive-sentinel-open-id";
+  let error; try { normalizeCreatorTokenResponse(tokenResponse({ open_id: sentinel, user_type: 0 }), { now: NOW }); } catch (caught) { error = caught; }
+  assert.ok(error); assert.equal(JSON.stringify(error).includes(sentinel), false);
 }
 
 function testRegistryAndStaticDormancy() {
