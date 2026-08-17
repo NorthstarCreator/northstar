@@ -49,6 +49,32 @@ function testExactLifecycleAndAuthorizationFacts() {
   assert.match(compact, /authorization_state not in \('authorized_limited', 'authorized_ready'\)/);
 }
 
+function testPostgreSQLPhysicalIdentifierNames() {
+  const physicalName = (name) => Buffer.from(name, "utf8").subarray(0, 63).toString("utf8");
+  const timestampOrder = "affiliate_creator_connections_authorization_timestamp_order_check";
+  const stateTimestamps = "affiliate_creator_connections_authorization_state_timestamps_check";
+  const lifecycleTrigger = "affiliate_creator_connections_authorization_lifecycle_forward_only";
+
+  assert.equal(Buffer.byteLength(timestampOrder, "utf8"), 65);
+  assert.equal(Buffer.byteLength(stateTimestamps, "utf8"), 66);
+  assert.equal(Buffer.byteLength(lifecycleTrigger, "utf8"), 66);
+  assert.equal(physicalName(timestampOrder), "affiliate_creator_connections_authorization_timestamp_order_che");
+  assert.equal(physicalName(stateTimestamps), "affiliate_creator_connections_authorization_state_timestamps_ch");
+  assert.equal(physicalName(lifecycleTrigger), "affiliate_creator_connections_authorization_lifecycle_forward_o");
+  assert.notEqual(physicalName(timestampOrder), physicalName(stateTimestamps));
+  const migration006 = fs.readFileSync(
+    path.join(__dirname, "../db/migrations/006_repair_affiliate_creator_authorization_safeguards.sql"),
+    "utf8"
+  );
+  for (const fullName of [timestampOrder, stateTimestamps, lifecycleTrigger]) {
+    assert.doesNotMatch(
+      migration006,
+      new RegExp(`(?:conname|tgname)\\s*=\\s*'${fullName}'`),
+      `Migration 006 must not look up only the untruncated PostgreSQL name: ${fullName}`
+    );
+  }
+}
+
 function testCiphertextOnlyCredentialEnvelope() {
   assert.match(compact, /create table public\.affiliate_creator_connection_credentials/);
   for (const field of [
@@ -142,6 +168,7 @@ function testPrivilegesSearchPathsAndBoundaries() {
 [
   testDependencyAndUnexecutedGuard,
   testExactLifecycleAndAuthorizationFacts,
+  testPostgreSQLPhysicalIdentifierNames,
   testCiphertextOnlyCredentialEnvelope,
   testCredentialImmutabilityAndConnectionCoherence,
   testSanitizedAppendOnlyEventsAndErasure,

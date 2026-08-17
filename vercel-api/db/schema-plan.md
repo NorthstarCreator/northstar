@@ -137,37 +137,30 @@ application roles and uninvoked.
 
 Migration 005's independently approved post-validation confirmed its new
 relations, encryption-envelope structure, PUBLIC revocations, existing Display
-baseline, and October 1, 2025 Display API cutoff, but did not pass overall. A
-catalog diagnostic identified two missing authorization timestamp CHECK
-constraints and the authorization lifecycle trigger. Migration 006 is a
-separately reviewed, forward-only repair for only those three missing
-safeguards; it must remain unexecuted until its own preflight and execution
-approval. Migration 005 does not change Display API routes, existing Content
-authorization, or the October 1, 2025 Display API cutoff.
+baseline, and October 1, 2025 Display API cutoff. Later catalog reconciliation
+confirmed that its two overlength CHECK-constraint names and lifecycle-trigger
+name were stored using PostgreSQL's 63-byte physical identifiers; all three
+safeguards exist and are structurally correct. Earlier missing-object results
+were untruncated-name lookup defects, not schema defects. Migration 005 does
+not change Display API routes, existing Content authorization, or the October
+1, 2025 Display API cutoff.
 
-## Affiliate Creator Authorization Safeguard Repair (Migration 006, Local and Unexecuted)
+## Affiliate Creator Authorization Safeguard Compatibility (Migration 006, Local and Unexecuted)
 
-Migration `006_repair_affiliate_creator_authorization_safeguards.sql` is a
-non-idempotent, transactional forward repair for an otherwise committed
-Migration 005 schema. It requires the exact M005 relation, columns, six existing
-validated authorization CHECK constraints, all prerequisite functions, the
-erasure-function PUBLIC-execution revocation, and an empty Affiliate Creator
-control plane. It locks the target relation before inspecting repair state and
-fails if either target constraint is already present. A target trigger that is
-already present is accepted only if it is the sole enabled, user-defined
-`BEFORE UPDATE` row trigger on the intended relation and is bound to the exact
-transition function; any duplicate or mismatch fails closed. It never replaces
-or broadens a safeguard.
+Migration `006_repair_affiliate_creator_authorization_safeguards.sql` is now a
+transactional, validation-only compatibility record. It performs no repair DDL
+or data change. It fails closed unless the Migration 005 safeguards exist once
+at these PostgreSQL 63-byte physical names, on the intended relation, with their
+validated/exact CHECK definitions and exact enabled user-defined `BEFORE UPDATE`
+row-trigger structure:
 
-The repair adds only these M005 definitions, verbatim: the validated
-`affiliate_creator_connections_authorization_timestamp_order_check`, the
-validated `affiliate_creator_connections_authorization_state_timestamps_check`,
-and the enabled `BEFORE UPDATE`
-`affiliate_creator_connections_authorization_lifecycle_forward_only` trigger
-bound to `validate_affiliate_creator_authorization_transition()`. It adds no
-role, grant, default privilege, route, flag, token, writer, provider request, or
-data row, and it preserves the controlled erasure boundary and all existing
-PUBLIC revocations.
+- `affiliate_creator_connections_authorization_timestamp_order_che`
+- `affiliate_creator_connections_authorization_state_timestamps_ch`
+- `affiliate_creator_connections_authorization_lifecycle_forward_o`
+
+It adds no role, grant, default privilege, route, flag, token, writer, provider
+request, or data row. It does not instruct execution of obsolete repair DDL and
+preserves the controlled erasure boundary and all existing PUBLIC revocations.
 
 The next planned migrations remain separate:
 
