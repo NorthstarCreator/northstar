@@ -1,11 +1,13 @@
 -- NorthStar Affiliate Creator authorization safeguard forward repair.
 --
 -- Prerequisite: the exact Migration 005 authorization-credential schema, with
--- no Affiliate Creator control-plane rows. This repair is intentionally
--- non-idempotent: it fails closed unless precisely the two named constraints
--- and one lifecycle trigger are absent and every prerequisite remains intact.
+-- no Affiliate Creator control-plane rows. This repair fails closed unless
+-- precisely the two named constraints are absent, every prerequisite remains
+-- intact, and any pre-existing lifecycle trigger is exactly the intended one.
 
 BEGIN;
+
+LOCK TABLE public.affiliate_creator_connections IN SHARE ROW EXCLUSIVE MODE;
 
 DO $repair$
 BEGIN
@@ -87,16 +89,6 @@ BEGIN
     RAISE EXCEPTION 'migration_005_existing_authorization_triggers_required';
   END IF;
 
-  IF EXISTS (
-    SELECT 1
-    FROM pg_catalog.pg_trigger trigger
-    WHERE trigger.tgrelid = 'public.affiliate_creator_connections'::pg_catalog.regclass
-      AND NOT trigger.tgisinternal
-      AND trigger.tgname = 'affiliate_creator_connections_authorization_lifecycle_forward_only'
-  ) THEN
-    RAISE EXCEPTION 'migration_006_target_trigger_already_present';
-  END IF;
-
   IF NOT EXISTS (
     SELECT 1
     FROM pg_catalog.pg_proc procedure
@@ -106,6 +98,31 @@ BEGIN
       AND procedure.prorettype = 'pg_catalog.trigger'::pg_catalog.regtype
   ) THEN
     RAISE EXCEPTION 'migration_005_authorization_transition_function_required';
+  END IF;
+
+  IF (SELECT count(*)
+      FROM pg_catalog.pg_trigger trigger
+      WHERE trigger.tgname = 'affiliate_creator_connections_authorization_lifecycle_forward_only') > 1 THEN
+    RAISE EXCEPTION 'migration_006_target_trigger_duplicate_or_mismatched';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1
+    FROM pg_catalog.pg_trigger trigger
+    JOIN pg_catalog.pg_class relation ON relation.oid = trigger.tgrelid
+    JOIN pg_catalog.pg_namespace namespace ON namespace.oid = relation.relnamespace
+    WHERE trigger.tgname = 'affiliate_creator_connections_authorization_lifecycle_forward_only'
+      AND NOT (
+        namespace.nspname = 'public'
+        AND relation.oid = 'public.affiliate_creator_connections'::pg_catalog.regclass
+        AND NOT trigger.tgisinternal
+        AND trigger.tgenabled IN ('O', 'A', 'R')
+        AND trigger.tgtype = 19
+        AND trigger.tgfoid = 'public.validate_affiliate_creator_authorization_transition()'::pg_catalog.regprocedure
+        AND trigger.tgargs = ''::bytea
+      )
+  ) THEN
+    RAISE EXCEPTION 'migration_006_target_trigger_duplicate_or_mismatched';
   END IF;
 
   IF (SELECT count(*)
@@ -198,10 +215,17 @@ ALTER TABLE public.affiliate_creator_connections
       OR revoked_at IS NOT NULL)
   );
 
-CREATE TRIGGER affiliate_creator_connections_authorization_lifecycle_forward_only
-BEFORE UPDATE ON public.affiliate_creator_connections
-FOR EACH ROW
-EXECUTE FUNCTION public.validate_affiliate_creator_authorization_transition();
+DO $trigger$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_catalog.pg_trigger trigger
+    WHERE trigger.tgname = 'affiliate_creator_connections_authorization_lifecycle_forward_only'
+  ) THEN
+    EXECUTE 'CREATE TRIGGER affiliate_creator_connections_authorization_lifecycle_forward_only BEFORE UPDATE ON public.affiliate_creator_connections FOR EACH ROW EXECUTE FUNCTION public.validate_affiliate_creator_authorization_transition()';
+  END IF;
+END;
+$trigger$;
 
 DO $verification$
 BEGIN
@@ -217,16 +241,24 @@ BEGIN
     RAISE EXCEPTION 'migration_006_repaired_constraints_not_validated';
   END IF;
 
-  IF NOT EXISTS (
+  IF (SELECT count(*)
+      FROM pg_catalog.pg_trigger trigger
+      WHERE trigger.tgname = 'affiliate_creator_connections_authorization_lifecycle_forward_only') <> 1
+    OR NOT EXISTS (
     SELECT 1
     FROM pg_catalog.pg_trigger trigger
+    JOIN pg_catalog.pg_class relation ON relation.oid = trigger.tgrelid
+    JOIN pg_catalog.pg_namespace namespace ON namespace.oid = relation.relnamespace
     WHERE trigger.tgrelid = 'public.affiliate_creator_connections'::pg_catalog.regclass
+      AND namespace.nspname = 'public'
       AND NOT trigger.tgisinternal
       AND trigger.tgname = 'affiliate_creator_connections_authorization_lifecycle_forward_only'
       AND trigger.tgenabled IN ('O', 'A', 'R')
+      AND trigger.tgtype = 19
       AND trigger.tgfoid = 'public.validate_affiliate_creator_authorization_transition()'::pg_catalog.regprocedure
+      AND trigger.tgargs = ''::bytea
   ) THEN
-    RAISE EXCEPTION 'migration_006_repaired_trigger_not_enabled';
+    RAISE EXCEPTION 'migration_006_repaired_trigger_not_exactly_enabled';
   END IF;
 END;
 $verification$;

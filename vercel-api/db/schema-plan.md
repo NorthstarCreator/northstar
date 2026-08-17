@@ -152,8 +152,12 @@ non-idempotent, transactional forward repair for an otherwise committed
 Migration 005 schema. It requires the exact M005 relation, columns, six existing
 validated authorization CHECK constraints, all prerequisite functions, the
 erasure-function PUBLIC-execution revocation, and an empty Affiliate Creator
-control plane. It fails if either target constraint or the target trigger is
-already present, so it cannot silently replace or broaden a safeguard.
+control plane. It locks the target relation before inspecting repair state and
+fails if either target constraint is already present. A target trigger that is
+already present is accepted only if it is the sole enabled, user-defined
+`BEFORE UPDATE` row trigger on the intended relation and is bound to the exact
+transition function; any duplicate or mismatch fails closed. It never replaces
+or broadens a safeguard.
 
 The repair adds only these M005 definitions, verbatim: the validated
 `affiliate_creator_connections_authorization_timestamp_order_check`, the
