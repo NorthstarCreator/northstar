@@ -97,11 +97,11 @@ PostgreSQL 18 represents table `NOT NULL` constraints in `pg_constraint` with
 and check constraints with `contype IN ('p','u','f','c')` and audit `n`
 constraints separately; it must not compare an unfiltered total constraint count.
 
-## Affiliate Creator Authorization Credentials (Migration 005, Local and Unexecuted)
+## Affiliate Creator Authorization Credentials (Migration 005, Applied in Sandbox; Safeguard Repair Pending)
 
-Migration `005_affiliate_creator_authorization_credentials.sql` is a local-only,
-unexecuted persistence checkpoint that depends on the validated Migration 004
-control plane. It fails closed if Migration 004 control relations are absent, a
+Migration `005_affiliate_creator_authorization_credentials.sql` depends on the
+validated Migration 004 control plane. It was applied to the NorthStar sandbox
+through a separately approved operation. It fails closed if Migration 004 control relations are absent, a
 calculated All Accounts alias is present, a pre-existing connection would need
 legacy interpretation, or its own relations already exist. It creates no rows,
 grants, routes, flags, writers, encryption implementation, credentials, or
@@ -135,10 +135,35 @@ explicitly revoked from the new tables and functions; the replacement
 `erase_affiliate_creator_control_data(uuid,text,text)` remains ungranted to
 application roles and uninvoked.
 
-Migration 005 must not be applied until a separately approved database preflight,
-role/grant plan, execution plan, and post-migration validation are complete. It
-does not change Display API routes, existing Content authorization, or the
-October 1, 2025 Display API cutoff.
+Migration 005's independently approved post-validation confirmed its new
+relations, encryption-envelope structure, PUBLIC revocations, existing Display
+baseline, and October 1, 2025 Display API cutoff, but did not pass overall. A
+catalog diagnostic identified two missing authorization timestamp CHECK
+constraints and the authorization lifecycle trigger. Migration 006 is a
+separately reviewed, forward-only repair for only those three missing
+safeguards; it must remain unexecuted until its own preflight and execution
+approval. Migration 005 does not change Display API routes, existing Content
+authorization, or the October 1, 2025 Display API cutoff.
+
+## Affiliate Creator Authorization Safeguard Repair (Migration 006, Local and Unexecuted)
+
+Migration `006_repair_affiliate_creator_authorization_safeguards.sql` is a
+non-idempotent, transactional forward repair for an otherwise committed
+Migration 005 schema. It requires the exact M005 relation, columns, six existing
+validated authorization CHECK constraints, all prerequisite functions, the
+erasure-function PUBLIC-execution revocation, and an empty Affiliate Creator
+control plane. It fails if either target constraint or the target trigger is
+already present, so it cannot silently replace or broaden a safeguard.
+
+The repair adds only these M005 definitions, verbatim: the validated
+`affiliate_creator_connections_authorization_timestamp_order_check`, the
+validated `affiliate_creator_connections_authorization_state_timestamps_check`,
+and the enabled `BEFORE UPDATE`
+`affiliate_creator_connections_authorization_lifecycle_forward_only` trigger
+bound to `validate_affiliate_creator_authorization_transition()`. It adds no
+role, grant, default privilege, route, flag, token, writer, provider request, or
+data row, and it preserves the controlled erasure boundary and all existing
+PUBLIC revocations.
 
 The next planned migrations remain separate:
 
