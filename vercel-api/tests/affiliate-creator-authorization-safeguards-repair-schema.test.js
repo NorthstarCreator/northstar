@@ -98,8 +98,10 @@ function testFailClosedPrerequisitesAndEmptyStateGuard() {
 }
 
 function testPostgreSQL18AwareVerificationAndNoDisplayExpansion() {
-  assert.match(compact, /constraint\.contype = 'c'/);
-  assert.match(compact, /constraint\.convalidated/);
+  assert.doesNotMatch(migration, /\bpg_catalog\.pg_constraint\s+constraint\b/i);
+  assert.match(migration, /\bpg_catalog\.pg_constraint\s+catalog_constraint\b/i);
+  assert.match(compact, /catalog_constraint\.contype = 'c'/);
+  assert.match(compact, /catalog_constraint\.convalidated/);
   assert.doesNotMatch(compact, /contype = 'n'/);
   assert.match(compact, /migration_006_repaired_constraints_not_validated/);
   assert.match(compact, /migration_006_repaired_trigger_not_exactly_enabled/);

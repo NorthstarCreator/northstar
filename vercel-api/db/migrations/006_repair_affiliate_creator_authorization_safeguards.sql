@@ -39,11 +39,11 @@ BEGIN
   END IF;
 
   IF (SELECT count(*)
-      FROM pg_catalog.pg_constraint constraint
-      WHERE constraint.conrelid = 'public.affiliate_creator_connections'::pg_catalog.regclass
-        AND constraint.contype = 'c'
-        AND constraint.convalidated
-        AND constraint.conname = ANY (ARRAY[
+      FROM pg_catalog.pg_constraint catalog_constraint
+      WHERE catalog_constraint.conrelid = 'public.affiliate_creator_connections'::pg_catalog.regclass
+        AND catalog_constraint.contype = 'c'
+        AND catalog_constraint.convalidated
+        AND catalog_constraint.conname = ANY (ARRAY[
           'affiliate_creator_connections_authorization_state_check',
           'affiliate_creator_connections_authorization_revision_check',
           'affiliate_creator_connections_credential_revision_check',
@@ -56,9 +56,9 @@ BEGIN
 
   IF EXISTS (
     SELECT 1
-    FROM pg_catalog.pg_constraint constraint
-    WHERE constraint.conrelid = 'public.affiliate_creator_connections'::pg_catalog.regclass
-      AND constraint.conname = ANY (ARRAY[
+    FROM pg_catalog.pg_constraint catalog_constraint
+    WHERE catalog_constraint.conrelid = 'public.affiliate_creator_connections'::pg_catalog.regclass
+      AND catalog_constraint.conname = ANY (ARRAY[
         'affiliate_creator_connections_authorization_timestamp_order_check',
         'affiliate_creator_connections_authorization_state_timestamps_check'
       ]::text[])
@@ -230,11 +230,11 @@ $trigger$;
 DO $verification$
 BEGIN
   IF (SELECT count(*)
-      FROM pg_catalog.pg_constraint constraint
-      WHERE constraint.conrelid = 'public.affiliate_creator_connections'::pg_catalog.regclass
-        AND constraint.contype = 'c'
-        AND constraint.convalidated
-        AND constraint.conname = ANY (ARRAY[
+      FROM pg_catalog.pg_constraint catalog_constraint
+      WHERE catalog_constraint.conrelid = 'public.affiliate_creator_connections'::pg_catalog.regclass
+        AND catalog_constraint.contype = 'c'
+        AND catalog_constraint.convalidated
+        AND catalog_constraint.conname = ANY (ARRAY[
           'affiliate_creator_connections_authorization_timestamp_order_check',
           'affiliate_creator_connections_authorization_state_timestamps_check'
         ]::text[])) <> 2 THEN
