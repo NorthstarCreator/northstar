@@ -59,6 +59,12 @@ function revokeSignatureTypes(name) {
 function testTransactionAndPrerequisiteGuards() {
   assert.match(compact, /^begin;/);
   assert.match(compact, /commit;$/);
+  assert.match(migration, /required_column_count pg_catalog\.int4;/);
+  assert.match(migration, /changed_access_rows pg_catalog\.int4;/);
+  assert.match(migration, /changed_refresh_rows pg_catalog\.int4;/);
+  assert.doesNotMatch(migration, /pg_catalog\.integer\b/);
+  assert.match(migration, /\n\s*COALESCE\(\n\s*function_row\.proacl,/);
+  assert.doesNotMatch(migration, /pg_catalog\.coalesce\(/i);
   for (const relation of [
     "affiliate_creator_connections",
     "affiliate_creator_connection_credentials",

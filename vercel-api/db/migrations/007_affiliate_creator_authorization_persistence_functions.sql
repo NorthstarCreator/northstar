@@ -8,7 +8,7 @@ BEGIN;
 
 DO $migration_guard$
 DECLARE
-  required_column_count pg_catalog.integer;
+  required_column_count pg_catalog.int4;
   timestamp_definition pg_catalog.text;
   state_definition pg_catalog.text;
 BEGIN
@@ -118,7 +118,7 @@ BEGIN
     SELECT 1
     FROM pg_catalog.pg_proc AS function_row
     CROSS JOIN LATERAL pg_catalog.aclexplode(
-      pg_catalog.coalesce(
+      COALESCE(
         function_row.proacl,
         pg_catalog.acldefault('f'::pg_catalog."char", function_row.proowner)
       )
@@ -319,8 +319,8 @@ DECLARE
   current_credential_revision pg_catalog.bigint;
   current_token_validated_at pg_catalog.timestamptz;
   current_last_refresh_attempted_at pg_catalog.timestamptz;
-  changed_access_rows pg_catalog.integer;
-  changed_refresh_rows pg_catalog.integer;
+  changed_access_rows pg_catalog.int4;
+  changed_refresh_rows pg_catalog.int4;
 BEGIN
   IF p_connection_id IS NULL OR p_account_id IS NULL
     OR p_expected_authorization_revision < 0 OR p_expected_credential_revision < 0
