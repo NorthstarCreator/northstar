@@ -74,7 +74,11 @@ function testTransactionAndPrerequisiteGuards() {
   assert.match(compact, /convalidated/);
   assert.match(compact, /validate_affiliate_creator_authorization_transition\(\).*::pg_catalog\.regprocedure/);
   assert.match(compact, /erase_affiliate_creator_control_data\(uuid,text,text\)/);
-  assert.match(compact, /has_function_privilege\('public'/);
+  assert.doesNotMatch(compact, /has_function_privilege\('public'/);
+  assert.match(compact, /pg_catalog\.aclexplode\(/);
+  assert.match(compact, /pg_catalog\.acldefault\('f'::pg_catalog\."char", function_row\.proowner\)/);
+  assert.match(compact, /function_acl\.grantee = 0/);
+  assert.match(compact, /function_acl\.privilege_type = 'execute'/);
 }
 
 function testFourUnrestrictedFunctionsAndPrivileges() {

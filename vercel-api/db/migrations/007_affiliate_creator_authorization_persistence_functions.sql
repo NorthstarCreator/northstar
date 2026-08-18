@@ -114,24 +114,26 @@ BEGIN
     RAISE EXCEPTION 'affiliate_creator_persistence_functions_required';
   END IF;
 
-  IF pg_catalog.has_function_privilege('public',
+  IF EXISTS (
+    SELECT 1
+    FROM pg_catalog.pg_proc AS function_row
+    CROSS JOIN LATERAL pg_catalog.aclexplode(
+      pg_catalog.coalesce(
+        function_row.proacl,
+        pg_catalog.acldefault('f'::pg_catalog."char", function_row.proowner)
+      )
+    ) AS function_acl(grantor, grantee, privilege_type, is_grantable)
+    WHERE function_row.oid IN (
       'public.erase_affiliate_creator_control_data(uuid,text,text)'::pg_catalog.regprocedure,
-      'EXECUTE')
-    OR pg_catalog.has_function_privilege('public',
       'public.validate_affiliate_creator_authorization_transition()'::pg_catalog.regprocedure,
-      'EXECUTE')
-    OR pg_catalog.has_function_privilege('public',
       'public.validate_affiliate_creator_credential_mutation()'::pg_catalog.regprocedure,
-      'EXECUTE')
-    OR pg_catalog.has_function_privilege('public',
       'public.validate_affiliate_creator_connection_credential_coherence()'::pg_catalog.regprocedure,
-      'EXECUTE')
-    OR pg_catalog.has_function_privilege('public',
       'public.prepare_affiliate_creator_authorization_event()'::pg_catalog.regprocedure,
-      'EXECUTE')
-    OR pg_catalog.has_function_privilege('public',
-      'public.prevent_affiliate_creator_authorization_event_change()'::pg_catalog.regprocedure,
-      'EXECUTE') THEN
+      'public.prevent_affiliate_creator_authorization_event_change()'::pg_catalog.regprocedure
+    )
+      AND function_acl.grantee = 0
+      AND function_acl.privilege_type = 'EXECUTE'
+  ) THEN
     RAISE EXCEPTION 'affiliate_creator_persistence_public_privilege_invalid';
   END IF;
 
