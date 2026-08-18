@@ -165,6 +165,35 @@ It adds no role, grant, default privilege, route, flag, token, writer, provider
 request, or data row. It does not instruct execution of obsolete repair DDL and
 preserves the controlled erasure boundary and all existing PUBLIC revocations.
 
+## Affiliate Creator Authorization Persistence Functions (Migration 007, Local and Unexecuted)
+
+Migration `007_affiliate_creator_authorization_persistence_functions.sql` is a
+local, unexecuted, transactional writer boundary. It creates exactly four
+`SECURITY DEFINER` functions, each with the fixed search path `pg_catalog,
+public, pg_temp` and an exact `PUBLIC` execute revocation: authorization
+finalization, refresh credential replacement, invalid-refresh cleanup, and
+deauthorization. No application role is granted execution and no direct table
+privilege, route, feature flag, runtime writer, token exchange, or provider
+activity is added.
+
+The migration fails closed unless Migration 005's connection, ciphertext-only
+credential, and append-only authorization-event relations are present; its
+physical 63-byte lifecycle safeguard names are validated; required trigger
+functions and existing PUBLIC revocations remain intact; and the Affiliate
+Creator connection, credential, and event tables are empty. The controlled
+erasure function remains unchanged and ungranted.
+
+Each function locks one exact connection/account/provider row `FOR UPDATE` and
+requires compare-and-swap authorization and credential revisions. Finalization
+from `callback_received` inserts only a current access/refresh AES-256-GCM
+envelope pair and appends `token_validated`. Refresh from `refresh_required`
+updates both current envelope rows in place (no ciphertext history) and appends
+`refresh_succeeded`. Invalid refresh deletes the pair, transitions to
+`reauthorization_required`, and appends `refresh_failed`. Deauthorization
+deletes the pair, sets the legacy state to `revoked`, transitions to
+`deauthorized`, and appends `all_access_removed`. All errors are stable,
+identifier-free codes; events contain no provider error or credential data.
+
 The next planned migrations remain separate:
 
 1. typed Affiliate Creator products, collaborations, samples, orders, and order
