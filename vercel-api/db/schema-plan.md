@@ -97,7 +97,7 @@ PostgreSQL 18 represents table `NOT NULL` constraints in `pg_constraint` with
 and check constraints with `contype IN ('p','u','f','c')` and audit `n`
 constraints separately; it must not compare an unfiltered total constraint count.
 
-## Affiliate Creator Authorization Credentials (Migration 005, Applied in Sandbox; Safeguard Repair Pending)
+## Affiliate Creator Authorization Credentials (Migration 005, Applied and Validated in Sandbox)
 
 Migration `005_affiliate_creator_authorization_credentials.sql` depends on the
 validated Migration 004 control plane. It was applied to the NorthStar sandbox
@@ -137,13 +137,16 @@ application roles and uninvoked.
 
 Migration 005's independently approved post-validation confirmed its new
 relations, encryption-envelope structure, PUBLIC revocations, existing Display
-baseline, and October 1, 2025 Display API cutoff. Later catalog reconciliation
-confirmed that its two overlength CHECK-constraint names and lifecycle-trigger
-name were stored using PostgreSQL's 63-byte physical identifiers; all three
-safeguards exist and are structurally correct. Earlier missing-object results
-were untruncated-name lookup defects, not schema defects. Migration 005 does
-not change Display API routes, existing Content authorization, or the October
-1, 2025 Display API cutoff.
+baseline, and October 1, 2025 Display API cutoff. The final physical-name
+safeguard validation confirmed both lifecycle CHECK constraints are present
+once, validated, and definition-matched; the lifecycle trigger is present once
+and structurally matched; the Affiliate Creator control-plane baseline remains
+empty; and the Display boundary remains unchanged (`validation_passed = true`).
+The helper's 10-versus-9 field expectation was a local result-shape defect only
+and did not require a rerun. Migration 006 was not executed and no database
+repair is required. Earlier missing-object results were untruncated-name lookup
+defects, not schema defects. Migration 005 does not change Display API routes,
+existing Content authorization, or the October 1, 2025 Display API cutoff.
 
 ## Affiliate Creator Authorization Safeguard Compatibility (Migration 006, Local and Unexecuted)
 

@@ -190,6 +190,15 @@ function createAffiliateCreatorCredentialEnvelopeContext({ envelope, aad } = {})
   return context;
 }
 
+function getAffiliateCreatorCredentialAadMaterial(context) {
+  const material = aadContexts.get(context);
+  if (!material) fail("invalid_credential_aad");
+  return frozenRecord({
+    aad: material.canonical,
+    keyReference: material.normalized.keyReference
+  });
+}
+
 function getAffiliateCreatorCredentialEnvelopeMaterial(context) {
   const material = credentialContexts.get(context);
   if (!material) fail("invalid_credential_aad");
@@ -206,5 +215,6 @@ module.exports = {
   normalizeAffiliateCreatorCredentialEnvelope,
   createAffiliateCreatorCredentialAad,
   createAffiliateCreatorCredentialEnvelopeContext,
+  getAffiliateCreatorCredentialAadMaterial,
   getAffiliateCreatorCredentialEnvelopeMaterial
 };

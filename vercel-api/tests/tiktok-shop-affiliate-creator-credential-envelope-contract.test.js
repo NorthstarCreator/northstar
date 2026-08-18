@@ -9,6 +9,7 @@ const {
   AffiliateCreatorCredentialEnvelopeContractError,
   createAffiliateCreatorCredentialAad,
   createAffiliateCreatorCredentialEnvelopeContext,
+  getAffiliateCreatorCredentialAadMaterial,
   getAffiliateCreatorCredentialEnvelopeMaterial,
   normalizeAffiliateCreatorCredentialEnvelope
 } = require("../lib/tiktok-shop-affiliate-creator-credential-envelope-contract");
@@ -135,6 +136,12 @@ function testPrivacyAndPrivateAccess() {
   assert.strictEqual(Object.getPrototypeOf(material), null);
   assert(Object.isFrozen(material.envelope));
   assert.strictEqual(Object.getPrototypeOf(material.envelope), null);
+  const aadMaterial = getAffiliateCreatorCredentialAadMaterial(aadContext);
+  assert(Object.isFrozen(aadMaterial));
+  assert.strictEqual(Object.getPrototypeOf(aadMaterial), null);
+  assert(aadMaterial.aad.includes("northstar-affiliate-credential-aad"));
+  assert.strictEqual(aadMaterial.keyReference, "affiliate-creator-sandbox-v1");
+  expectCode(() => getAffiliateCreatorCredentialAadMaterial({}), "invalid_credential_aad");
   expectCode(() => getAffiliateCreatorCredentialEnvelopeMaterial({}), "invalid_credential_aad");
   expectCode(() => getAffiliateCreatorCredentialEnvelopeMaterial(Object.create(context)), "invalid_credential_aad");
   expectCode(() => createAffiliateCreatorCredentialEnvelopeContext({ envelope: {}, aad: {} }), "invalid_credential_aad");
