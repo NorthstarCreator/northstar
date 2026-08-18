@@ -14,12 +14,13 @@ const {
 const {
   CAPABILITY_REGISTRY
 } = require("./tiktok-shop-affiliate-creator-capability-registry");
+const {
+  mapAffiliateCreatorCredentialEnvelopePersistenceMaterial
+} = require("./tiktok-shop-affiliate-creator-credential-envelope-persistence-contract");
 
 const AUTHORIZED_STATES = Object.freeze(["authorized_limited", "authorized_ready"]);
 const REQUIRED_SCOPE = CREATOR_AUTHORIZATION_CONTRACT.requiredScope;
 const APPROVED_CREATOR_SCOPES = Object.freeze(CAPABILITY_REGISTRY.map((item) => item.key).sort());
-const MAX_CIPHERTEXT_LENGTH = 16 * 1024;
-const MAX_METADATA_LENGTH = 128;
 const commands = new WeakMap();
 
 class AffiliateCreatorAuthorizationPersistenceContractError extends Error {
@@ -42,14 +43,6 @@ function isRecord(value) {
 
 function exactKeys(value, keys) {
   return isRecord(value) && Object.keys(value).every((key) => keys.includes(key));
-}
-
-function safeText(value, maximum = MAX_METADATA_LENGTH) {
-  return typeof value === "string"
-    && value.length > 0
-    && value.length <= maximum
-    && value === value.trim()
-    && !/[\u0000-\u001f\u007f]/.test(value);
 }
 
 function validUnixSeconds(value) {
@@ -87,20 +80,6 @@ function normalizeScopes(value) {
   }
   if (!scopes.has(REQUIRED_SCOPE)) fail("invalid_authorization_scopes");
   return Object.freeze([...scopes].sort());
-}
-
-function ciphertext(value) {
-  // Ciphertext is deliberately opaque here: reject only values that cannot be
-  // safely carried as bounded, non-empty text; do not impose a crypto format.
-  if (!safeText(value, MAX_CIPHERTEXT_LENGTH)) {
-    fail("encrypted_credentials_required");
-  }
-  return value;
-}
-
-function encryptionMetadata(format, keyReference) {
-  if (!safeText(format) || !safeText(keyReference)) fail("invalid_encryption_metadata");
-  return Object.freeze({ format, keyReference });
 }
 
 function supportedProviderProvenance(value) {
@@ -147,17 +126,26 @@ function authorizedAssessment({ state, grantedScopes, accessTokenExpiresAt, refr
 }
 
 function command(publicFields, privateFields) {
-  const normalized = Object.freeze(Object.assign(Object.create(null), publicFields));
-  commands.set(normalized, Object.freeze(Object.assign(Object.create(null), privateFields)));
+  const normalized = Object.freeze(Object.create(null));
+  commands.set(normalized, Object.freeze(Object.assign(Object.create(null), publicFields, privateFields)));
   return normalized;
 }
 
-function credentialsFor(input) {
-  return Object.freeze({
-    accessTokenCiphertext: ciphertext(input.accessTokenCiphertext),
-    refreshTokenCiphertext: ciphertext(input.refreshTokenCiphertext),
-    encryption: encryptionMetadata(input.encryptionFormat, input.encryptionKeyReference)
-  });
+function credentialsFor(input, credentialRevision) {
+  try {
+    return mapAffiliateCreatorCredentialEnvelopePersistenceMaterial({
+      authorizationContext: input.authorizationContext,
+      connectionId: input.connectionId,
+      credentialRevision,
+      accessEnvelope: input.accessEnvelope,
+      refreshEnvelope: input.refreshEnvelope,
+      expectedAccessAad: input.expectedAccessAad,
+      expectedRefreshAad: input.expectedRefreshAad
+    });
+  } catch (error) {
+    if (error && typeof error.code === "string") fail(error.code);
+    fail("encrypted_credentials_required");
+  }
 }
 
 function trustedAuthorizationFacts(result) {
@@ -178,7 +166,7 @@ function trustedAuthorizationFacts(result) {
 }
 
 function normalizeAuthorizationPersistenceCommand(input, { operation, timestampName }) {
-  const keys = ["authorizationContext", "authorizationResult", "expectedRevision", "nextRevision", "state", "accessTokenCiphertext", "refreshTokenCiphertext", timestampName, "validatedAt", "optionalCapabilitiesComplete", "encryptionFormat", "encryptionKeyReference", "providerApiVersion"];
+  const keys = ["authorizationContext", "authorizationResult", "expectedRevision", "nextRevision", "state", "connectionId", "accessEnvelope", "refreshEnvelope", "expectedAccessAad", "expectedRefreshAad", timestampName, "validatedAt", "optionalCapabilitiesComplete", "providerApiVersion"];
   if (!exactKeys(input, keys) || !validUnixSeconds(input[timestampName]) || !validUnixSeconds(input.validatedAt) || input[timestampName] > input.validatedAt) {
     fail("invalid_persistence_input");
   }
@@ -187,7 +175,7 @@ function normalizeAuthorizationPersistenceCommand(input, { operation, timestampN
   const revisions = validateRevisionPair(input.expectedRevision, input.nextRevision);
   const facts = trustedAuthorizationFacts(input.authorizationResult);
   const assessment = authorizedAssessment({ ...input, grantedScopes: facts.scopes, accessTokenExpiresAt: facts.accessTokenExpiresAt, refreshTokenExpiresAt: facts.refreshTokenExpiresAt });
-  const credentials = credentialsFor(input);
+  const credentials = credentialsFor(input, revisions.next);
   return command({ operation, state: input.state, expectedRevision: revisions.expected, nextRevision: revisions.next }, {
     accountId, identity: facts.identity, scopes: facts.scopes, credentials, [timestampName]: input[timestampName], validatedAt: input.validatedAt,
     accessTokenExpiresAt: assessment.accessTokenExpiresAt, refreshTokenExpiresAt: assessment.refreshTokenExpiresAt ?? null
@@ -203,7 +191,7 @@ function normalizeReauthorizationPersistenceCommand(input) {
 }
 
 function normalizeRefreshRotationPersistenceCommand(input) {
-  const keys = ["authorizationContext", "expectedRevision", "nextRevision", "state", "grantedScopes", "accessTokenCiphertext", "refreshTokenCiphertext", "accessTokenExpiresAt", "refreshTokenExpiresAt", "validatedAt", "refreshedAt", "optionalCapabilitiesComplete", "encryptionFormat", "encryptionKeyReference", "providerApiVersion"];
+  const keys = ["authorizationContext", "expectedRevision", "nextRevision", "state", "grantedScopes", "connectionId", "accessEnvelope", "refreshEnvelope", "expectedAccessAad", "expectedRefreshAad", "accessTokenExpiresAt", "refreshTokenExpiresAt", "validatedAt", "refreshedAt", "optionalCapabilitiesComplete", "providerApiVersion"];
   if (!exactKeys(input, keys) || !validUnixSeconds(input.validatedAt) || !validUnixSeconds(input.refreshedAt) || input.validatedAt > input.refreshedAt) {
     fail("invalid_persistence_input");
   }
@@ -212,7 +200,7 @@ function normalizeRefreshRotationPersistenceCommand(input) {
   const revisions = validateRevisionPair(input.expectedRevision, input.nextRevision);
   const scopes = normalizeScopes(input.grantedScopes);
   const assessment = authorizedAssessment({ ...input, grantedScopes: scopes, validatedAt: input.refreshedAt });
-  const credentials = credentialsFor(input);
+  const credentials = credentialsFor(input, revisions.next);
   return command({ operation: "refresh_rotation", state: input.state, expectedRevision: revisions.expected, nextRevision: revisions.next }, {
     accountId, scopes, credentials, validatedAt: input.validatedAt, refreshedAt: input.refreshedAt,
     accessTokenExpiresAt: assessment.accessTokenExpiresAt, refreshTokenExpiresAt: assessment.refreshTokenExpiresAt ?? null
@@ -285,7 +273,6 @@ module.exports = {
   AffiliateCreatorAuthorizationPersistenceContractError,
   APPROVED_CREATOR_SCOPES,
   REQUIRED_SCOPE,
-  MAX_CIPHERTEXT_LENGTH,
   normalizeInitialAuthorizationPersistenceCommand,
   normalizeReauthorizationPersistenceCommand,
   normalizeRefreshRotationPersistenceCommand,
