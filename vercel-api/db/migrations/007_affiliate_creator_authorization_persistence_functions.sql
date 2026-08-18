@@ -148,26 +148,26 @@ $migration_guard$;
 CREATE FUNCTION public.persist_affiliate_creator_authorization(
   p_connection_id pg_catalog.uuid,
   p_account_id pg_catalog.uuid,
-  p_expected_authorization_revision pg_catalog.bigint,
-  p_expected_credential_revision pg_catalog.bigint,
+  p_expected_authorization_revision pg_catalog.int8,
+  p_expected_credential_revision pg_catalog.int8,
   p_authorization_state pg_catalog.text,
   p_provider_creator_open_id pg_catalog.text,
-  p_user_type pg_catalog.smallint,
+  p_user_type pg_catalog.int2,
   p_granted_scopes pg_catalog.text[],
   p_authorized_at pg_catalog.timestamptz,
   p_access_expires_at pg_catalog.timestamptz,
   p_refresh_expires_at pg_catalog.timestamptz,
-  p_access_envelope_version pg_catalog.smallint,
+  p_access_envelope_version pg_catalog.int2,
   p_access_envelope_algorithm pg_catalog.text,
   p_access_envelope_key_reference pg_catalog.text,
-  p_access_envelope_aad_version pg_catalog.smallint,
+  p_access_envelope_aad_version pg_catalog.int2,
   p_access_envelope_initialization_vector pg_catalog.text,
   p_access_envelope_ciphertext pg_catalog.text,
   p_access_envelope_authentication_tag pg_catalog.text,
-  p_refresh_envelope_version pg_catalog.smallint,
+  p_refresh_envelope_version pg_catalog.int2,
   p_refresh_envelope_algorithm pg_catalog.text,
   p_refresh_envelope_key_reference pg_catalog.text,
-  p_refresh_envelope_aad_version pg_catalog.smallint,
+  p_refresh_envelope_aad_version pg_catalog.int2,
   p_refresh_envelope_initialization_vector pg_catalog.text,
   p_refresh_envelope_ciphertext pg_catalog.text,
   p_refresh_envelope_authentication_tag pg_catalog.text
@@ -179,8 +179,8 @@ SET search_path = pg_catalog, public, pg_temp
 AS $persist$
 DECLARE
   current_authorization_state pg_catalog.text;
-  current_authorization_revision pg_catalog.bigint;
-  current_credential_revision pg_catalog.bigint;
+  current_authorization_revision pg_catalog.int8;
+  current_credential_revision pg_catalog.int8;
   current_callback_received_at pg_catalog.timestamptz;
 BEGIN
   IF p_connection_id IS NULL OR p_account_id IS NULL
@@ -286,24 +286,24 @@ $persist$;
 CREATE FUNCTION public.replace_affiliate_creator_credentials_after_refresh(
   p_connection_id pg_catalog.uuid,
   p_account_id pg_catalog.uuid,
-  p_expected_authorization_revision pg_catalog.bigint,
-  p_expected_credential_revision pg_catalog.bigint,
+  p_expected_authorization_revision pg_catalog.int8,
+  p_expected_credential_revision pg_catalog.int8,
   p_authorization_state pg_catalog.text,
   p_granted_scopes pg_catalog.text[],
   p_refreshed_at pg_catalog.timestamptz,
   p_access_expires_at pg_catalog.timestamptz,
   p_refresh_expires_at pg_catalog.timestamptz,
-  p_access_envelope_version pg_catalog.smallint,
+  p_access_envelope_version pg_catalog.int2,
   p_access_envelope_algorithm pg_catalog.text,
   p_access_envelope_key_reference pg_catalog.text,
-  p_access_envelope_aad_version pg_catalog.smallint,
+  p_access_envelope_aad_version pg_catalog.int2,
   p_access_envelope_initialization_vector pg_catalog.text,
   p_access_envelope_ciphertext pg_catalog.text,
   p_access_envelope_authentication_tag pg_catalog.text,
-  p_refresh_envelope_version pg_catalog.smallint,
+  p_refresh_envelope_version pg_catalog.int2,
   p_refresh_envelope_algorithm pg_catalog.text,
   p_refresh_envelope_key_reference pg_catalog.text,
-  p_refresh_envelope_aad_version pg_catalog.smallint,
+  p_refresh_envelope_aad_version pg_catalog.int2,
   p_refresh_envelope_initialization_vector pg_catalog.text,
   p_refresh_envelope_ciphertext pg_catalog.text,
   p_refresh_envelope_authentication_tag pg_catalog.text
@@ -315,8 +315,8 @@ SET search_path = pg_catalog, public, pg_temp
 AS $refresh$
 DECLARE
   current_authorization_state pg_catalog.text;
-  current_authorization_revision pg_catalog.bigint;
-  current_credential_revision pg_catalog.bigint;
+  current_authorization_revision pg_catalog.int8;
+  current_credential_revision pg_catalog.int8;
   current_token_validated_at pg_catalog.timestamptz;
   current_last_refresh_attempted_at pg_catalog.timestamptz;
   changed_access_rows pg_catalog.int4;
@@ -439,8 +439,8 @@ $refresh$;
 CREATE FUNCTION public.mark_affiliate_creator_refresh_invalid(
   p_connection_id pg_catalog.uuid,
   p_account_id pg_catalog.uuid,
-  p_expected_authorization_revision pg_catalog.bigint,
-  p_expected_credential_revision pg_catalog.bigint,
+  p_expected_authorization_revision pg_catalog.int8,
+  p_expected_credential_revision pg_catalog.int8,
   p_occurred_at pg_catalog.timestamptz
 )
 RETURNS pg_catalog.void
@@ -450,8 +450,8 @@ SET search_path = pg_catalog, public, pg_temp
 AS $invalid_refresh$
 DECLARE
   current_authorization_state pg_catalog.text;
-  current_authorization_revision pg_catalog.bigint;
-  current_credential_revision pg_catalog.bigint;
+  current_authorization_revision pg_catalog.int8;
+  current_credential_revision pg_catalog.int8;
   current_authorization_started_at pg_catalog.timestamptz;
 BEGIN
   IF p_connection_id IS NULL OR p_account_id IS NULL OR p_occurred_at IS NULL
@@ -505,8 +505,8 @@ $invalid_refresh$;
 CREATE FUNCTION public.deauthorize_affiliate_creator_connection(
   p_connection_id pg_catalog.uuid,
   p_account_id pg_catalog.uuid,
-  p_expected_authorization_revision pg_catalog.bigint,
-  p_expected_credential_revision pg_catalog.bigint,
+  p_expected_authorization_revision pg_catalog.int8,
+  p_expected_credential_revision pg_catalog.int8,
   p_revoked_at pg_catalog.timestamptz
 )
 RETURNS pg_catalog.void
@@ -516,8 +516,8 @@ SET search_path = pg_catalog, public, pg_temp
 AS $deauthorize$
 DECLARE
   current_authorization_state pg_catalog.text;
-  current_authorization_revision pg_catalog.bigint;
-  current_credential_revision pg_catalog.bigint;
+  current_authorization_revision pg_catalog.int8;
+  current_credential_revision pg_catalog.int8;
   current_authorization_started_at pg_catalog.timestamptz;
 BEGIN
   IF p_connection_id IS NULL OR p_account_id IS NULL OR p_revoked_at IS NULL
@@ -574,29 +574,29 @@ END;
 $deauthorize$;
 
 REVOKE ALL ON FUNCTION public.persist_affiliate_creator_authorization(
-  pg_catalog.uuid, pg_catalog.uuid, pg_catalog.bigint, pg_catalog.bigint,
-  pg_catalog.text, pg_catalog.text, pg_catalog.smallint, pg_catalog.text[],
+  pg_catalog.uuid, pg_catalog.uuid, pg_catalog.int8, pg_catalog.int8,
+  pg_catalog.text, pg_catalog.text, pg_catalog.int2, pg_catalog.text[],
   pg_catalog.timestamptz, pg_catalog.timestamptz, pg_catalog.timestamptz,
-  pg_catalog.smallint, pg_catalog.text, pg_catalog.text, pg_catalog.smallint,
-  pg_catalog.text, pg_catalog.text, pg_catalog.text, pg_catalog.smallint,
-  pg_catalog.text, pg_catalog.text, pg_catalog.smallint, pg_catalog.text,
+  pg_catalog.int2, pg_catalog.text, pg_catalog.text, pg_catalog.int2,
+  pg_catalog.text, pg_catalog.text, pg_catalog.text, pg_catalog.int2,
+  pg_catalog.text, pg_catalog.text, pg_catalog.int2, pg_catalog.text,
   pg_catalog.text, pg_catalog.text
 ) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.replace_affiliate_creator_credentials_after_refresh(
-  pg_catalog.uuid, pg_catalog.uuid, pg_catalog.bigint, pg_catalog.bigint,
+  pg_catalog.uuid, pg_catalog.uuid, pg_catalog.int8, pg_catalog.int8,
   pg_catalog.text, pg_catalog.text[], pg_catalog.timestamptz,
-  pg_catalog.timestamptz, pg_catalog.timestamptz, pg_catalog.smallint,
-  pg_catalog.text, pg_catalog.text, pg_catalog.smallint, pg_catalog.text,
-  pg_catalog.text, pg_catalog.text, pg_catalog.smallint, pg_catalog.text,
-  pg_catalog.text, pg_catalog.smallint, pg_catalog.text, pg_catalog.text,
+  pg_catalog.timestamptz, pg_catalog.timestamptz, pg_catalog.int2,
+  pg_catalog.text, pg_catalog.text, pg_catalog.int2, pg_catalog.text,
+  pg_catalog.text, pg_catalog.text, pg_catalog.int2, pg_catalog.text,
+  pg_catalog.text, pg_catalog.int2, pg_catalog.text, pg_catalog.text,
   pg_catalog.text
 ) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.mark_affiliate_creator_refresh_invalid(
-  pg_catalog.uuid, pg_catalog.uuid, pg_catalog.bigint, pg_catalog.bigint,
+  pg_catalog.uuid, pg_catalog.uuid, pg_catalog.int8, pg_catalog.int8,
   pg_catalog.timestamptz
 ) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.deauthorize_affiliate_creator_connection(
-  pg_catalog.uuid, pg_catalog.uuid, pg_catalog.bigint, pg_catalog.bigint,
+  pg_catalog.uuid, pg_catalog.uuid, pg_catalog.int8, pg_catalog.int8,
   pg_catalog.timestamptz
 ) FROM PUBLIC;
 

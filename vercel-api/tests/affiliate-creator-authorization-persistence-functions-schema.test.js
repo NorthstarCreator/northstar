@@ -63,6 +63,10 @@ function testTransactionAndPrerequisiteGuards() {
   assert.match(migration, /changed_access_rows pg_catalog\.int4;/);
   assert.match(migration, /changed_refresh_rows pg_catalog\.int4;/);
   assert.doesNotMatch(migration, /pg_catalog\.integer\b/);
+  assert.doesNotMatch(migration, /pg_catalog\.bigint\b/);
+  assert.doesNotMatch(migration, /pg_catalog\.smallint\b/);
+  assert.equal((migration.match(/pg_catalog\.int8\b/g) || []).length, 24);
+  assert.equal((migration.match(/pg_catalog\.int2\b/g) || []).length, 18);
   assert.match(migration, /\n\s*COALESCE\(\n\s*function_row\.proacl,/);
   assert.doesNotMatch(migration, /pg_catalog\.coalesce\(/i);
   for (const relation of [
