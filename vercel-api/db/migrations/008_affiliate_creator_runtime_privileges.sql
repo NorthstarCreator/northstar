@@ -16,6 +16,9 @@ DECLARE
   runtime_createrole pg_catalog.bool;
   runtime_replication pg_catalog.bool;
   runtime_bypassrls pg_catalog.bool;
+  runtime_provisioner_oid pg_catalog.oid;
+  runtime_password_row_count pg_catalog.int8;
+  runtime_password_unset pg_catalog.bool;
 BEGIN
   SELECT role_row.oid, role_row.rolcanlogin, role_row.rolinherit,
     role_row.rolsuper, role_row.rolcreatedb, role_row.rolcreaterole,
@@ -25,6 +28,18 @@ BEGIN
     runtime_replication, runtime_bypassrls
   FROM pg_catalog.pg_roles AS role_row
   WHERE role_row.rolname = 'northstar_affiliate_creator_runtime';
+
+  SELECT SESSION_USER::pg_catalog.regrole::pg_catalog.oid
+  INTO runtime_provisioner_oid;
+
+  BEGIN
+    SELECT count(*), COALESCE(bool_and(role_auth.rolpassword IS NULL), false)
+    INTO runtime_password_row_count, runtime_password_unset
+    FROM pg_catalog.pg_authid AS role_auth
+    WHERE role_auth.rolname = 'northstar_affiliate_creator_runtime';
+  EXCEPTION WHEN insufficient_privilege THEN
+    RAISE EXCEPTION 'affiliate_creator_runtime_role_password_invalid';
+  END;
 
   IF runtime_role_oid IS NULL THEN
     RAISE EXCEPTION 'affiliate_creator_runtime_role_required';
@@ -36,11 +51,23 @@ BEGIN
     RAISE EXCEPTION 'affiliate_creator_runtime_role_attributes_invalid';
   END IF;
 
+  IF runtime_password_row_count <> 1 OR NOT runtime_password_unset THEN
+    RAISE EXCEPTION 'affiliate_creator_runtime_role_password_invalid';
+  END IF;
+
   IF EXISTS (
     SELECT 1 FROM pg_catalog.pg_auth_members AS membership_row
     WHERE membership_row.member = runtime_role_oid
-       OR membership_row.roleid = runtime_role_oid
-  ) THEN
+  ) OR (SELECT count(*) FROM pg_catalog.pg_auth_members AS membership_row
+        WHERE membership_row.roleid = runtime_role_oid) <> 1
+    OR EXISTS (
+      SELECT 1 FROM pg_catalog.pg_auth_members AS membership_row
+      WHERE membership_row.roleid = runtime_role_oid
+        AND (membership_row.member <> runtime_provisioner_oid
+          OR NOT membership_row.admin_option
+          OR membership_row.inherit_option
+          OR membership_row.set_option)
+    ) THEN
     RAISE EXCEPTION 'affiliate_creator_runtime_role_membership_invalid';
   END IF;
 
@@ -167,9 +194,6 @@ BEGIN
   END IF;
 
   IF EXISTS (
-    SELECT 1 FROM pg_catalog.pg_auth_members AS membership_row
-    WHERE membership_row.member = runtime_role_oid
-  ) OR EXISTS (
     SELECT 1 FROM pg_catalog.pg_default_acl AS default_acl
     CROSS JOIN LATERAL pg_catalog.aclexplode(default_acl.defaclacl)
       AS default_acl_entry(grantor, grantee, privilege_type, is_grantable)
@@ -233,13 +257,29 @@ GRANT EXECUTE ON FUNCTION public.deauthorize_affiliate_creator_connection(
 DO $runtime_privilege_postcheck$
 DECLARE
   runtime_role_oid pg_catalog.oid;
+  runtime_provisioner_oid pg_catalog.oid;
 BEGIN
   SELECT role_row.oid INTO runtime_role_oid
   FROM pg_catalog.pg_roles AS role_row
   WHERE role_row.rolname = 'northstar_affiliate_creator_runtime';
 
+  SELECT SESSION_USER::pg_catalog.regrole::pg_catalog.oid
+  INTO runtime_provisioner_oid;
+
   IF runtime_role_oid IS NULL
     OR EXISTS (
+      SELECT 1 FROM pg_catalog.pg_auth_members AS membership_row
+      WHERE membership_row.member = runtime_role_oid
+    ) OR (SELECT count(*) FROM pg_catalog.pg_auth_members AS membership_row
+          WHERE membership_row.roleid = runtime_role_oid) <> 1
+    OR EXISTS (
+      SELECT 1 FROM pg_catalog.pg_auth_members AS membership_row
+      WHERE membership_row.roleid = runtime_role_oid
+        AND (membership_row.member <> runtime_provisioner_oid
+          OR NOT membership_row.admin_option
+          OR membership_row.inherit_option
+          OR membership_row.set_option)
+    ) OR EXISTS (
       SELECT 1 FROM pg_catalog.pg_class AS class_row
       CROSS JOIN LATERAL pg_catalog.aclexplode(
         COALESCE(class_row.relacl, pg_catalog.acldefault(

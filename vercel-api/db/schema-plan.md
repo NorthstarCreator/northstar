@@ -207,10 +207,18 @@ Migration `008_affiliate_creator_runtime_privileges.sql` is a dormant,
 transactional privilege boundary for one separately provisioned exact runtime
 role, `northstar_affiliate_creator_runtime`. It never creates, alters,
 credentials, or grants membership to that role. Before any grant, it fails
-closed unless the role can log in, is `NOINHERIT`, has no memberships, owns no
-relevant object, has no default privileges or existing direct access, and has
-none of the superuser, database-creation, role-creation, replication, or
-BYPASSRLS attributes.
+closed unless the role can log in, is `NOINHERIT`, owns no relevant object, has
+no default privileges or existing direct access, and has none of the
+superuser, database-creation, role-creation, replication, or BYPASSRLS
+attributes. PostgreSQL 18 implicitly gives the provisioning `SESSION_USER` one
+inbound administrator relationship on a newly created role; the migration
+accepts only that exact `ADMIN OPTION` row with neither `INHERIT OPTION` nor
+`SET OPTION`, rejects all outbound memberships, and rejects every additional
+or unrelated inbound membership. This administrative relationship does not
+confer runtime privilege inheritance. Before any grant, the guard reads only
+the exact role's `pg_authid.rolpassword IS NULL` predicate; it never reads or
+exposes a password value and fails closed if that catalog predicate cannot be
+validated.
 
 The migration grants only `USAGE` on `public` and `EXECUTE` on the four exact
 Migration 007 `SECURITY DEFINER` signatures. It grants no direct table,
