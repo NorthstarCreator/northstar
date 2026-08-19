@@ -165,10 +165,10 @@ It adds no role, grant, default privilege, route, flag, token, writer, provider
 request, or data row. It does not instruct execution of obsolete repair DDL and
 preserves the controlled erasure boundary and all existing PUBLIC revocations.
 
-## Affiliate Creator Authorization Persistence Functions (Migration 007, Local and Unexecuted)
+## Affiliate Creator Authorization Persistence Functions (Migration 007, Applied and Dormant)
 
 Migration `007_affiliate_creator_authorization_persistence_functions.sql` is a
-local, unexecuted, transactional writer boundary. It creates exactly four
+transactional writer boundary. It creates exactly four
 `SECURITY DEFINER` functions, each with the fixed search path `pg_catalog,
 public, pg_temp` and an exact `PUBLIC` execute revocation: authorization
 finalization, refresh credential replacement, invalid-refresh cleanup, and
@@ -193,6 +193,34 @@ updates both current envelope rows in place (no ciphertext history) and appends
 deletes the pair, sets the legacy state to `revoked`, transitions to
 `deauthorized`, and appends `all_access_removed`. All errors are stable,
 identifier-free codes; events contain no provider error or credential data.
+
+Migration 007 was applied once to the sandbox only after a verified-TLS
+preflight. Its read-only post-validation passed: all four exact functions are
+present with their intended security and ACL boundary, the M005 safeguards and
+Display boundary remain intact, and the Affiliate Creator baseline is empty.
+The functions remain dormant and ungranted; this record does not activate a
+runtime writer, authorization exchange, provider request, or route.
+
+## Affiliate Creator Runtime Privileges (Migration 008, Local and Unexecuted)
+
+Migration `008_affiliate_creator_runtime_privileges.sql` is a dormant,
+transactional privilege boundary for one separately provisioned exact runtime
+role, `northstar_affiliate_creator_runtime`. It never creates, alters,
+credentials, or grants membership to that role. Before any grant, it fails
+closed unless the role can log in, is `NOINHERIT`, has no memberships, owns no
+relevant object, has no default privileges or existing direct access, and has
+none of the superuser, database-creation, role-creation, replication, or
+BYPASSRLS attributes.
+
+The migration grants only `USAGE` on `public` and `EXECUTE` on the four exact
+Migration 007 `SECURITY DEFINER` signatures. It grants no direct table,
+sequence, credential, event, erasure-function, schema-creation, broad
+function, grant-option, or PUBLIC privilege. Its postcheck rejects every
+effective direct grant outside that exact set and preserves the existing
+ungranted controlled-erasure boundary. It remains unexecuted until private
+provider approval separately provisions the exact role and authorizes the
+database change; no runtime code, route, token flow, or provider action is
+activated by this plan.
 
 The next planned migrations remain separate:
 
