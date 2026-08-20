@@ -404,6 +404,39 @@ remain unset and must not activate or supply the future Affiliate path.
 
 ## Shared Rules
 
+## Affiliate Creator single-account authorization boundary (Migration 009)
+
+Migration 009 is a dormant database-only authorization boundary. It binds the
+validated `northstar_affiliate_creator_runtime` role OID to exactly one
+Affiliate Creator account and provider. The binding cascades when the controlled
+account-erasure path removes that account; the runtime role receives no direct
+access to the binding or authorization-state relations.
+
+The boundary derives account identity from `SESSION_USER`, never from a
+runtime-supplied account ID or `CURRENT_USER`. PostgreSQL 18 documents that
+`SESSION_USER` remains the real/original login identity while `CURRENT_USER` is
+the effective permission identity and changes under a `SECURITY DEFINER`
+function. The validated runtime role is `NOSUPERUSER`, so it cannot substitute
+another session identity. The two runtime functions therefore use a fixed
+search path and fail closed unless `SESSION_USER` resolves to the exact runtime
+role and its sole binding.
+
+The ungranted administrative binder verifies the runtime role's least-privilege
+attributes, NULL password, and PostgreSQL 18 creator-admin membership model
+before creating the single account binding. Public execution is revoked from
+every new function; only the runtime role receives EXECUTE on the two
+authorization-control functions.
+
+Authorization state stores only an internal connection/account binding, fixed
+provider, monotonic authorization revision, strict 64-character lowercase
+hexadecimal digest, and expiry metadata. It stores no raw state, authorization
+code, token, app credential, encryption key, Open ID, redirect URL, callback
+payload, or provider error. A successful callback atomically deletes its exact
+state row, then advances from `authorization_pending` to `callback_received`.
+Migration 005's trigger remains the source of event sequencing: Migration 009
+supplies its required `event_sequence = 0` sentinel for `authorization_started`
+and `callback_accepted` events.
+
 - Use exact platform IDs first.
 - Use normalized names only as an explicit fallback and mark those matches as lower confidence.
 - Every imported row should carry `first_seen_sync_run_id` and `last_seen_sync_run_id` when it represents a durable entity.
