@@ -437,6 +437,20 @@ Migration 005's trigger remains the source of event sequencing: Migration 009
 supplies its required `event_sequence = 0` sentinel for `authorization_started`
 and `callback_accepted` events.
 
+## Affiliate Creator runtime persistence boundary (Migration 010)
+
+Migration 010 adds the sole runtime entry point for initial credential
+persistence. It accepts no account ID: it resolves the bound account only from
+`SESSION_USER` and Migration 009's exact runtime-role binding, then verifies
+the callback lifecycle state and revisions before delegating to Migration 007's
+atomic persistence function. The wrapper is `SECURITY DEFINER` with a fixed
+search path, has PUBLIC execution revoked, and is the sole initial-persistence
+entry point granted by this migration. The former direct runtime grant on
+the account-id persistence function is revoked, preventing account identity
+from being supplied by a runtime caller. It stores only the pre-encrypted
+envelope fields accepted by Migration 007; plaintext credentials, codes, and
+provider payloads remain outside this database boundary.
+
 - Use exact platform IDs first.
 - Use normalized names only as an explicit fallback and mark those matches as lower confidence.
 - Every imported row should carry `first_seen_sync_run_id` and `last_seen_sync_run_id` when it represents a durable entity.
