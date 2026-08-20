@@ -149,7 +149,9 @@ function testRegistryAndStaticDormancy() {
   assert.doesNotMatch(source, /\b(?:INSERT\s+INTO|UPDATE\s+[\w."]+\s+SET|DELETE\s+FROM|ALTER\s+TABLE|DROP\s+TABLE|GRANT\s+\w+\s+ON|REVOKE\s+\w+\s+ON|CALL\s+[\w."]+)\b/i);
   assert.doesNotMatch(source, /2025-10-01|sync_runs|videos|connected_tiktok_accounts/i);
   const permittedDormantConsumers = new Set([
-    "lib/tiktok-shop-affiliate-creator-authorization-persistence-contract.js"
+    "lib/tiktok-shop-affiliate-creator-authorization-persistence-contract.js",
+    "lib/tiktok-shop-affiliate-creator-runtime-service.js",
+    "lib/tiktok-shop-affiliate-creator-runtime-tiktok-client.js"
   ]);
   const consumers = [];
   for (const directory of [path.join(root, "api"), path.join(root, "lib")]) {

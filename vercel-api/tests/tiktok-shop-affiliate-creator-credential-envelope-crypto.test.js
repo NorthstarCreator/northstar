@@ -144,10 +144,11 @@ function testNoRuntimeReachabilityOrUnsafeDependencies() {
   assert.match(source, /setAuthTag\(/);
   assert.doesNotMatch(source, /process\.env|fetch\(|https?:\/\/|SELECT\s|INSERT\s|UPDATE\s|DELETE\s|console\.|logger|cache|retry/i);
   assert.doesNotMatch(source, /token-store|upstash|redis|oauth|seller|partner|local sellers|display|october\s+1/i);
-  const runtimeFiles = ["api", "lib"].flatMap((directory) => fs.readdirSync(path.join(root, directory), { recursive: true })
-    .filter((file) => file.endsWith(".js") && file !== "tiktok-shop-affiliate-creator-credential-envelope-crypto.js")
-    .map((file) => fs.readFileSync(path.join(root, directory, file), "utf8")));
-  assert(runtimeFiles.every((sourceText) => !sourceText.includes("tiktok-shop-affiliate-creator-credential-envelope-crypto")));
+  const runtimeConsumers = ["api", "lib"].flatMap((directory) => fs.readdirSync(path.join(root, directory), { recursive: true })
+    .filter((file) => file.endsWith(".js"))
+    .map((file) => path.join(directory, file))
+    .filter((file) => file !== "lib/tiktok-shop-affiliate-creator-credential-envelope-crypto.js" && fs.readFileSync(path.join(root, file), "utf8").includes("tiktok-shop-affiliate-creator-credential-envelope-crypto")));
+  assert.deepEqual(runtimeConsumers, ["lib/tiktok-shop-affiliate-creator-runtime-service.js"]);
 }
 
 testRoundTripsAndEnvelopeShape();

@@ -15,6 +15,7 @@ const REFRESH_PURPOSE_SEGMENT = "|purpose=7:refresh|";
 const SANDBOX_SEGMENT = "|env=7:sandbox|";
 const PROVIDER_SEGMENT = `|provider=${Buffer.byteLength(AFFILIATE_CREATOR_PROVIDER, "utf8")}:${AFFILIATE_CREATOR_PROVIDER}|`;
 const materials = new WeakMap();
+const trustedRuntimeAccounts = new WeakMap();
 
 class AffiliateCreatorCredentialEnvelopePersistenceContractError extends Error {
   constructor(code) {
@@ -61,11 +62,19 @@ function positiveRevision(value) {
 }
 
 function accountIdFor(context) {
+  const runtimeAccountId = trustedRuntimeAccounts.get(context);
+  if (runtimeAccountId) return runtimeAccountId;
   try {
     return uuid(getAuthorizedCreatorAccountId(context));
   } catch {
     fail("authorization_context_required");
   }
+}
+
+function createAffiliateCreatorTrustedRuntimeAccountContext(creatorAccountId) {
+  const context = opaque();
+  trustedRuntimeAccounts.set(context, uuid(creatorAccountId));
+  return context;
 }
 
 function aadInfo(context) {
@@ -151,6 +160,7 @@ function getAffiliateCreatorCredentialEnvelopePersistenceRows(context) {
 
 module.exports = {
   AffiliateCreatorCredentialEnvelopePersistenceContractError,
+  createAffiliateCreatorTrustedRuntimeAccountContext,
   mapAffiliateCreatorCredentialEnvelopePersistenceMaterial,
   getAffiliateCreatorCredentialEnvelopePersistenceRows
 };

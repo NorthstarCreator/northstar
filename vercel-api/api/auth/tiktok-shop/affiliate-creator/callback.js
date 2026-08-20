@@ -1,65 +1,12 @@
-const { requireSession } = require("../../../../lib/session");
-const { sendJson } = require("../../../../lib/cors");
-const {
-  authorizationEnabled,
-  ENVIRONMENT,
-  consumeTikTokShopAffiliateCreatorOAuthState,
-  TikTokShopAffiliateCreatorOAuthStateError
-} = require("../../../../lib/tiktok-shop-affiliate-creator-oauth-state");
-
-function response(req, res, status, code) {
-  return sendJson(req, res, status, {
-    source: "tiktok_shop_affiliate_creator",
-    status: code,
-    connectionCreated: false,
-    tokenExchangeAttempted: false
-  });
-}
-
-function createHandler(dependencies = {}) {
-  const sessionReader = dependencies.requireSession || requireSession;
-  const stateConsumer = dependencies.consumeState || consumeTikTokShopAffiliateCreatorOAuthState;
-  const enabled = dependencies.authorizationEnabled || authorizationEnabled;
-
-  return async function handler(req, res) {
-    if (process.env.NORTHSTAR_ENV !== ENVIRONMENT) {
-      return response(req, res, 404, "sandbox_callback_unavailable");
-    }
-    if (!enabled()) return response(req, res, 404, "authorization_disabled");
-    if (req.method !== "GET") {
-      res.setHeader("Allow", "GET");
-      return response(req, res, 405, "method_not_allowed");
-    }
-
-    const url = new URL(req.url, "https://sandbox-api.northstar-creator.com");
-    const states = url.searchParams.getAll("state");
-    if (states.length !== 1 || !states[0]) return response(req, res, 400, "invalid_state");
-
-    try {
-      const session = await sessionReader(req);
-      if (!session?.id) return response(req, res, 401, "session_required");
-      await stateConsumer(states[0], { sessionId: session.id });
-    } catch (error) {
-      if (!(error instanceof TikTokShopAffiliateCreatorOAuthStateError)) {
-        return response(req, res, 503, "state_validation_unavailable");
-      }
-      const status = error.code === "expired_state" ? "expired_state" : "invalid_state";
-      return response(req, res, 400, status);
-    }
-
-    const errors = url.searchParams.getAll("error");
-    const codes = url.searchParams.getAll("code");
-    if (errors.length > 1 || codes.length > 1 || (errors.length && codes.length)) {
-      return response(req, res, 400, "invalid_callback_parameters");
-    }
-    if (errors.length === 1) return response(req, res, 400, "provider_error");
-    if (codes.length !== 1 || !codes[0] || codes[0] === "null") {
-      return response(req, res, 400, "missing_callback_code");
-    }
-
-    return response(req, res, 200, "callback_received_token_exchange_blocked");
-  };
-}
-
-module.exports = createHandler();
-module.exports.createHandler = createHandler;
+"use strict";
+const runtimeConfig = require("../../../../lib/tiktok-shop-affiliate-creator-runtime-config");
+const state = require("../../../../lib/tiktok-shop-affiliate-creator-runtime-state");
+const database = require("../../../../lib/tiktok-shop-affiliate-creator-runtime-db");
+const client = require("../../../../lib/tiktok-shop-affiliate-creator-runtime-tiktok-client");
+const persistence = require("../../../../lib/tiktok-shop-affiliate-creator-runtime-persistence");
+const service = require("../../../../lib/tiktok-shop-affiliate-creator-runtime-service");
+const MAX_CODE = 2048, MAX_ERROR = 128;
+function send(res, status, value) { res.statusCode = status; res.setHeader("Cache-Control", "private, no-store, max-age=0"); res.setHeader("Content-Type", "application/json; charset=utf-8"); res.end(JSON.stringify(value)); }
+function parameters(url) { const allowed = new Set(["code", "state", "error"]); for (const [key] of url.searchParams) if (!allowed.has(key)) throw new Error("invalid"); const read = (key, max) => { const values = url.searchParams.getAll(key); if (values.length > 1 || (values.length === 1 && (!values[0] || values[0].length > max))) throw new Error("invalid"); return values[0]; }; const code = read("code", MAX_CODE), rawState = read("state", 128), error = read("error", MAX_ERROR); if (!rawState || (code && error) || (!code && !error)) throw new Error("invalid"); return error ? { state: rawState, error } : { state: rawState, code }; }
+function createHandler(dependencies = {}) { const createService = dependencies.createService || (() => { const values = runtimeConfig.read(); return service.create({ config: { read: () => values }, state, createDatabase: database.create, createTikTokClient: client.create, createPersistence: persistence.create }); }); return async function handler(req, res) { if (req.method !== "GET") { res.setHeader("Allow", "GET"); return send(res, 405, { error: "affiliate_creator_runtime_unavailable" }); } let values; try { values = parameters(new URL(req.url, "https://sandbox-api.northstar-creator.com")); } catch { return send(res, 400, { error: "affiliate_creator_runtime_unavailable" }); } let runtime; try { runtime = createService(); } catch { return send(res, 404, { error: "affiliate_creator_runtime_unavailable" }); } try { const profile = await runtime.callback(values); return send(res, 200, { profile }); } catch { return send(res, 400, { error: "affiliate_creator_runtime_unavailable" }); } }; }
+module.exports = createHandler(); module.exports.createHandler = createHandler; module.exports.config = { runtime: "nodejs" };

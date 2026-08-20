@@ -135,7 +135,7 @@ function testStaticSafetyAndDormancy() {
       if (target !== modulePath && fs.readFileSync(target, "utf8").includes(moduleName)) consumers.push(target);
     }
   }
-  assert.deepEqual(consumers, []);
+  assert.deepEqual(consumers, [path.join(root, "lib", "tiktok-shop-affiliate-creator-runtime-tiktok-client.js")]);
 }
 
 [testStaticContract, testNormalizationAndDiscarding, testFailureContainment, testRegistryReview, testStaticSafetyAndDormancy].forEach((test) => test());

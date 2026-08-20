@@ -15,6 +15,7 @@ const {
 } = require("../lib/session-creator-account-authorization");
 const {
   AffiliateCreatorCredentialEnvelopePersistenceContractError,
+  createAffiliateCreatorTrustedRuntimeAccountContext,
   mapAffiliateCreatorCredentialEnvelopePersistenceMaterial,
   getAffiliateCreatorCredentialEnvelopePersistenceRows
 } = require("../lib/tiktok-shop-affiliate-creator-credential-envelope-persistence-contract");
@@ -118,13 +119,23 @@ function testContextAndAadMismatchBoundaries() {
   code(() => mapAffiliateCreatorCredentialEnvelopePersistenceMaterial({ ...valid, unexpected: true }), "invalid_credential_persistence_input");
 }
 
+function testTrustedRuntimeContext() {
+  const context = createAffiliateCreatorTrustedRuntimeAccountContext(ACCOUNT_ID);
+  assert.equal(JSON.stringify(context), "{}"); assert.deepEqual(Object.keys(context), []);
+  const valid = input({ authorizationContext: context });
+  const rows = getAffiliateCreatorCredentialEnvelopePersistenceRows(mapAffiliateCreatorCredentialEnvelopePersistenceMaterial(valid));
+  assert.equal(rows.access.account_id, ACCOUNT_ID);
+  code(() => createAffiliateCreatorTrustedRuntimeAccountContext("bad"), "invalid_credential_persistence_input");
+  code(() => mapAffiliateCreatorCredentialEnvelopePersistenceMaterial({ ...valid, authorizationContext: {} }), "authorization_context_required");
+}
+
 function testNoUnsafeDependenciesOrRuntimeConsumers() {
   const source = fs.readFileSync(target, "utf8");
   assert.doesNotMatch(source, /process\.env|fetch\s*\(|https?:\/\/|withDatabase|redis|upstash|oauth|console\.|logger|cache|retry|\bsql`|encryptJson|decryptJson/i);
   assert.doesNotMatch(source, /\b(?:SELECT|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM|ALTER\s+TABLE|CREATE\s+TABLE|DROP\s+TABLE|GRANT|REVOKE|CALL)\b/i);
   assert.doesNotMatch(source, /display|seller|partner|token-store|october\s+1/i);
-  const consumers = []; for (const dir of [path.join(root, "api"), path.join(root, "lib")]) for (const item of fs.readdirSync(dir, { withFileTypes: true })) { const candidate = path.join(dir, item.name); if (item.name.endsWith(".js") && candidate !== target && !candidate.endsWith("tiktok-shop-affiliate-creator-authorization-persistence-contract.js") && fs.readFileSync(candidate, "utf8").includes("tiktok-shop-affiliate-creator-credential-envelope-persistence-contract")) consumers.push(candidate); } assert.deepEqual(consumers, []);
+  const consumers = []; for (const dir of [path.join(root, "api"), path.join(root, "lib")]) for (const item of fs.readdirSync(dir, { withFileTypes: true })) { const candidate = path.join(dir, item.name); if (item.name.endsWith(".js") && candidate !== target && !candidate.endsWith("tiktok-shop-affiliate-creator-authorization-persistence-contract.js") && !candidate.endsWith("tiktok-shop-affiliate-creator-runtime-persistence.js") && fs.readFileSync(candidate, "utf8").includes("tiktok-shop-affiliate-creator-credential-envelope-persistence-contract")) consumers.push(candidate); } assert.deepEqual(consumers, []);
 }
 
-[testExactMappingAndOpacity, testContextAndAadMismatchBoundaries, testNoUnsafeDependenciesOrRuntimeConsumers].forEach((test) => test());
+[testExactMappingAndOpacity, testContextAndAadMismatchBoundaries, testTrustedRuntimeContext, testNoUnsafeDependenciesOrRuntimeConsumers].forEach((test) => test());
 console.log("TikTok Shop Affiliate Creator credential-envelope persistence contract tests passed.");
