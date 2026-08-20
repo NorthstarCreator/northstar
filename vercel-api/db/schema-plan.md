@@ -451,6 +451,18 @@ from being supplied by a runtime caller. It stores only the pre-encrypted
 envelope fields accepted by Migration 007; plaintext credentials, codes, and
 provider payloads remain outside this database boundary.
 
+## Affiliate Creator runtime AAD context (Migration 011)
+
+Migration 011 adds the no-argument, `SECURITY DEFINER`
+`public.get_affiliate_creator_runtime_account_id()` accessor. It resolves the
+single bound account only from `SESSION_USER` and the Migration 009 binding,
+then returns the UUID only to the trusted server-side runtime adapter. The UUID
+is internal AAD material: it may exist in process memory only long enough to
+construct the existing account-bound envelope context and must never be logged,
+cached, serialized, redirected, placed in a cookie, or accepted from HTTP.
+PUBLIC execution is revoked and only the restricted runtime role receives
+EXECUTE; the migration grants no direct object access.
+
 - Use exact platform IDs first.
 - Use normalized names only as an explicit fallback and mark those matches as lower confidence.
 - Every imported row should carry `first_seen_sync_run_id` and `last_seen_sync_run_id` when it represents a durable entity.
