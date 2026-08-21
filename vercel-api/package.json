@@ -11,6 +11,8 @@
     "@neondatabase/serverless": "^0.10.4"
   },
   "scripts": {
+    "test:migration-012": "node tests/affiliate-creator-authorization-function-column-qualification-schema.test.js",
+    "check:migration-012": "node -c tests/affiliate-creator-authorization-function-column-qualification-schema.test.js",
     "test:migration-011": "node tests/affiliate-creator-runtime-aad-context-schema.test.js",
     "test:migration-010": "node tests/affiliate-creator-runtime-persistence-wrapper-schema.test.js",
     "test:affiliate-creator-runtime": "node tests/tiktok-shop-affiliate-creator-runtime-foundations.test.js && node tests/tiktok-shop-affiliate-creator-runtime-persistence.test.js && node tests/tiktok-shop-affiliate-creator-runtime-service.test.js",

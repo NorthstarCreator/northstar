@@ -463,6 +463,17 @@ cached, serialized, redirected, placed in a cookie, or accepted from HTTP.
 PUBLIC execution is revoked and only the restricted runtime role receives
 EXECUTE; the migration grants no direct object access.
 
+## Affiliate Creator authorization function qualification repair (Migration 012)
+
+Migration 012 is a forward-only repair for the two dormant Migration 009
+authorization-control functions. Their `RETURNS TABLE` output names are also
+PL/pgSQL variables, so every same-named relation column is explicitly qualified
+with a relation alias. The repair preserves the exact signatures, account
+identity derivation from `SESSION_USER`, compare-and-swap lifecycle guards,
+state-digest rules, `SECURITY DEFINER` properties, fixed search paths, and
+runtime-only EXECUTE grants. It grants no direct object access and stores no
+additional data.
+
 - Use exact platform IDs first.
 - Use normalized names only as an explicit fallback and mark those matches as lower confidence.
 - Every imported row should carry `first_seen_sync_run_id` and `last_seen_sync_run_id` when it represents a durable entity.
