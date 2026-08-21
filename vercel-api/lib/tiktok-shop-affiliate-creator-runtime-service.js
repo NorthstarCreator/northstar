@@ -30,8 +30,8 @@ function keyring(value) {
   return Object.freeze({ getAffiliateCreatorCredentialKey(reference) { if (reference !== KEY_REFERENCE) fail(); return key; } });
 }
 
-function create({ config, state, createDatabase, createTikTokClient, createPersistence, createCryptographer = createAffiliateCreatorCredentialCryptographer, clock = () => Date.now(), createKeyring = keyring, onStage = () => {} } = {}) {
-  if (!config || typeof config.read !== "function" || !state || typeof state.create !== "function" || typeof state.digest !== "function" || typeof state.connectionId !== "function" || typeof createDatabase !== "function" || typeof createTikTokClient !== "function" || typeof createPersistence !== "function" || typeof createCryptographer !== "function" || typeof clock !== "function" || typeof createKeyring !== "function" || typeof onStage !== "function") fail();
+function create({ config, state, createDatabase, createTikTokClient, createPersistence, createCryptographer = createAffiliateCreatorCredentialCryptographer, clock = () => Date.now(), createKeyring = keyring, onStage = () => {}, onDatabaseDiagnostic } = {}) {
+  if (!config || typeof config.read !== "function" || !state || typeof state.create !== "function" || typeof state.digest !== "function" || typeof state.connectionId !== "function" || typeof createDatabase !== "function" || typeof createTikTokClient !== "function" || typeof createPersistence !== "function" || typeof createCryptographer !== "function" || typeof clock !== "function" || typeof createKeyring !== "function" || typeof onStage !== "function" || (onDatabaseDiagnostic !== undefined && typeof onDatabaseDiagnostic !== "function")) fail();
 
   function dependencies() {
     let values;
@@ -39,7 +39,7 @@ function create({ config, state, createDatabase, createTikTokClient, createPersi
     if (!values || values.environment !== "sandbox") fail();
     try {
       onStage("database_initialization");
-      const database = createDatabase({ databaseUrl: values.databaseUrl });
+      const database = createDatabase(onDatabaseDiagnostic ? { databaseUrl: values.databaseUrl, onDiagnostic: onDatabaseDiagnostic } : { databaseUrl: values.databaseUrl });
       const client = createTikTokClient({ appKey: values.appKey, appSecret: values.appSecret });
       const persistence = createPersistence({ cryptographer: createCryptographer({ keyring: createKeyring(values.keyring) }), keyReference: KEY_REFERENCE });
       if (!database || typeof database.begin !== "function" || typeof database.accept !== "function" || typeof database.account !== "function" || typeof database.complete !== "function" || !client || typeof client.authorizationUrl !== "function" || typeof client.exchange !== "function" || typeof client.profile !== "function" || !persistence || typeof persistence.prepare !== "function") fail();

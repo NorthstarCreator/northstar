@@ -53,6 +53,10 @@ async function testAdapterContainment() {
   const throwing = createDatabase({ execute: async () => { throw new Error(accessSecret); } });
   await assert.rejects(() => throwing.complete(command), (error) => error.message === "runtime_database_unavailable" && !error.message.includes(accessSecret));
   await assert.rejects(() => createDatabase({ execute: async () => [{ completed: null }] }).complete({}), { message: "runtime_database_unavailable" });
+  const labels = []; const sqlFailure = createDatabase({ onDiagnostic: label => labels.push(label), execute: async () => { const error = new Error("discarded"); error.code = "42501"; throw error; } });
+  await assert.rejects(() => sqlFailure.begin({}), { message: "runtime_database_unavailable" }); assert.deepEqual(labels, ["database_sqlstate_42501"]);
+  const shapeLabels = []; const malformed = createDatabase({ onDiagnostic: label => shapeLabels.push(label), execute: async () => [] });
+  await assert.rejects(() => malformed.begin({}), { message: "runtime_database_unavailable" }); assert.deepEqual(shapeLabels, ["database_result_shape_failure"]);
 }
 
 function testSourceBoundaries() {
@@ -60,6 +64,7 @@ function testSourceBoundaries() {
   assert.doesNotMatch(source, /process\.env|fetch\(|https?:\/\/|console\.|logger|cache|retry|redis|upstash|token-store|session|display|seller|partner/i);
   assert.doesNotMatch(db, /from\s+public\.(?:affiliate_creator_connections|affiliate_creator_credentials)|insert\s+into|update\s+public\.|delete\s+from/i);
   assert.match(db, /complete_affiliate_creator_runtime_authorization/); assert.doesNotMatch(db, /public\.persist_affiliate_creator_authorization\(/);
+  assert.match(db, /database_http_2xx|database_http_4xx|database_http_5xx|database_sqlstate_/); assert.doesNotMatch(db, /console\.|logger|resource\.url|response\.text\(/);
   assert.equal((db.match(/\$24::text/g) || []).length, 1);
 }
 
