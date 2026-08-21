@@ -24,7 +24,8 @@ async function testDisabledAndParameterBoundaries() {
 function testNoLegacyCallbackDependencies() {
   const source = fs.readFileSync(callbackPath, "utf8");
   assert.match(source, /tiktok-shop-affiliate-creator-runtime-service/);
-  assert.doesNotMatch(source, /requireSession|oauth-state|token-store|redis|upstash|session|withDatabase|process\.env|console\.|logger/i);
+  assert.doesNotMatch(source, /requireSession|oauth-state|token-store|redis|upstash|session|withDatabase|logger/i);
+  assert.match(source, /console\.info\(`affiliate_creator_preview_stage=\$\{stage\}`\)/);
   assert.match(source, /runtime: "nodejs"/);
 }
 

@@ -30,14 +30,15 @@ function keyring(value) {
   return Object.freeze({ getAffiliateCreatorCredentialKey(reference) { if (reference !== KEY_REFERENCE) fail(); return key; } });
 }
 
-function create({ config, state, createDatabase, createTikTokClient, createPersistence, createCryptographer = createAffiliateCreatorCredentialCryptographer, clock = () => Date.now(), createKeyring = keyring } = {}) {
-  if (!config || typeof config.read !== "function" || !state || typeof state.create !== "function" || typeof state.digest !== "function" || typeof state.connectionId !== "function" || typeof createDatabase !== "function" || typeof createTikTokClient !== "function" || typeof createPersistence !== "function" || typeof createCryptographer !== "function" || typeof clock !== "function" || typeof createKeyring !== "function") fail();
+function create({ config, state, createDatabase, createTikTokClient, createPersistence, createCryptographer = createAffiliateCreatorCredentialCryptographer, clock = () => Date.now(), createKeyring = keyring, onStage = () => {} } = {}) {
+  if (!config || typeof config.read !== "function" || !state || typeof state.create !== "function" || typeof state.digest !== "function" || typeof state.connectionId !== "function" || typeof createDatabase !== "function" || typeof createTikTokClient !== "function" || typeof createPersistence !== "function" || typeof createCryptographer !== "function" || typeof clock !== "function" || typeof createKeyring !== "function" || typeof onStage !== "function") fail();
 
   function dependencies() {
     let values;
     try { values = config.read(); } catch { fail(); }
     if (!values || values.environment !== "sandbox") fail();
     try {
+      onStage("database_initialization");
       const database = createDatabase({ databaseUrl: values.databaseUrl });
       const client = createTikTokClient({ appKey: values.appKey, appSecret: values.appSecret });
       const persistence = createPersistence({ cryptographer: createCryptographer({ keyring: createKeyring(values.keyring) }), keyReference: KEY_REFERENCE });
@@ -53,6 +54,7 @@ function create({ config, state, createDatabase, createTikTokClient, createPersi
     const connectionId = state.connectionId(rawState);
     const stateDigest = state.digest(rawState);
     let begun;
+    onStage("authorization_start_database_call");
     try { begun = await database.begin({ connectionId, stateDigest, expiresAt: iso(now + STATE_TTL_MS), occurredAt: iso(now) }); } catch { fail(); }
     if (!begun || begun.connection_id !== connectionId || integer(begun.authorization_revision) !== INITIAL_AUTHORIZATION_REVISION) fail();
     let redirect;
@@ -70,19 +72,25 @@ function create({ config, state, createDatabase, createTikTokClient, createPersi
     const connectionId = state.connectionId(rawState);
     const stateDigest = state.digest(rawState);
     let accepted;
+    onStage("callback_state_consumption");
     try { accepted = await database.accept({ connectionId, authorizationRevision: INITIAL_AUTHORIZATION_REVISION, stateDigest, occurredAt: iso(now) }); } catch { fail(); }
     if (!accepted || accepted.connection_id !== connectionId || integer(accepted.authorization_revision) !== INITIAL_AUTHORIZATION_REVISION + 1 || integer(accepted.credential_revision) < 0) fail();
     if (error !== undefined) fail("affiliate_creator_authorization_denied");
     let tokenResult;
+    onStage("callback_token_exchange");
     try { tokenResult = await client.exchange(code); } catch { fail(); }
     let identity; let credentials;
     try { identity = getValidatedCreatorAuthorizationIdentity(tokenResult); credentials = getValidatedCreatorAuthorizationCredentialMaterial(tokenResult); } catch { fail(); }
     if (identity.userType !== 1 || !identity.grantedScopes.includes("creator.affiliate.info")) fail();
     let creatorAccountId; let profile;
-    try { creatorAccountId = (await database.account()).account_id; profile = safeProfile(await client.profile(credentials.accessToken)); } catch { fail(); }
+    onStage("callback_account_context");
+    try { creatorAccountId = (await database.account()).account_id; } catch { fail(); }
+    onStage("callback_profile_request");
+    try { profile = safeProfile(await client.profile(credentials.accessToken)); } catch { fail(); }
     let command;
     try {
       command = persistence.prepare({ creatorAccountId, connectionId, expectedAuthorizationRevision: integer(accepted.authorization_revision), expectedCredentialRevision: integer(accepted.credential_revision), authorizationState: "authorized_ready", providerCreatorOpenId: identity.openId, userType: identity.userType, grantedScopes: identity.grantedScopes, authorizedAt: iso(now), accessExpiresAt: iso(identity.accessTokenExpiresAt * 1000), refreshExpiresAt: iso(identity.refreshTokenExpiresAt * 1000), accessToken: credentials.accessToken, refreshToken: credentials.refreshToken });
+      onStage("callback_persistence");
       await database.complete(command);
     } catch { fail(); }
     return Object.freeze({ creatorUserId: profile.creatorUserId, selectionRegion: profile.selectionRegion, registerRegion: profile.registerRegion, sellerType: profile.sellerType, permissions: profile.permissions, userType: profile.userType });
