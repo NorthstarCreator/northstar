@@ -1,0 +1,18 @@
+"use strict";
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const source = fs.readFileSync(path.join(__dirname, "..", "db", "migrations", "013_affiliate_creator_expired_authorization_restart.sql"), "utf8");
+const compact = source.replace(/\s+/g, " ").toLowerCase();
+assert.match(source, /^BEGIN;[\s\S]*COMMIT;\s*$/);
+assert.equal((source.match(/CREATE OR REPLACE FUNCTION public\.begin_affiliate_creator_authorization\(/g) || []).length, 1);
+assert.match(compact, /current_state = 'authorization_pending'/);
+assert.match(compact, /state_row\.expires_at > p_occurred_at/);
+assert.match(compact, /state_row\.expires_at <= p_occurred_at/);
+assert.match(compact, /authorization_revision = next_revision/);
+assert.match(compact, /authorization_restarted/);
+assert.match(compact, /state_row\.connection_id = p_connection_id/);
+assert.match(compact, /security definer set search_path = pg_catalog, public, pg_temp/);
+assert.match(compact, /session_user::pg_catalog\.regrole::pg_catalog\.oid/);
+assert.doesNotMatch(compact, /create role|alter role|grant .* to public|default privileges|process\.env|https?:\/\/|redis|upstash|token-store|fetch\s*\(/);
+console.log("Affiliate Creator expired-authorization restart schema tests passed.");
