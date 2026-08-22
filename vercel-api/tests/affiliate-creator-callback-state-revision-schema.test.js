@@ -1,0 +1,21 @@
+"use strict";
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const source = fs.readFileSync(path.join(__dirname, "..", "db", "migrations", "014_affiliate_creator_callback_state_revision.sql"), "utf8");
+const compact = source.replace(/--.*$/gm, "").replace(/\s+/g, " ").trim().toLowerCase();
+
+assert.match(source, /^BEGIN;[\s\S]*COMMIT;\s*$/);
+assert.match(source, /DROP FUNCTION public\.accept_affiliate_creator_authorization_callback\(\s*pg_catalog\.uuid, pg_catalog\.int8, pg_catalog\.text, pg_catalog\.timestamptz\s*\);/);
+assert.match(source, /CREATE FUNCTION public\.accept_affiliate_creator_authorization_callback\(\s*p_connection_id pg_catalog\.uuid, p_state_digest pg_catalog\.text,\s*p_occurred_at pg_catalog\.timestamptz/);
+assert.doesNotMatch(source, /p_authorization_revision/);
+assert.match(source, /SESSION_USER::pg_catalog\.regrole::pg_catalog\.oid/);
+assert.doesNotMatch(source, /CURRENT_USER\s*::\s*pg_catalog\.regrole/i);
+assert.match(compact, /delete from public\.affiliate_creator_authorization_states as state_row[\s\S]*?state_row\.state_digest = p_state_digest[\s\S]*?returning state_row\.authorization_revision into state_revision/);
+assert.match(compact, /if not found or state_revision <> current_revision then raise exception 'affiliate_creator_callback_state_invalid'/);
+assert.match(compact, /security definer set search_path = pg_catalog, public, pg_temp/);
+assert.match(compact, /revoke all on function public\.accept_affiliate_creator_authorization_callback\( pg_catalog\.uuid, pg_catalog\.text, pg_catalog\.timestamptz \) from public/);
+assert.match(compact, /grant execute on function public\.accept_affiliate_creator_authorization_callback\( pg_catalog\.uuid, pg_catalog\.text, pg_catalog\.timestamptz \) to northstar_affiliate_creator_runtime/);
+assert.doesNotMatch(compact, /grant (select|insert|update|delete|truncate|references|trigger|usage) on (table|sequence)/);
+assert.doesNotMatch(compact, /create role|alter role|password|redis|upstash|token-store|fetch\s*\(|https?:\/\//);
+console.log("Affiliate Creator callback state-revision schema tests passed.");

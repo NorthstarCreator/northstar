@@ -56,7 +56,7 @@ function create({ config, state, createDatabase, createTikTokClient, createPersi
     let begun;
     onStage("authorization_start_database_call");
     try { begun = await database.begin({ connectionId, stateDigest, expiresAt: iso(now + STATE_TTL_MS), occurredAt: iso(now) }); } catch { fail(); }
-    if (!begun || begun.connection_id !== connectionId || integer(begun.authorization_revision) !== INITIAL_AUTHORIZATION_REVISION) fail();
+    if (!begun || begun.connection_id !== connectionId || integer(begun.authorization_revision) < INITIAL_AUTHORIZATION_REVISION) fail();
     let redirect;
     try { redirect = client.authorizationUrl(rawState); } catch { fail(); }
     if (typeof redirect !== "string" || !redirect.startsWith("https://shop.tiktok.com/")) fail();
@@ -73,8 +73,8 @@ function create({ config, state, createDatabase, createTikTokClient, createPersi
     const stateDigest = state.digest(rawState);
     let accepted;
     onStage("callback_state_consumption");
-    try { accepted = await database.accept({ connectionId, authorizationRevision: INITIAL_AUTHORIZATION_REVISION, stateDigest, occurredAt: iso(now) }); } catch { fail(); }
-    if (!accepted || accepted.connection_id !== connectionId || integer(accepted.authorization_revision) !== INITIAL_AUTHORIZATION_REVISION + 1 || integer(accepted.credential_revision) < 0) fail();
+    try { accepted = await database.accept({ connectionId, stateDigest, occurredAt: iso(now) }); } catch { fail(); }
+    if (!accepted || accepted.connection_id !== connectionId || integer(accepted.authorization_revision) < INITIAL_AUTHORIZATION_REVISION + 1 || integer(accepted.credential_revision) < 0) fail();
     if (error !== undefined) fail("affiliate_creator_authorization_denied");
     let tokenResult;
     onStage("callback_token_exchange");
