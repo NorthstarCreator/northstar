@@ -15,7 +15,7 @@ CREATE OR REPLACE FUNCTION public.begin_affiliate_creator_authorization(
 ) RETURNS TABLE(connection_id pg_catalog.uuid, authorization_revision pg_catalog.int8, expires_at pg_catalog.timestamptz)
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public, pg_temp
 AS $begin_authorization$
-DECLARE account_uuid pg_catalog.uuid; current_state pg_catalog.text; current_revision pg_catalog.int8; current_credential_revision pg_catalog.int8; next_revision pg_catalog.int8; restarted pg_catalog.boolean := false;
+DECLARE account_uuid pg_catalog.uuid; current_state pg_catalog.text; current_revision pg_catalog.int8; current_credential_revision pg_catalog.int8; next_revision pg_catalog.int8; restarted pg_catalog.bool := false;
 BEGIN
   SELECT binding_row.account_id INTO account_uuid FROM public.affiliate_creator_runtime_account_bindings AS binding_row JOIN pg_catalog.pg_roles AS role_row ON role_row.oid = binding_row.runtime_role_oid WHERE binding_row.runtime_role_oid = SESSION_USER::pg_catalog.regrole::pg_catalog.oid AND role_row.rolname = 'northstar_affiliate_creator_runtime';
   IF account_uuid IS NULL OR p_connection_id IS NULL OR p_state_digest !~ '^[0-9a-f]{64}$' OR p_expires_at IS NULL OR p_occurred_at IS NULL OR p_expires_at <= p_occurred_at OR p_expires_at > p_occurred_at + INTERVAL '10 minutes' THEN RAISE EXCEPTION 'affiliate_creator_authorization_start_invalid'; END IF;

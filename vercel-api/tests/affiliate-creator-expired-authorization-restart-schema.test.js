@@ -14,5 +14,7 @@ assert.match(compact, /authorization_restarted/);
 assert.match(compact, /state_row\.connection_id = p_connection_id/);
 assert.match(compact, /security definer set search_path = pg_catalog, public, pg_temp/);
 assert.match(compact, /session_user::pg_catalog\.regrole::pg_catalog\.oid/);
+assert.match(compact, /restarted pg_catalog\.bool := false/);
+assert.doesNotMatch(compact, /pg_catalog\.boolean/);
 assert.doesNotMatch(compact, /create role|alter role|grant .* to public|default privileges|process\.env|https?:\/\/|redis|upstash|token-store|fetch\s*\(/);
 console.log("Affiliate Creator expired-authorization restart schema tests passed.");
